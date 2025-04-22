@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -217,7 +218,12 @@ const Routines: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="templates">
-            <WeeklyRoutineBuilder />
+            <div className="mt-4">
+              <WeeklyRoutineBuilder 
+                onSave={() => {}} 
+                onCancel={() => {}} 
+              />
+            </div>
           </TabsContent>
           <TabsContent value="export">
             <DataExport />
@@ -228,10 +234,10 @@ const Routines: React.FC = () => {
           <div className="flex items-center justify-center min-h-screen">
             <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
               <h2 className="text-lg font-medium mb-4">Create Weekly Routine</h2>
-              <WeeklyRoutineBuilder onSave={() => { setOpen(false); handleRoutineSave(); }} />
-              <div className="flex justify-end mt-4">
-                <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
-              </div>
+              <WeeklyRoutineBuilder 
+                onSave={() => { setOpen(false); handleRoutineSave(); }} 
+                onCancel={() => setOpen(false)}
+              />
             </div>
           </div>
         </div>
@@ -242,10 +248,11 @@ const Routines: React.FC = () => {
               {editRoutineId && (
                 <>
                   <h2 className="text-lg font-medium mb-4">Edit Weekly Routine</h2>
-                  <WeeklyRoutineBuilder templateId={editRoutineId} onSave={() => { setEditRoutineId(null); handleRoutineSave(); }} />
-                  <div className="flex justify-end mt-4">
-                    <Button variant="secondary" onClick={() => setEditRoutineId(null)}>Cancel</Button>
-                  </div>
+                  <WeeklyRoutineBuilder 
+                    templateId={editRoutineId} 
+                    onSave={() => { setEditRoutineId(null); handleRoutineSave(); }}
+                    onCancel={() => setEditRoutineId(null)}
+                  />
                 </>
               )}
             </div>

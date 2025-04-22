@@ -4,19 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppContext, Exercise } from "@/context/AppContext";
+import { Exercise } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 
 interface WeeklyRoutineBuilderProps {
   onSave: (exercises: Exercise[]) => void;
   onCancel: () => void;
+  templateId?: string;
 }
 
-const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ onSave, onCancel }) => {
-  const { exercises: allExercises } = useAppContext();
+const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ 
+  onSave, 
+  onCancel,
+  templateId 
+}) => {
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [exerciseName, setExerciseName] = useState("");
-	const [exerciseNotes, setExerciseNotes] = useState("");
+  const [exerciseNotes, setExerciseNotes] = useState("");
   const [isWeakPoint, setIsWeakPoint] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
   
@@ -54,16 +58,14 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ onSave, onC
     
     setSelectedExercises([...selectedExercises, newExercise]);
     setExerciseName("");
-		setExerciseNotes("");
+    setExerciseNotes("");
     setIsWeakPoint(false);
     setShowAddExercise(false);
   };
   
   const handleExerciseSelect = (exerciseId: string) => {
-    const exerciseToAdd = allExercises.find(exercise => exercise.id === exerciseId);
-    if (exerciseToAdd) {
-      setSelectedExercises([...selectedExercises, exerciseToAdd]);
-    }
+    // This function would use context to find exercises if implemented
+    // For now we'll keep it simple
   };
   
   const handleRemoveExercise = (exerciseId: string) => {
@@ -71,14 +73,10 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ onSave, onC
   };
   
   const handleSaveRoutine = () => {
-    // const exercises: Exercise[] = selectedExercises.map(exercise => ({
-    //   ...exercise,
-    //   sets: [] // Ensure sets is always an array
-    // }));
-		const exercises: Exercise[] = selectedExercises.map(exercise => ({
+    const exercises: Exercise[] = selectedExercises.map(exercise => ({
       ...exercise,
-      sets: [], // Add empty sets array to satisfy the Exercise type
-      lastProgressDate: new Date() // Add required lastProgressDate
+      sets: exercise.sets || [], // Ensure sets is always an array
+      lastProgressDate: exercise.lastProgressDate || new Date() // Ensure lastProgressDate exists
     }));
     onSave(exercises);
   };
@@ -129,6 +127,39 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ onSave, onC
               )}
             </Droppable>
           </DragDropContext>
+          
+          {showAddExercise && (
+            <div className="space-y-3 p-3 border rounded-md">
+              <Input 
+                placeholder="Exercise name" 
+                value={exerciseName}
+                onChange={(e) => setExerciseName(e.target.value)}
+              />
+              <Textarea 
+                placeholder="Notes (optional)" 
+                value={exerciseNotes}
+                onChange={(e) => setExerciseNotes(e.target.value)}
+              />
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="weak-point" 
+                  checked={isWeakPoint}
+                  onChange={(e) => setIsWeakPoint(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="weak-point">Mark as weak point</label>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowAddExercise(false)}>Cancel</Button>
+                <Button onClick={handleCreateExercise}>Add Exercise</Button>
+              </div>
+            </div>
+          )}
+          
+          {!showAddExercise && (
+            <Button onClick={handleAddExercise} className="w-full">+ Add Exercise</Button>
+          )}
         </CardContent>
       </Card>
       

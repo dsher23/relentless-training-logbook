@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -114,6 +115,8 @@ export interface Reminder {
   type?: string;
   message?: string;
   dateTime?: Date;
+  supplementId?: string;
+  referenceId?: string;
 }
 
 export interface SteroidCycle {
@@ -126,6 +129,7 @@ export interface SteroidCycle {
   isPrivate?: boolean;
   currentWeek?: number;
   totalWeeks?: number;
+  startWeek?: number;
 }
 
 export interface CycleCompound {
