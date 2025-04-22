@@ -32,7 +32,7 @@ const Workouts: React.FC = () => {
   const activePlan = workoutPlans.find(p => p.isActive);
   
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container animate-fade-in pb-16">
       <Header title="Workouts" />
       
       <div className="px-4 mb-6">
@@ -88,7 +88,7 @@ const Workouts: React.FC = () => {
       )}
       
       <Tabs defaultValue="routines" className="w-full">
-        <TabsList className="grid grid-cols-2 mx-4">
+        <TabsList className="grid grid-cols-2 mx-4 mb-4">
           <TabsTrigger value="routines">
             <ClipboardList className="h-4 w-4 mr-2" /> Workout Days
           </TabsTrigger>
@@ -97,7 +97,7 @@ const Workouts: React.FC = () => {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="routines" className="mt-4">
+        <TabsContent value="routines">
           {sortedTemplates.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-6 text-center">
               <Dumbbell className="h-12 w-12 text-gym-purple mb-4" />
@@ -115,7 +115,7 @@ const Workouts: React.FC = () => {
                   onClick={() => navigate("/exercise-plans")}
                 >
                   <ClipboardList className="h-4 w-4 mr-2" />
-                  View Exercise Plans
+                  View Workout Plans
                 </Button>
               </div>
             </div>
@@ -125,53 +125,55 @@ const Workouts: React.FC = () => {
                 <h2 className="text-lg font-semibold">My Workout Days</h2>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => navigate("/exercise-plans")}>
-                    Exercise Plans
+                    Workout Plans
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => navigate("/workouts/new")}>
                     <Plus className="h-4 w-4 mr-1" /> New
                   </Button>
                 </div>
               </div>
-              {sortedTemplates.map(template => (
-                <Card 
-                  key={template.id} 
-                  className="hover:border-primary cursor-pointer"
-                  onClick={() => navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {template.isFavorite && (
-                          <Star className="h-4 w-4 text-yellow-500" />
-                        )}
-                        <div>
-                          <h3 className="font-medium">{template.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {template.exercises?.length || 0} exercises
-                          </p>
+              <div className="space-y-3">
+                {sortedTemplates.map(template => (
+                  <Card 
+                    key={template.id} 
+                    className="hover:border-primary cursor-pointer shadow-sm"
+                    onClick={() => navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {template.isFavorite && (
+                            <Star className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <div>
+                            <h3 className="font-medium">{template.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {template.exercises?.length || 0} exercises
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <StartWorkoutButton 
+                            workoutId={template.id} 
+                            className="bg-gym-blue hover:bg-blue-700"
+                            isTemplate
+                          />
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <StartWorkoutButton 
-                          workoutId={template.id} 
-                          className="bg-gym-blue hover:bg-blue-700"
-                          isTemplate
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -184,7 +186,7 @@ const Workouts: React.FC = () => {
       {completedWorkouts.length > 0 && (
         <section className="px-4 mt-8 mb-16">
           <h2 className="text-lg font-semibold mb-4">Completed Workouts</h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {completedWorkouts.slice(0, 5).map(workout => (
               <WorkoutCard 
                 key={workout.id} 
@@ -195,7 +197,7 @@ const Workouts: React.FC = () => {
             {completedWorkouts.length > 5 && (
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="w-full mt-2" 
                 onClick={() => navigate("/workout-history")}
               >
                 View All Completed Workouts

@@ -12,6 +12,7 @@ import WorkoutHistory from './pages/WorkoutHistory';
 import Plans from './pages/Plans';
 import Routines from './pages/Routines';
 import WorkoutSelection from './pages/WorkoutSelection';
+import WorkoutTypeSelection from './pages/WorkoutTypeSelection';
 import WorkoutBuilder from './pages/WorkoutBuilder';
 import PlanDetail from './pages/PlanDetail';
 import Index from './pages/Index';
@@ -34,6 +35,8 @@ function App() {
           <Route path="/exercise-plans/:planId/days" element={<WorkoutDays />} />
           <Route path="/exercise-plans/:planId/days/:dayId" element={<DayExercises />} />
           
+          <Route path="/plans" element={<Plans />} />
+          
           <Route path="/workouts" element={<Workouts />} />
           <Route path="/workouts/new" element={<CreateWorkout />} />
           <Route path="/workouts/builder" element={<WorkoutBuilder />} />
@@ -47,6 +50,7 @@ function App() {
           <Route path="/routines/:id" element={<Routines />} />
 
           <Route path="/workout-selection" element={<WorkoutSelection />} />
+          <Route path="/workout-type-selection" element={<WorkoutTypeSelection />} />
           
           <Route path="/home" element={<Index />} />
         </Routes>

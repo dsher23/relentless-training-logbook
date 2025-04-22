@@ -28,12 +28,12 @@ const EmptyState = ({ onCreatePlan }) => (
         <div className="rounded-full bg-secondary p-3 mb-4">
           <Plus className="h-6 w-6" />
         </div>
-        <h3 className="text-lg font-medium mb-2">Create Your First Exercise Plan</h3>
+        <h3 className="text-lg font-medium mb-2">Create Your First Workout Plan</h3>
         <p className="text-muted-foreground mb-4 max-w-sm">
           Organize your workout days into a structured training plan. Perfect for tracking progress over time.
         </p>
         <Button onClick={onCreatePlan}>
-          New Exercise Plan
+          New Workout Plan
         </Button>
       </div>
     </CardContent>
@@ -150,7 +150,8 @@ const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
       name: name.trim(),
       description: description.trim() || undefined,
       workoutTemplates: plan?.workoutTemplates || [],
-      isActive: plan?.isActive || false
+      isActive: plan?.isActive || false,
+      archived: plan?.archived || false
     });
     
     setName("");
@@ -171,7 +172,7 @@ const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{plan ? "Edit Exercise Plan" : "Create New Exercise Plan"}</DialogTitle>
+          <DialogTitle>{plan ? "Edit Workout Plan" : "Create New Workout Plan"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div>
@@ -207,7 +208,11 @@ const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
   );
 };
 
-const WorkoutPlanList: React.FC = () => {
+interface WorkoutPlanListProps {
+  showArchived?: boolean;
+}
+
+const WorkoutPlanList: React.FC<WorkoutPlanListProps> = ({ showArchived = false }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { 
@@ -235,7 +240,7 @@ const WorkoutPlanList: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Exercise plan updated successfully",
+        description: "Workout plan updated successfully",
       });
       
       setEditingPlan(null);
@@ -244,7 +249,7 @@ const WorkoutPlanList: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Exercise plan created successfully",
+        description: "Workout plan created successfully",
       });
       
       setIsCreateDialogOpen(false);
@@ -257,7 +262,7 @@ const WorkoutPlanList: React.FC = () => {
     
     toast({
       title: "Success",
-      description: "Exercise plan deleted successfully",
+      description: "Workout plan deleted successfully",
     });
   };
 
@@ -266,7 +271,7 @@ const WorkoutPlanList: React.FC = () => {
     
     toast({
       title: "Success",
-      description: "Exercise plan duplicated successfully",
+      description: "Workout plan duplicated successfully",
     });
   };
 
@@ -278,24 +283,28 @@ const WorkoutPlanList: React.FC = () => {
       description: "Active plan updated successfully",
     });
   };
+
+  const filteredPlans = workoutPlans.filter(plan => plan.archived === showArchived);
   
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium">Exercise Plans</h2>
-        <Button 
-          size="sm" 
-          onClick={handleCreatePlan}
-        >
-          <Plus className="h-4 w-4 mr-1" /> New Plan
-        </Button>
+        <h2 className="text-lg font-medium">{showArchived ? "Archived Plans" : "Workout Plans"}</h2>
+        {!showArchived && (
+          <Button 
+            size="sm" 
+            onClick={handleCreatePlan}
+          >
+            <Plus className="h-4 w-4 mr-1" /> New Plan
+          </Button>
+        )}
       </div>
 
-      {workoutPlans.length === 0 ? (
+      {filteredPlans.length === 0 ? (
         <EmptyState onCreatePlan={handleCreatePlan} />
       ) : (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {workoutPlans.map((plan) => (
+          {filteredPlans.map((plan) => (
             <PlanCard 
               key={plan.id}
               plan={plan}

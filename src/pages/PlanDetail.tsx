@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Calendar, Copy, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppContext, WorkoutTemplate, WorkoutPlan } from "@/context/AppContext";
+import { useAppContext, WorkoutTemplate } from "@/context/AppContext";
 import Header from "@/components/Header";
 import StartWorkoutButton from "@/components/StartWorkoutButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -38,12 +38,22 @@ const PlanDetail: React.FC = () => {
   
   if (!plan) {
     return (
-      <div className="app-container animate-fade-in">
+      <div className="app-container animate-fade-in pb-16">
         <Header title="Plan Not Found" />
         <div className="p-4">
-          <Button onClick={() => navigate("/exercise-plans")} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Plans
-          </Button>
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center justify-center">
+                <h2 className="text-lg font-medium mb-3">Workout Plan Not Found</h2>
+                <p className="text-muted-foreground mb-4">
+                  The workout plan you're looking for doesn't exist or has been deleted.
+                </p>
+                <Button onClick={() => navigate("/exercise-plans")} variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" /> Back to Plans
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -137,7 +147,7 @@ const PlanDetail: React.FC = () => {
   };
   
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container animate-fade-in pb-16">
       <Header title={plan.name} />
       
       <div className="p-4 space-y-4">
@@ -158,12 +168,32 @@ const PlanDetail: React.FC = () => {
           </Button>
         </div>
         
+        <Card className="bg-secondary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-secondary/60">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-medium">Workout Plan</h3>
+                <p className="text-sm text-muted-foreground">
+                  A collection of workout days organized into a training plan
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         {plan.description && (
-          <p className="text-muted-foreground">{plan.description}</p>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-muted-foreground">{plan.description}</p>
+            </CardContent>
+          </Card>
         )}
         
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Workouts in Plan</h2>
+        <div className="flex justify-between items-center mt-6">
+          <h2 className="text-lg font-semibold">Workout Days in Plan</h2>
           <div className="flex gap-2">
             <Button 
               variant="outline" 
@@ -188,9 +218,9 @@ const PlanDetail: React.FC = () => {
                 <div className="rounded-full bg-secondary p-3 mb-4">
                   <Calendar className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">No Workouts Added</h3>
+                <h3 className="text-lg font-medium mb-2">No Workout Days Added</h3>
                 <p className="text-muted-foreground mb-4">
-                  Add existing workouts or create new ones to build your plan.
+                  Add existing workout days or create new ones to build your plan.
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -213,7 +243,7 @@ const PlanDetail: React.FC = () => {
             {planTemplates.map((template) => (
               <Card 
                 key={template.id}
-                className="hover:border-primary"
+                className="hover:border-primary shadow-sm"
                 onClick={() => handleEditTemplate(template.id)}
               >
                 <CardContent className="p-4">
@@ -263,12 +293,12 @@ const PlanDetail: React.FC = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add Existing Workout</DialogTitle>
+            <DialogTitle>Add Existing Workout Day</DialogTitle>
           </DialogHeader>
           <div className="max-h-[300px] overflow-y-auto">
             {availableTemplates.length === 0 ? (
               <div className="text-center py-6">
-                <p className="text-muted-foreground">No available workouts to add</p>
+                <p className="text-muted-foreground">No available workout days to add</p>
               </div>
             ) : (
               <div className="space-y-2">

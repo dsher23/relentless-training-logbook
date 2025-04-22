@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon, ListChecks } from "lucide-react";
+import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 
@@ -25,12 +25,13 @@ const TabNavigationExtended: React.FC = () => {
   const trainingPaths = [
     "/training", 
     "/workouts", 
+    "/exercise-plans",
     "/plans", 
     "/routines",
     "/workout-selection",
     "/workout-history",
     "/live-workout",
-    "/weekly"
+    "/weekly-overview"
   ];
   
   const tabs = [
@@ -47,10 +48,10 @@ const TabNavigationExtended: React.FC = () => {
       isActive: isActive(trainingPaths),
     },
     {
-      path: "/weekly",
+      path: "/weekly-overview",
       label: "Weekly",
       icon: <CalendarDays className="w-5 h-5" />,
-      isActive: isActive(["/weekly"]),
+      isActive: isActive(["/weekly-overview"]),
     },
     {
       path: "/supplements",
@@ -64,12 +65,6 @@ const TabNavigationExtended: React.FC = () => {
       label: "Recovery",
       icon: <Heart className="w-5 h-5" />,
       isActive: isActive(["/recovery"]),
-    },
-    {
-      path: "/settings",
-      label: "Settings",
-      icon: <SettingsIcon className="w-5 h-5" />,
-      isActive: isActive(["/settings"]),
     },
   ];
   
