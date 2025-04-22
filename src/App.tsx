@@ -10,6 +10,7 @@ import { AppProvider } from '@/context/AppContext';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Workouts from '@/pages/Workouts';
+import Training from '@/pages/Training';
 import WorkoutTypeSelection from '@/pages/WorkoutTypeSelection';
 import CreateWorkout from '@/pages/CreateWorkout';
 import WorkoutDetail from '@/pages/WorkoutDetail';
@@ -37,6 +38,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workouts" element={<Workouts />} />
+            <Route path="/training" element={<Training />} />
             <Route path="/workout-selection" element={<WorkoutTypeSelection />} />
             <Route path="/workouts/:workoutId" element={<WorkoutDetail />} />
             <Route path="/workouts/new" element={<CreateWorkout />} />

@@ -92,7 +92,7 @@ const WorkoutTypeSelection: React.FC = () => {
             </Button>
             
             <Button
-              onClick={() => navigate("/workouts?tab=weekly")}
+              onClick={() => navigate("/training?tab=weekly")}
               size="lg"
               variant="outline"
               className="h-auto py-6 justify-start"
@@ -170,7 +170,7 @@ const WorkoutTypeSelection: React.FC = () => {
                 </p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/plans")}
+                  onClick={() => navigate("/training?tab=plans")}
                 >
                   Create Your First Plan
                 </Button>

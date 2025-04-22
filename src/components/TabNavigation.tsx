@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon, ClipboardList } from "lucide-react";
+import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 
@@ -19,14 +19,9 @@ const TabNavigationExtended: React.FC = () => {
       icon: <BarChart className="w-5 h-5" />,
     },
     {
-      path: "/workouts",
-      label: "Workouts",
+      path: "/training",
+      label: "Training",
       icon: <Dumbbell className="w-5 h-5" />,
-    },
-    {
-      path: "/plans",
-      label: "Plans",
-      icon: <ClipboardList className="w-5 h-5" />,
     },
     {
       path: "/weekly",
@@ -60,7 +55,12 @@ const TabNavigationExtended: React.FC = () => {
           className={cn(
             "flex flex-col items-center py-2 px-3 relative",
             location.pathname === tab.path || 
-            (location.pathname.startsWith(tab.path + "/") && tab.path !== "/dashboard")
+            (location.pathname.startsWith(tab.path + "/") && tab.path !== "/dashboard") ||
+            // Consider workout-related paths as part of Training
+            (tab.path === "/training" && 
+              (location.pathname.startsWith("/workouts") || 
+               location.pathname.startsWith("/plans") ||
+               location.pathname.startsWith("/routines")))
               ? "text-gym-purple"
               : "text-muted-foreground"
           )}

@@ -80,10 +80,10 @@ const Dashboard: React.FC = () => {
         >
           <Button 
             className="w-full bg-gym-blue hover:bg-gym-blue/90 text-white font-semibold py-6 flex items-center justify-center shadow-lg rounded-xl"
-            onClick={() => navigate("/workout-selection")}
+            onClick={() => navigate("/training")}
           >
             <Dumbbell className="mr-3 h-5 w-5" />
-            Start Workout
+            Training Hub
           </Button>
         </motion.div>
       </div>
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
             title="Workouts Logged"
             value={`${workouts.length}`}
             icon={<Dumbbell className="h-6 w-6 text-gym-blue" />}
-            onClick={() => navigate("/workouts")}
+            onClick={() => navigate("/training")}
           />
           <StatCard
             title="Stats Tracker"
