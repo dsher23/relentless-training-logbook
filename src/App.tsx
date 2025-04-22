@@ -1,4 +1,3 @@
-
 // This is a read-only file, so we'll update it carefully within our limits
 
 import React from "react";
@@ -21,6 +20,7 @@ import ProgressPhotos from "./pages/ProgressPhotos";
 import CreateWorkout from "./pages/CreateWorkout";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import WorkoutTypeSelection from "./pages/WorkoutTypeSelection";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -115,6 +115,15 @@ function App() {
             <Route
               path="/workout-selection"
               element={<WorkoutTypeSelection />}
+            />
+            <Route
+              path="/settings"
+              element={
+                <>
+                  <Settings />
+                  <TabNavigation />
+                </>
+              }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

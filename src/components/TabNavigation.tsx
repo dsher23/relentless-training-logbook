@@ -1,9 +1,6 @@
-
-// Since TabNavigation is read-only, we'll create a new component
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays } from "lucide-react";
+import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 
@@ -45,6 +42,11 @@ const TabNavigationExtended: React.FC = () => {
       path: "/routines",
       label: "Routines",
       icon: <Calendar className="w-5 h-5" />,
+    },
+    {
+      path: "/settings",
+      label: "Settings",
+      icon: <SettingsIcon className="w-5 h-5" />,
     },
   ];
   
