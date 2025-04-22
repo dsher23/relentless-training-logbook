@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { PillIcon, Check, X, Clock } from "lucide-react";
+import { PillIcon, Check, X, Clock, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Popover,
@@ -72,6 +72,14 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
     setShowTimePopover(false);
   };
 
+  // Get formatted schedule times if available
+  const scheduleTimes = supplement.schedule?.times?.map(time => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const timeDate = new Date();
+    timeDate.setHours(hours, minutes, 0, 0);
+    return format(timeDate, "h:mm a");
+  }).join(', ');
+
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center">
@@ -82,10 +90,11 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
           <h3 className="text-base font-medium">{supplement.name}</h3>
           <p className="text-xs text-muted-foreground">
             {supplement.dosage}
-            {supplement.reminder && 
-              ` · ${format(new Date(supplement.reminder), "h:mm a")}`
-            }
+            {scheduleTimes && ` · ${scheduleTimes}`}
           </p>
+          {supplement.notes && (
+            <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -124,6 +133,7 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
           className={`w-8 h-8 rounded-full flex items-center justify-center ${
             log?.taken ? "bg-gym-success text-white" : "bg-secondary text-muted-foreground"
           }`}
+          aria-label={log?.taken ? "Mark as not taken" : "Mark as taken"}
         >
           {log?.taken ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
         </button>

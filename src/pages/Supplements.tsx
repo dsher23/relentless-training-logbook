@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { PillIcon, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import SupplementItem from "@/components/SupplementItem";
+import AddSupplementForm from "@/components/AddSupplementForm";
 import { useAppContext } from "@/context/AppContext";
 
 const Supplements: React.FC = () => {
   const { supplements, supplementLogs } = useAppContext();
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const today = new Date();
   
   // Get today's logs
@@ -26,13 +28,13 @@ const Supplements: React.FC = () => {
     : 0;
   
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container animate-fade-in pb-16">
       <Header title="Supplements" />
       
       <div className="px-4 mb-6">
         <Button
           className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple"
-          onClick={() => {}}
+          onClick={() => setIsFormOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
           Add New Supplement
@@ -103,8 +105,11 @@ const Supplements: React.FC = () => {
                         <h3 className="text-base font-medium">{supplement.name}</h3>
                         <p className="text-xs text-muted-foreground">
                           {supplement.dosage}
-                          {supplement.schedule?.workoutDays ? " · Workout days" : ""}
+                          {supplement.schedule?.times && ` · ${supplement.schedule.times.join(", ")}`}
                         </p>
+                        {supplement.notes && (
+                          <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>
+                        )}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="text-muted-foreground">
@@ -123,6 +128,8 @@ const Supplements: React.FC = () => {
           </Tabs>
         </>
       )}
+      
+      <AddSupplementForm open={isFormOpen} onOpenChange={setIsFormOpen} />
     </div>
   );
 };
