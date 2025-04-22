@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -30,19 +31,22 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, onClick }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
+    className="h-full"
   >
     <Card 
-      className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/80" 
+      className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/80 h-full" 
       onClick={onClick}
     >
-      <CardContent className="p-6 flex flex-col space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="p-3 rounded-lg bg-secondary">
+      <CardContent className="p-4 flex flex-col h-full justify-between">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="p-2 rounded-lg bg-secondary shrink-0">
             {icon}
           </div>
-          <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
+          <h2 className="text-sm font-medium text-muted-foreground text-right">
+            {title}
+          </h2>
         </div>
-        <p className="text-2xl font-bold self-end">{value}</p>
+        <p className="text-2xl font-bold self-end mt-2">{value}</p>
       </CardContent>
     </Card>
   </motion.div>
@@ -82,7 +86,7 @@ const Dashboard: React.FC = () => {
       
       <div className="px-4 mb-10">
         <SectionHeader title="Activity Overview" icon={<BarChart className="h-5 w-5 text-gym-blue" />} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             title="Workouts Logged"
             value={`${workouts.length}`}
@@ -90,13 +94,13 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate("/workouts")}
           />
           <StatCard
-            title="Measurements"
+            title="Measurements Tracked"
             value={`${bodyMeasurements.length}`}
             icon={<Scale className="h-6 w-6 text-gym-orange" />}
             onClick={() => navigate("/measurements")}
           />
           <StatCard
-            title="Supplements"
+            title="Supplements Used"
             value={`${supplements.length}`}
             icon={<Pill className="h-6 w-6 text-gym-teal" />}
             onClick={() => navigate("/supplements")}
