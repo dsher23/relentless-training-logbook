@@ -12,6 +12,7 @@ import AddCycleForm from "@/components/AddCycleForm";
 import AddCompoundForm from "@/components/AddCompoundForm";
 import { useAppContext } from "@/context/AppContext";
 import { SteroidCompound } from "@/types";
+import TabNavigation from "@/components/TabNavigation";
 
 const Supplements: React.FC = () => {
   const { supplements, supplementLogs, steroidCycles, compounds, addCompound, updateCompound, deleteCompound } = useAppContext();
@@ -53,6 +54,7 @@ const Supplements: React.FC = () => {
         cycleId: currentCycleId!
       });
     }
+    setIsCompoundFormOpen(false);
   };
   
   const handleDeleteCompound = (compoundId: string) => {
@@ -116,56 +118,68 @@ const Supplements: React.FC = () => {
         </TabsList>
         
         <TabsContent value="today">
-          <div className="bg-white rounded-md shadow-sm overflow-hidden">
-            {supplements.map(supplement => {
-              const log = todayLogs.find(log => log.supplementId === supplement.id);
-              return (
-                <SupplementItem
-                  key={supplement.id}
-                  supplement={supplement}
-                  log={log}
-                />
-              );
-            })}
-          </div>
+          {supplements.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              No supplements added yet. Click "Add New Supplement" to get started.
+            </div>
+          ) : (
+            <div className="bg-white rounded-md shadow-sm overflow-hidden">
+              {supplements.map(supplement => {
+                const log = todayLogs.find(log => log.supplementId === supplement.id);
+                return (
+                  <SupplementItem
+                    key={supplement.id}
+                    supplement={supplement}
+                    log={log}
+                  />
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="all">
-          <div className="bg-white rounded-md shadow-sm overflow-hidden">
-            {supplements.map(supplement => (
-              <div key={supplement.id} className="flex items-center justify-between p-4 border-b">
-                <div className="flex items-center">
-                  <div className="p-2 rounded-full bg-secondary text-gym-purple mr-3">
-                    <PillIcon className="w-5 h-5" />
+          {supplements.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              No supplements added yet. Click "Add New Supplement" to get started.
+            </div>
+          ) : (
+            <div className="bg-white rounded-md shadow-sm overflow-hidden">
+              {supplements.map(supplement => (
+                <div key={supplement.id} className="flex items-center justify-between p-4 border-b">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-secondary text-gym-purple mr-3">
+                      <PillIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-medium">{supplement.name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {supplement.dosage}
+                        {supplement.schedule?.times && ` · ${supplement.schedule.times.join(", ")}`}
+                      </p>
+                      {supplement.notes && (
+                        <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-medium">{supplement.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {supplement.dosage}
-                      {supplement.schedule?.times && ` · ${supplement.schedule.times.join(", ")}`}
-                    </p>
-                    {supplement.notes && (
-                      <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>
-                    )}
-                  </div>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    Edit
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  Edit
-                </Button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="cycles">
           <div className="space-y-4">
             {steroidCycles.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
-                No cycles added yet
+                No cycles added yet. Click "Add Steroid Cycle" to get started.
               </div>
             ) : (
               steroidCycles.map(cycle => (
-                <Card key={cycle.id}>
+                <Card key={cycle.id} className="mb-4">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
@@ -173,7 +187,7 @@ const Supplements: React.FC = () => {
                         {cycle.isPrivate && <Lock className="w-4 h-4 text-muted-foreground" />}
                       </div>
                       <span className="text-sm text-muted-foreground">
-                        Week {cycle.currentWeek} of {cycle.totalWeeks}
+                        Week {cycle.currentWeek || 1} of {cycle.totalWeeks || 12}
                       </span>
                     </div>
                     
@@ -263,6 +277,7 @@ const Supplements: React.FC = () => {
         initialCompound={editingCompound || undefined}
         cycleId={currentCycleId || undefined}
       />
+      <TabNavigation />
     </div>
   );
 };
