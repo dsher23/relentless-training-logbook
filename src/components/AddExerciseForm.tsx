@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
-import { Exercise } from "@/context/AppContext";
+import { Exercise } from "@/types";
 
 interface AddExerciseFormProps {
   isOpen: boolean;
@@ -63,7 +63,8 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
       }),
       restTime: restTime !== "custom" ? parseInt(restTime) : undefined,
       notes: notes.trim() || undefined,
-      lastProgressDate: new Date()
+      lastProgressDate: new Date(),
+      isWeakPoint: false // Added the missing required property
     };
 
     onSave(newExercise);
