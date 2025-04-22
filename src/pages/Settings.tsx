@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import {
   Sun, 
   Moon, 
   Bell, 
-  CloudSync, 
+  Cloud, 
   Lock, 
   Info, 
   LogOut,
@@ -97,7 +96,7 @@ const Settings = () => {
       {/* Data & Backup Section */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <CloudSync className="w-5 h-5" />
+          <Cloud className="w-5 h-5" />
           <h2 className="text-lg font-semibold">Data & Backup</h2>
         </div>
         <div className="space-y-3">
