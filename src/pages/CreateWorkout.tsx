@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -25,92 +24,30 @@ interface CreateWorkoutFormValues {
 const CreateWorkout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addWorkout, workouts, updateWorkout, getWorkoutById } = useAppContext();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
 
-  // Get edit ID from query params (if any)
-  const searchParams = new URLSearchParams(location.search);
-  const editId = searchParams.get('edit');
-  const templateId = searchParams.get('templateId');
-  
-  // Find workout if in edit mode
-  const existingWorkout = editId ? getWorkoutById(editId) : null;
-  
-  // Setup form
   const form = useForm<CreateWorkoutFormValues>({
     defaultValues: {
-      name: existingWorkout?.name || "",
-      date: existingWorkout?.date ? new Date(existingWorkout.date) : new Date(),
-      notes: existingWorkout?.notes || ""
+      name: "",
+      date: new Date(),
+      notes: ""
     }
   });
-  
-  // Load data when edit ID changes
-  useEffect(() => {
-    if (existingWorkout) {
-      form.reset({
-        name: existingWorkout.name,
-        date: new Date(existingWorkout.date),
-        notes: existingWorkout.notes || ""
-      });
-    }
-  }, [editId, existingWorkout, form]);
 
   const handleSubmit = async (values: CreateWorkoutFormValues) => {
     setSubmitting(true);
     
     try {
-      if (existingWorkout) {
-        // Update existing workout
-        const updatedWorkout: Workout = {
-          ...existingWorkout,
-          name: values.name,
-          date: values.date,
-          notes: values.notes || ""
-        };
-        
-        updateWorkout(updatedWorkout);
-        
-        toast({
-          title: "Workout Updated",
-          description: `${values.name} has been updated.`
-        });
-        
-        // Add a slight delay before navigation to ensure context is updated
-        setTimeout(() => {
-          navigate(`/workouts/${updatedWorkout.id}`);
-          setSubmitting(false);
-        }, 100);
-      } else {
-        // Create new workout
-        const newWorkout: Workout = {
-          id: uuidv4(),
-          name: values.name,
-          date: values.date,
-          exercises: [],
-          completed: false,
-          notes: values.notes || ""
-        };
-        
-        addWorkout(newWorkout);
-        
-        toast({
-          title: "Workout Created",
-          description: `${values.name} has been created.`
-        });
-        
-        // Add a slight delay before navigation to ensure context is updated
-        setTimeout(() => {
-          navigate(`/workouts/${newWorkout.id}`);
-          setSubmitting(false);
-        }, 100);
-      }
+      // Navigate to builder with workout name
+      navigate("/workouts/builder", {
+        state: { workoutName: values.name }
+      });
     } catch (error) {
-      console.error("Error saving workout:", error);
+      console.error("Error creating workout:", error);
       toast({
         title: "Error",
-        description: "Failed to save workout. Please try again.",
+        description: "Failed to create workout. Please try again.",
         variant: "destructive"
       });
       setSubmitting(false);
@@ -119,7 +56,7 @@ const CreateWorkout: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title={existingWorkout ? "Edit Workout" : "Create Workout"} />
+      <Header title="Create Workout" />
       
       <div className="p-4">
         <Card>
@@ -201,7 +138,7 @@ const CreateWorkout: React.FC = () => {
                     disabled={submitting}
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {submitting ? "Saving..." : existingWorkout ? "Update Workout" : "Create Workout"}
+                    {submitting ? "Saving..." : "Create Workout"}
                   </Button>
                 </div>
               </form>
