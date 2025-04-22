@@ -1,7 +1,6 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Plus, Calendar, ClipboardList } from "lucide-react";
+import { Dumbbell, Plus, Calendar, ClipboardList, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
@@ -14,6 +13,14 @@ import WeeklyPlanView from "@/components/WeeklyPlanView";
 const Workouts: React.FC = () => {
   const navigate = useNavigate();
   const { workouts, workoutTemplates } = useAppContext();
+  
+  // Sort templates to show favorites first
+  const sortedTemplates = [...workoutTemplates].sort((a, b) => {
+    if (a.isFavorite === b.isFavorite) {
+      return a.name.localeCompare(b.name);
+    }
+    return a.isFavorite ? -1 : 1;
+  });
   
   // Group workouts by completion status and sort by date
   const completedWorkouts = workouts
@@ -54,7 +61,7 @@ const Workouts: React.FC = () => {
         </TabsList>
         
         <TabsContent value="routines" className="mt-4">
-          {workoutTemplates.length === 0 ? (
+          {sortedTemplates.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-6 text-center">
               <Dumbbell className="h-12 w-12 text-gym-purple mb-4" />
               <h2 className="text-xl font-bold mb-2">No Routines Yet</h2>
@@ -74,7 +81,7 @@ const Workouts: React.FC = () => {
                   <Plus className="h-4 w-4 mr-1" /> New
                 </Button>
               </div>
-              {workoutTemplates.map(template => (
+              {sortedTemplates.map(template => (
                 <Card 
                   key={template.id} 
                   className="hover:border-primary cursor-pointer"
@@ -82,11 +89,16 @@ const Workouts: React.FC = () => {
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">{template.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {template.exercises.length} exercises
-                        </p>
+                      <div className="flex items-center gap-2">
+                        {template.isFavorite && (
+                          <Star className="h-4 w-4 text-yellow-500" />
+                        )}
+                        <div>
+                          <h3 className="font-medium">{template.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {template.exercises.length} exercises
+                          </p>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button 

@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Star } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
@@ -93,6 +92,7 @@ const WeeklyRoutineBuilder: React.FC<RoutineBuilderProps> = ({ templateId, onSav
   );
   const [newExercise, setNewExercise] = useState("");
   const [isWeakPoint, setIsWeakPoint] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(existingTemplate?.isFavorite || false);
   
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -156,7 +156,8 @@ const WeeklyRoutineBuilder: React.FC<RoutineBuilderProps> = ({ templateId, onSav
       id: existingTemplate?.id || uuidv4(),
       name: name.trim(),
       dayName: dayName.trim() || undefined,
-      exercises
+      exercises,
+      isFavorite,
     };
     
     if (existingTemplate) {
@@ -184,9 +185,19 @@ const WeeklyRoutineBuilder: React.FC<RoutineBuilderProps> = ({ templateId, onSav
     <div className="space-y-6">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-medium">
-            {existingTemplate ? "Edit" : "Create"} Workout Template
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg font-medium">
+              {existingTemplate ? "Edit" : "Create"} Workout Template
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className={isFavorite ? "text-yellow-500" : "text-muted-foreground"}
+            >
+              <Star className="h-5 w-5" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

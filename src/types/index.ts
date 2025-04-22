@@ -1,30 +1,20 @@
+export interface Workout {
+  id: string;
+  name: string;
+  date: Date;
+  exercises: Exercise[];
+  notes?: string;
+  completed: boolean;
+  isDeload?: boolean;
+}
+
 export interface Exercise {
   id: string;
   name: string;
   sets: { reps: number; weight: number }[];
+  notes?: string;
   lastProgressDate: Date;
-  isWeakPoint: boolean;
-  restTime?: number;
-  notes?: string;
-}
-
-export interface Workout {
-  id: string;
-  date: Date;
-  name: string;
-  exercises: Exercise[];
-  notes?: string;
-  completed?: boolean;
-  isDeload?: boolean;
-  scheduledTime?: string;
-}
-
-export interface WorkoutTemplate {
-  id: string;
-  name: string;
-  dayName?: string;
-  exercises: Omit<Exercise, "sets">[];
-  scheduledTime?: string;
+  isWeakPoint?: boolean;
 }
 
 export interface BodyMeasurement {
@@ -33,13 +23,11 @@ export interface BodyMeasurement {
   weight: number;
   bodyFat?: number;
   muscleMass?: number;
-  notes?: string;
-  photoUrl?: string;
   arms?: number;
   chest?: number;
   waist?: number;
   legs?: number;
-  bodyFatPercentage?: number;
+  notes?: string;
 }
 
 export interface Supplement {
@@ -47,51 +35,50 @@ export interface Supplement {
   name: string;
   dosage: string;
   notes?: string;
-  reminder?: Date;
-  schedule?: {
-    workoutDays?: boolean;
-    times?: string[];
-  };
 }
 
 export interface SupplementLog {
   id: string;
-  date: Date;
   supplementId: string;
-  dosageTaken: string;
-  notes?: string;
-  taken?: boolean;
+  date: Date;
   time?: Date;
+  dosageTaken: string;
+  taken: boolean;
+  notes?: string;
 }
 
 export interface MoodLog {
   id: string;
   date: Date;
-  mood: "terrible" | "bad" | "neutral" | "good" | "great";
+  mood: number;
   energyLevel: number;
   sleepQuality: number;
+  stressLevel: number;
   notes?: string;
-  sleep?: number;
-  energy?: number;
 }
 
 export interface WeakPoint {
   id: string;
-  muscleGroup: string;
-  priority: number;
-  sessionsPerWeekGoal: number;
+  name: string;
+  description?: string;
 }
 
-export interface WorkoutDay {
-  dayOfWeek: number;
-  workoutTemplateId: string | null;
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  dayName?: string;
+  exercises: Exercise[];
+  isFavorite?: boolean;
 }
 
 export interface WeeklyRoutine {
   id: string;
   name: string;
-  workoutDays: WorkoutDay[];
-  archived?: boolean;
+  workoutDays: {
+    dayOfWeek: number;
+    workoutTemplateId: string | null;
+  }[];
+  archived: boolean;
 }
 
 export interface TrainingBlock {
@@ -99,18 +86,15 @@ export interface TrainingBlock {
   name: string;
   startDate: Date;
   durationWeeks: number;
-  weeklyRoutineId: string;
+  goal: string;
   notes?: string;
-  reminderEnabled?: boolean;
 }
 
 export interface Reminder {
   id: string;
-  type: "supplement" | "workout" | "routineChange";
-  referenceId: string;
-  dateTime: Date;
   title: string;
-  message: string;
+  description?: string;
+  dueDate: Date;
   seen: boolean;
   dismissed: boolean;
 }
@@ -118,10 +102,8 @@ export interface Reminder {
 export interface SteroidCycle {
   id: string;
   name: string;
-  startWeek: number;
-  totalWeeks: number;
-  currentWeek?: number;
-  isPrivate?: boolean;
+  startDate: Date;
+  endDate: Date;
   notes?: string;
   compounds: CycleCompound[];
 }
@@ -129,10 +111,6 @@ export interface SteroidCycle {
 export interface CycleCompound {
   id: string;
   name: string;
-  dosagePerWeek: number;
-  startWeek: number;
-  endWeek: number;
-  isOral: boolean;
-  injectionDays?: number[];
-  notes?: string;
+  dosage: string;
+  frequency: string;
 }
