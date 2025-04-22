@@ -37,16 +37,20 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, onClick }) => (
       className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/80 h-full" 
       onClick={onClick}
     >
-      <CardContent className="p-4 flex flex-col h-full justify-between">
-        <div className="flex items-start justify-between gap-3 mb-2">
+      <CardContent className="p-4 flex flex-col h-full">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div className="p-2 rounded-lg bg-secondary shrink-0">
             {icon}
           </div>
-          <h2 className="text-sm font-medium text-muted-foreground text-right">
-            {title}
-          </h2>
+          <div className="flex-1 text-right">
+            <h2 className="text-sm font-medium text-muted-foreground break-words">
+              {title}
+            </h2>
+          </div>
         </div>
-        <p className="text-2xl font-bold self-end mt-2">{value}</p>
+        <div className="mt-auto text-right">
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
       </CardContent>
     </Card>
   </motion.div>
