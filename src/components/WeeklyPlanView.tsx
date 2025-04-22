@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
@@ -61,7 +60,28 @@ const WeeklyPlanView: React.FC = () => {
     setCurrentDate(prev => addDays(prev, 7));
   };
   
+  const getAvailableWorkouts = () => {
+    if (workoutTemplates.length === 0) {
+      return [];
+    }
+    return workoutTemplates.map(template => ({
+      id: template.id,
+      name: template.name,
+      exerciseCount: template.exercises.length
+    }));
+  };
+
   const handleDayClick = (dayIndex: number) => {
+    const availableWorkouts = getAvailableWorkouts();
+    if (availableWorkouts.length === 0) {
+      toast({
+        title: "No Workouts Available",
+        description: "Create workouts in the Workouts tab first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedDayIndex(dayIndex);
     const selectedDay = currentRoutine.workoutDays.find(day => day.dayOfWeek === dayIndex);
     setSelectedRoutineId(selectedDay?.workoutTemplateId || null);

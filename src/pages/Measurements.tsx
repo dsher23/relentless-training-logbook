@@ -1,17 +1,19 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { Ruler, Camera, Plus } from "lucide-react";
+import { Ruler, Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProgressChart from "@/components/ProgressChart";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
+import MeasurementForm from "@/components/MeasurementForm";
 
 const Measurements: React.FC = () => {
-  const { bodyMeasurements } = useAppContext();
+  const { bodyMeasurements, addBodyMeasurement } = useAppContext();
   const [openDialog, setOpenDialog] = useState(false);
+  const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
   
   // Sort measurements by date (newest first)
   const sortedMeasurements = [...bodyMeasurements].sort(
@@ -42,7 +44,12 @@ const Measurements: React.FC = () => {
   const handleAddMeasurement = () => {
     setOpenDialog(true);
   };
-  
+
+  const handleSaveMeasurement = (measurement: BodyMeasurement) => {
+    addBodyMeasurement(measurement);
+    setOpenDialog(false);
+  };
+
   return (
     <div className="app-container animate-fade-in">
       <Header title="Body Measurements" />
@@ -69,10 +76,29 @@ const Measurements: React.FC = () => {
         <>
           {weightData.length > 1 && (
             <section className="mb-8 px-4">
-              <h2 className="text-lg font-semibold mb-4">Weight Trend</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Weight Trend</h2>
+                <div className="space-x-2">
+                  <Button 
+                    variant={viewMode === "weekly" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("weekly")}
+                  >
+                    Weekly
+                  </Button>
+                  <Button 
+                    variant={viewMode === "monthly" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("monthly")}
+                  >
+                    Monthly
+                  </Button>
+                </div>
+              </div>
               <ProgressChart 
                 title="Weight Over Time" 
                 data={weightData}
+                interval={viewMode}
               />
             </section>
           )}
@@ -148,15 +174,14 @@ const Measurements: React.FC = () => {
       )}
       
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add New Measurement</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-center text-muted-foreground">
-              Measurement form would go here in the next iteration
-            </p>
-          </div>
+          <MeasurementForm 
+            onSubmit={handleSaveMeasurement}
+            onCancel={() => setOpenDialog(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
