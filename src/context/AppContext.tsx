@@ -116,6 +116,28 @@ export interface Reminder {
   dismissed: boolean;
 }
 
+export interface SteroidCycle {
+  id: string;
+  name: string;
+  startWeek: number;
+  totalWeeks: number;
+  currentWeek?: number;
+  isPrivate?: boolean;
+  notes?: string;
+  compounds: CycleCompound[];
+}
+
+export interface CycleCompound {
+  id: string;
+  name: string;
+  dosagePerWeek: number;
+  startWeek: number;
+  endWeek: number;
+  isOral: boolean;
+  injectionDays?: number[]; // 0-6 for days of week
+  notes?: string;
+}
+
 interface AppContextType {
   workouts: Workout[];
   addWorkout: (workout: Workout) => void;
@@ -168,6 +190,11 @@ interface AppContextType {
   markReminderAsSeen: (id: string) => void;
   dismissReminder: (id: string) => void;
   exportData: (type: "workouts" | "measurements" | "supplements") => string;
+  steroidCycles: SteroidCycle[];
+  addSteroidCycle: (cycle: SteroidCycle) => void;
+  updateSteroidCycle: (cycle: SteroidCycle) => void;
+  deleteSteroidCycle: (id: string) => void;
+  duplicateSteroidCycle: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -191,6 +218,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
   const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>([]);
 
   useEffect(() => {
     loadInitialData();
@@ -206,7 +234,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('ironlog_workoutTemplates', JSON.stringify(workoutTemplates));
     localStorage.setItem('ironlog_weeklyRoutines', JSON.stringify(weeklyRoutines));
     localStorage.setItem('ironlog_trainingBlocks', JSON.stringify(trainingBlocks));
-  }, [workouts, bodyMeasurements, supplements, supplementLogs, moodLogs, weakPoints, workoutTemplates, weeklyRoutines, trainingBlocks]);
+    localStorage.setItem('ironlog_steroidCycles', JSON.stringify(steroidCycles));
+  }, [workouts, bodyMeasurements, supplements, supplementLogs, moodLogs, weakPoints, workoutTemplates, weeklyRoutines, trainingBlocks, steroidCycles]);
 
   const loadInitialData = () => {
     try {
@@ -219,6 +248,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedWorkoutTemplates = localStorage.getItem('ironlog_workoutTemplates');
       const savedWeeklyRoutines = localStorage.getItem('ironlog_weeklyRoutines');
       const savedTrainingBlocks = localStorage.getItem('ironlog_trainingBlocks');
+      const savedSteroidCycles = localStorage.getItem('ironlog_steroidCycles');
       
       setWorkouts(savedWorkouts ? JSON.parse(savedWorkouts) : []);
       setBodyMeasurements(savedBodyMeasurements ? JSON.parse(savedBodyMeasurements) : []);
@@ -229,6 +259,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkoutTemplates(savedWorkoutTemplates ? JSON.parse(savedWorkoutTemplates) : []);
       setWeeklyRoutines(savedWeeklyRoutines ? JSON.parse(savedWeeklyRoutines) : []);
       setTrainingBlocks(savedTrainingBlocks ? JSON.parse(savedTrainingBlocks) : []);
+      setSteroidCycles(savedSteroidCycles ? JSON.parse(savedSteroidCycles) : []);
     } catch (error) {
       console.error('Error loading initial data:', error);
       setWorkouts([]);
@@ -240,6 +271,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkoutTemplates([]);
       setWeeklyRoutines([]);
       setTrainingBlocks([]);
+      setSteroidCycles([]);
     }
   };
 
@@ -546,6 +578,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return csvRows.join('\n');
   };
 
+  const addSteroidCycle = (cycle: SteroidCycle) => {
+    setSteroidCycles([...steroidCycles, cycle]);
+  };
+
+  const updateSteroidCycle = (cycle: SteroidCycle) => {
+    setSteroidCycles(steroidCycles.map(c => c.id === cycle.id ? cycle : c));
+  };
+
+  const deleteSteroidCycle = (id: string) => {
+    setSteroidCycles(steroidCycles.filter(c => c.id !== id));
+  };
+
+  const duplicateSteroidCycle = (id: string) => {
+    const cycleToDuplicate = steroidCycles.find(c => c.id === id);
+    if (cycleToDuplicate) {
+      const newCycle = {
+        ...cycleToDuplicate,
+        id: uuidv4(),
+        name: `${cycleToDuplicate.name} (Copy)`,
+      };
+      setSteroidCycles([...steroidCycles, newCycle]);
+    }
+  };
+
   const value: AppContextType = {
     workouts,
     addWorkout,
@@ -597,7 +653,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getDueReminders,
     markReminderAsSeen,
     dismissReminder,
-    exportData
+    exportData,
+    steroidCycles,
+    addSteroidCycle,
+    updateSteroidCycle,
+    deleteSteroidCycle,
+    duplicateSteroidCycle
   };
 
   return (
