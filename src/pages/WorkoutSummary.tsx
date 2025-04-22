@@ -7,6 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Exercise } from "@/context/AppContext";
 import { formatDuration } from "date-fns";
 
+// Define an extended Exercise type if needed
+interface ExtendedExercise extends Exercise {
+  notes?: string;
+}
+
 const WorkoutSummary = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -119,7 +124,7 @@ const WorkoutSummary = () => {
         <div className="space-y-3">
           <h2 className="font-semibold">Exercise Summary</h2>
           
-          {exercises.map((exercise: Exercise) => (
+          {exercises.map((exercise: ExtendedExercise) => (
             <div key={exercise.id} className="border rounded-lg p-3">
               <div className="font-medium">{exercise.name}</div>
               <div className="text-sm text-muted-foreground mt-1">

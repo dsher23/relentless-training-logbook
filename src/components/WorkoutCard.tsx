@@ -8,9 +8,10 @@ import { Workout } from "@/context/AppContext";
 interface WorkoutCardProps {
   workout: Workout;
   onClick?: () => void;
+  actionButton?: React.ReactNode; // Add this prop
 }
 
-const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onClick }) => {
+const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onClick, actionButton }) => {
   return (
     <Card 
       className={`mb-4 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
@@ -47,6 +48,13 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onClick }) => {
           {workout.notes && (
             <div className="mt-4 text-sm text-muted-foreground border-t pt-2">
               <p className="line-clamp-2">{workout.notes}</p>
+            </div>
+          )}
+          
+          {/* Add action button if provided */}
+          {actionButton && (
+            <div className="mt-4 flex justify-end">
+              {actionButton}
             </div>
           )}
         </div>

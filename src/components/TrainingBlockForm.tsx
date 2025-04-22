@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -40,14 +39,11 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
     
     if (existingDayIndex >= 0) {
       if (templateId === null) {
-        // Remove the day if templateId is null
         updatedDays.splice(existingDayIndex, 1);
       } else {
-        // Update existing day
         updatedDays[existingDayIndex].workoutTemplateId = templateId;
       }
     } else if (templateId !== null) {
-      // Add new day
       updatedDays.push({ dayOfWeek, workoutTemplateId: templateId });
     }
     
@@ -86,10 +82,17 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
 
 interface TrainingBlockFormProps {
   blockId?: string;
+  nextSuggestedDate?: Date;
   onSave?: () => void;
+  onClose?: () => void;
 }
 
-const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ blockId, onSave }) => {
+const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ 
+  blockId, 
+  nextSuggestedDate,
+  onSave,
+  onClose 
+}) => {
   const { 
     trainingBlocks, 
     addTrainingBlock, 
@@ -120,14 +123,13 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ blockId, onSave }
     defaultValues: {
       name: existingBlock?.name || "",
       weeklyRoutineId: existingBlock?.weeklyRoutineId || "",
-      startDate: existingBlock?.startDate ? new Date(existingBlock.startDate) : new Date(),
+      startDate: existingBlock?.startDate ? new Date(existingBlock.startDate) : nextSuggestedDate || new Date(),
       durationWeeks: existingBlock?.durationWeeks || 6,
       notes: existingBlock?.notes || ""
     }
   });
   
   const handleSubmit = (values: TrainingBlockFormValues) => {
-    // First save/update the weekly routine
     if (weeklyRoutine.workoutDays.length === 0) {
       toast({
         title: "Missing Information",
@@ -137,13 +139,11 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ blockId, onSave }
       return;
     }
     
-    // Check if this is a new routine or an update to an existing one
     const existingRoutine = weeklyRoutines.find(r => r.id === weeklyRoutine.id);
     if (!existingRoutine) {
       addWeeklyRoutine(weeklyRoutine);
     }
     
-    // Now save/update the training block
     const blockData: TrainingBlock = {
       id: existingBlock?.id || uuidv4(),
       name: values.name,
@@ -157,13 +157,13 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ blockId, onSave }
       updateTrainingBlock(blockData);
       toast({
         title: "Training Block Updated",
-        description: `"${values.name}" has been updated.`
+        description: `"${values.name}" has been updated."
       });
     } else {
       addTrainingBlock(blockData);
       toast({
         title: "Training Block Created",
-        description: `"${values.name}" has been created.`
+        description: `"${values.name}" has been created."
       });
     }
     
