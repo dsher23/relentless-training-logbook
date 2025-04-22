@@ -50,10 +50,15 @@ const AddCycleForm: React.FC<AddCycleFormProps> = ({ open, onOpenChange }) => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + values.totalWeeks * 7); // Calculate end date based on weeks
+    
     const newCycle = {
       id: uuidv4(),
       name: values.name,
-      startWeek: 1,
+      startDate: today,
+      endDate: endDate,
       totalWeeks: values.totalWeeks,
       currentWeek: 1,
       isPrivate: values.isPrivate,

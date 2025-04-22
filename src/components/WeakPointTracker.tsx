@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AlertTriangle, Plus, Tag, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +33,7 @@ const WeakPointForm: React.FC<WeakPointFormProps> = ({ onSave }) => {
     
     const newWeakPoint: WeakPoint = {
       id: uuidv4(),
+      name: muscleGroup.trim(), // Set name to the same as muscleGroup
       muscleGroup: muscleGroup.trim(),
       priority,
       sessionsPerWeekGoal: sessionsPerWeek
@@ -116,7 +116,6 @@ const WeakPointTracker: React.FC = () => {
   const { weakPoints, deleteWeakPoint, workouts } = useAppContext();
   const [showDialog, setShowDialog] = useState(false);
   
-  // Calculate how many times each weak point was trained this week
   const calculateTrainingFrequency = () => {
     const today = new Date();
     const startOfWeek = new Date(today);
@@ -134,12 +133,10 @@ const WeakPointTracker: React.FC = () => {
     
     const trainingCount: Record<string, number> = {};
     
-    // Initialize all weak points with 0
     weakPoints.forEach(wp => {
       trainingCount[wp.muscleGroup.toLowerCase()] = 0;
     });
     
-    // Count occurrences of each weak point in this week's workouts
     thisWeeksWorkouts.forEach(workout => {
       workout.exercises.forEach(exercise => {
         if (exercise.isWeakPoint) {

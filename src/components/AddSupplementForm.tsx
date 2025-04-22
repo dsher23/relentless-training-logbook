@@ -70,7 +70,7 @@ const AddSupplementForm: React.FC<AddSupplementFormProps> = ({ open, onOpenChang
       notes: data.notes,
       schedule: {
         times: data.times,
-        workoutDays: false,
+        workoutDays: false
       },
     };
     

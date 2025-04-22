@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -19,6 +20,7 @@ interface TrainingBlockFormValues {
   weeklyRoutineId: string;
   startDate: Date;
   durationWeeks: number;
+  goal: string;
   notes: string;
 }
 
@@ -111,13 +113,15 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       return weeklyRoutines.find(r => r.id === existingBlock.weeklyRoutineId) || {
         id: uuidv4(),
         name: "New Schedule",
-        workoutDays: []
+        workoutDays: [],
+        archived: false
       };
     }
     return {
       id: uuidv4(),
       name: "New Schedule",
-      workoutDays: []
+      workoutDays: [],
+      archived: false
     };
   });
   
@@ -127,6 +131,7 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       weeklyRoutineId: existingBlock?.weeklyRoutineId || "",
       startDate: existingBlock?.startDate ? new Date(existingBlock.startDate) : nextSuggestedDate || new Date(),
       durationWeeks: existingBlock?.durationWeeks || 6,
+      goal: existingBlock?.goal || "",
       notes: existingBlock?.notes || ""
     }
   });
@@ -152,6 +157,7 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       startDate: values.startDate,
       durationWeeks: values.durationWeeks,
       weeklyRoutineId: weeklyRoutine.id,
+      goal: values.goal || "Training Block",
       notes: values.notes
     };
     

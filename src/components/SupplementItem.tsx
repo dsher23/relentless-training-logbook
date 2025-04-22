@@ -49,10 +49,11 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
     addReminder({
       id: crypto.randomUUID(),
       type: "supplement",
-      referenceId: supplement.id,
+      supplementId: supplement.id,
       dateTime: reminderDate,
       title: `Time to take ${supplement.name}`,
       message: `${supplement.dosage} as scheduled`,
+      dueDate: reminderDate,
       seen: false,
       dismissed: false
     });
@@ -63,8 +64,8 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
       updateSupplement({
         ...supplement,
         schedule: {
-          ...supplement.schedule,
-          times: [...times, time]
+          times: [...times, time],
+          workoutDays: supplement.schedule?.workoutDays || false
         }
       });
     }

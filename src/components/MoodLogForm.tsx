@@ -7,13 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { MoodLog, useAppContext } from "@/context/AppContext";
 
-const emojis = {
-  terrible: "😖",
-  bad: "😔",
-  neutral: "😐",
-  good: "😊",
-  great: "🤩"
-};
+const emojis = ["😖", "😔", "😐", "😊", "🤩"];
 
 interface MoodLogFormProps {
   existingLog?: MoodLog;
@@ -24,7 +18,7 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
   const { addMoodLog, updateMoodLog } = useAppContext();
   const [sleep, setSleep] = useState(existingLog?.sleepQuality || existingLog?.sleep || 7);
   const [energy, setEnergy] = useState(existingLog?.energyLevel || existingLog?.energy || 7);
-  const [mood, setMood] = useState<MoodLog["mood"]>(existingLog?.mood || "neutral");
+  const [mood, setMood] = useState<number>(existingLog?.mood || 3); // Use number for mood, default to 3 (neutral)
   const [notes, setNotes] = useState(existingLog?.notes || "");
 
   const handleSave = () => {
@@ -35,6 +29,7 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
       energyLevel: energy,
       mood,
       notes,
+      stressLevel: existingLog?.stressLevel || 5, // Default stress level
       // Add compatibility fields
       sleep,
       energy
@@ -101,15 +96,15 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
         <div className="space-y-2">
           <label className="text-sm font-medium">Mood</label>
           <div className="flex justify-between">
-            {(Object.keys(emojis) as Array<keyof typeof emojis>).map((key) => (
+            {emojis.map((emoji, index) => (
               <button
-                key={key}
-                onClick={() => setMood(key)}
+                key={index}
+                onClick={() => setMood(index + 1)} // Set mood as number 1-5
                 className={`p-2 rounded-full text-2xl ${
-                  mood === key ? "bg-secondary" : ""
+                  mood === index + 1 ? "bg-secondary" : ""
                 }`}
               >
-                {emojis[key]}
+                {emoji}
               </button>
             ))}
           </div>

@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -39,7 +38,10 @@ export interface Supplement {
   name: string;
   dosage: string;
   notes?: string;
-  schedule?: string;
+  schedule?: {
+    times: string[];
+    workoutDays: boolean;
+  };
 }
 
 export interface SupplementLog {
@@ -79,6 +81,7 @@ export interface WorkoutTemplate {
   dayName?: string;
   exercises: Exercise[];
   isFavorite?: boolean;
+  scheduledTime?: string;
 }
 
 export interface WeeklyRoutine {
