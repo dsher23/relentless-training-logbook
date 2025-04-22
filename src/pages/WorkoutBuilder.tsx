@@ -61,7 +61,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Calculate total sets with properly typed reduce function
+  // Fixed totalSets calculation with proper type annotations and initial value
   const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
     return acc + exercise.sets.length;
   }, 0);
