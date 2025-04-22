@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Header from "@/components/Header";
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
-import { useAppContext, WeeklyRoutine } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
 import DataExport from "@/components/DataExport";
 import { CalendarDays, Plus, MoreVertical } from "lucide-react";
+import { WeeklyRoutineEntry } from "@/types";
 
 const Routines: React.FC = () => {
   const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine } = useAppContext();
@@ -141,7 +142,7 @@ const Routines: React.FC = () => {
                         </p>
                         <div className="text-xs text-muted-foreground mt-2">
                           <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
-                            {routine.workoutDays.map(day => (
+                            {routine.workoutDays.map((day: WeeklyRoutineEntry) => (
                               <li key={day.id}>
                                 • {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.dayOfWeek]}: {day.workoutName || 'Rest'}
                               </li>

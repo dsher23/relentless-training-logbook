@@ -20,6 +20,7 @@ import Training from './pages/Training';
 import WorkoutDays from './pages/WorkoutDays';
 import DayExercises from './pages/DayExercises';
 import WeeklyOverview from './pages/WeeklyOverview';
+import Measurements from './pages/Measurements';
 
 function App() {
   return (
@@ -51,6 +52,8 @@ function App() {
 
           <Route path="/workout-selection" element={<WorkoutSelection />} />
           <Route path="/workout-type-selection" element={<WorkoutTypeSelection />} />
+          
+          <Route path="/measurements" element={<Measurements />} />
           
           <Route path="/home" element={<Index />} />
         </Routes>

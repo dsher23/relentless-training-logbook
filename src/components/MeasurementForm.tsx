@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -27,10 +27,14 @@ import { v4 as uuidv4 } from 'uuid';
 interface MeasurementFormProps {
   onSubmit: (measurement: BodyMeasurement) => void;
   onCancel: () => void;
+  unitSystem?: 'metric' | 'imperial';
 }
 
-const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel }) => {
+const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, unitSystem = 'metric' }) => {
   const { toast } = useToast();
+  const weightUnit = unitSystem === 'metric' ? 'kg' : 'lbs';
+  const sizeUnit = unitSystem === 'metric' ? 'cm' : 'in';
+  
   const form = useForm({
     defaultValues: {
       date: new Date(),
@@ -41,6 +45,10 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
       armsRight: "",
       legsLeft: "",
       legsRight: "",
+      thigh: "",
+      calf: "",
+      biceps: "",
+      forearm: "",
       bodyFatPercentage: "",
       notes: ""
     }
@@ -53,9 +61,9 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
       weight: Number(data.weight),
       chest: data.chest ? Number(data.chest) : undefined,
       waist: data.waist ? Number(data.waist) : undefined,
-      // Combine arm measurements if both are provided, or use left arm if only that's provided
+      // Use average of left and right if both provided, otherwise use the one that's provided
       arms: data.armsLeft ? Number(data.armsLeft) : undefined,
-      // Combine leg measurements if both are provided, or use left leg if only that's provided
+      // Use average of left and right if both provided, otherwise use the one that's provided
       legs: data.legsLeft ? Number(data.legsLeft) : undefined,
       bodyFat: data.bodyFatPercentage ? Number(data.bodyFatPercentage) : undefined,
       notes: data.notes || undefined
@@ -112,7 +120,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
           name="weight"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Weight (kg)*</FormLabel>
+              <FormLabel>Weight ({weightUnit})*</FormLabel>
               <FormControl>
                 <Input type="number" step="0.1" required {...field} />
               </FormControl>
@@ -126,7 +134,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="chest"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Chest (cm)</FormLabel>
+                <FormLabel>Chest ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -139,7 +147,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="waist"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Waist (cm)</FormLabel>
+                <FormLabel>Waist ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -154,7 +162,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="armsLeft"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Left Arm (cm)</FormLabel>
+                <FormLabel>Left Arm ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -167,7 +175,35 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="armsRight"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Right Arm (cm)</FormLabel>
+                <FormLabel>Right Arm ({sizeUnit})</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="biceps"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Biceps ({sizeUnit})</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="forearm"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Forearm ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -182,7 +218,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="legsLeft"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Left Leg (cm)</FormLabel>
+                <FormLabel>Left Leg ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>
@@ -195,7 +231,35 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
             name="legsRight"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Right Leg (cm)</FormLabel>
+                <FormLabel>Right Leg ({sizeUnit})</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="thigh"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Thigh ({sizeUnit})</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.1" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="calf"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Calf ({sizeUnit})</FormLabel>
                 <FormControl>
                   <Input type="number" step="0.1" {...field} />
                 </FormControl>

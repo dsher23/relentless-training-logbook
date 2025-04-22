@@ -64,7 +64,7 @@ const TabNavigationExtended: React.FC = () => {
       path: "/recovery",
       label: "Recovery",
       icon: <Heart className="w-5 h-5" />,
-      isActive: isActive(["/recovery"]),
+      isActive: isActive(["/recovery", "/measurements"]),
     },
   ];
   

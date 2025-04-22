@@ -32,6 +32,7 @@ export interface BodyMeasurement {
   legs?: number;
   notes?: string;
   photoUrl?: string;
+  unit?: 'metric' | 'imperial';
 }
 
 export interface Supplement {
@@ -88,11 +89,15 @@ export interface WorkoutTemplate {
 export interface WeeklyRoutine {
   id: string;
   name: string;
-  workoutDays: {
-    dayOfWeek: number;
-    workoutTemplateId: string | null;
-  }[];
+  workoutDays: WeeklyRoutineEntry[];
   archived: boolean;
+}
+
+export interface WeeklyRoutineEntry {
+  id: string;
+  dayOfWeek: number;
+  workoutTemplateId: string | null;
+  workoutName: string;
 }
 
 export interface TrainingBlock {
@@ -157,4 +162,15 @@ export interface WorkoutPlan {
   description?: string;
   workoutTemplates: WorkoutTemplate[];
   isActive: boolean;
+  archived: boolean;
+}
+
+export interface ProgressPhoto {
+  id: string;
+  date: Date;
+  url: string;
+  notes?: string;
+  weight?: number;
+  isPrivate: boolean;
+  tags?: string[];
 }
