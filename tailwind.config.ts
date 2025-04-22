@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -53,18 +52,24 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        iron: {
-          DEFAULT: "#000000",
-          blue: "#0066FF",
-          gray: "#F5F5F7",
-          muted: "#6E6E73",
-        },
         gym: {
-          purple: "#9b87f5",
-          darkPurple: "#7E69AB",
-          light: "#F5F5F7",
-          dark: "#1A1F2C",
+          dark: "#121212",
+          blue: "#1E90FF",
+          orange: "#FF6F00",
+          teal: "#00C9A7",
+          lime: "#B4FF00",
+          success: "#22c55e",
+          warning: "#f59e0b",
+          error: "#ef4444",
+          text: {
+            primary: "#E0E0E0",
+            secondary: "#B0B0B0",
+          }
         }
+      },
+      fontFamily: {
+        sans: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'SF Pro Display', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -111,7 +116,8 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.3s ease-out',
-        'pulse-light': 'pulse-light 2s ease-in-out infinite'
+        'pulse-light': 'pulse-light 2s ease-in-out infinite',
+        'graph-in': 'fadeIn 0.6s ease-out forwards'
       }
     },
   },

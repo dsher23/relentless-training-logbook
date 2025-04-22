@@ -95,68 +95,102 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     
     const data = payload[0].payload as DayData;
     return (
-      <div className="bg-background border rounded-lg p-3 shadow-lg">
-        <p className="font-medium">{data.name}</p>
-        <p className="text-sm">Volume: {data.volume.toLocaleString()}kg</p>
-        <p className="text-sm">Exercises: {data.exercises}</p>
+      <div className="glass-effect p-3 rounded-lg shadow-xl">
+        <p className="font-heading text-sm">{data.name}</p>
+        <p className="text-sm text-gym-text-secondary">Volume: {data.volume.toLocaleString()}kg</p>
+        <p className="text-sm text-gym-text-secondary">Exercises: {data.exercises}</p>
         {data.prs > 0 && (
-          <p className="text-sm text-green-500">PRs: {data.prs}</p>
+          <p className="text-sm text-gym-success">PRs: {data.prs}</p>
         )}
       </div>
     );
   };
 
-  // Define color mapping for bars
+  // Define color mapping for bars with gradients
   const getBarColor = (entry: DayData) => {
     switch (entry.change) {
-      case "increase": return "#22c55e"; // green
-      case "decrease": return "#ef4444"; // red
-      default: return "#eab308"; // yellow
+      case "increase": return "url(#greenGradient)";
+      case "decrease": return "url(#redGradient)";
+      default: return "url(#yellowGradient)";
     }
   };
   
   return (
-    <Card>
+    <Card className="card-highlighted">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">Weekly Progress</CardTitle>
+          <CardTitle className="text-lg font-heading">Weekly Progress</CardTitle>
           {streak >= 2 && (
-            <div className="text-sm bg-gym-purple/10 text-gym-purple px-2 py-1 rounded-full">
+            <div className="text-sm bg-gym-blue/10 text-gym-blue px-3 py-1.5 rounded-full font-medium">
               🔥 {streak}-Day Streak
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div className="h-64 animate-graph-in">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="volume" fill="#8884d8">
+              <defs>
+                <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" />
+                  <stop offset="100%" stopColor="#16a34a" />
+                </linearGradient>
+                <linearGradient id="redGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" />
+                  <stop offset="100%" stopColor="#dc2626" />
+                </linearGradient>
+                <linearGradient id="yellowGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#eab308" />
+                  <stop offset="100%" stopColor="#ca8a04" />
+                </linearGradient>
+              </defs>
+              <XAxis 
+                dataKey="name" 
+                stroke="#B0B0B0" 
+                fontSize={12}
+                tickLine={false}
+              />
+              <YAxis 
+                stroke="#B0B0B0"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip 
+                content={<CustomTooltip />}
+                cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+              />
+              <Bar 
+                dataKey="volume" 
+                radius={[4, 4, 0, 0]}
+              >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={getBarColor(entry)}
+                    className="transition-opacity duration-200 hover:opacity-80"
+                  />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
         
-        <div className="mt-4 space-y-2">
-          <p className="text-sm">
+        <div className="mt-6 space-y-3">
+          <p className="text-sm text-gym-text-secondary">
             You lifted {weeklyTotal.toLocaleString()}kg across {workoutCount} workouts this week.
             {Number(lastWeekTotal) > 0 && (
               <span>
                 {" "}That's{" "}
-                <span className={Number(percentageChange) > 0 ? "text-green-500" : "text-red-500"}>
+                <span className={Number(percentageChange) > 0 ? "text-gym-success" : "text-gym-error"}>
                   {Number(percentageChange) > 0 ? "+" : ""}{percentageChange}%
                 </span>{" "}
                 vs last week!
               </span>
             )}
           </p>
-          <p className="text-sm font-medium text-gym-purple">
+          <p className="text-sm font-medium text-gym-blue">
             {getMotivationalMessage()}
           </p>
         </div>
