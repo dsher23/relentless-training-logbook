@@ -98,13 +98,13 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate("/workouts")}
           />
           <StatCard
-            title="Measurements Tracked"
+            title="Stats Tracker"
             value={`${bodyMeasurements.length}`}
             icon={<Scale className="h-6 w-6 text-gym-orange" />}
             onClick={() => navigate("/measurements")}
           />
           <StatCard
-            title="Supplements Used"
+            title="Supps Used"
             value={`${supplements.length}`}
             icon={<Pill className="h-6 w-6 text-gym-teal" />}
             onClick={() => navigate("/supplements")}
