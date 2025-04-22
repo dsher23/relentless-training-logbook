@@ -4,6 +4,8 @@ import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAppContext } from "@/context/AppContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface StartWorkoutButtonProps {
   workoutId: string;
@@ -17,10 +19,26 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
   className,
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { workoutTemplates } = useAppContext();
 
   const handleStartWorkout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
+    
+    // Check if the workout template exists
+    const workoutExists = workoutTemplates.some(template => template.id === workoutId);
+    
+    if (workoutExists) {
+      // Navigate to the live workout page with the workout ID
+      navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
+    } else {
+      // Show an error toast if the workout doesn't exist
+      toast({
+        title: "Workout Not Found",
+        description: "The selected workout could not be found. Please try another workout.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

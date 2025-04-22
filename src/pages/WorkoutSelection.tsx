@@ -1,14 +1,17 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Plus, Repeat } from 'lucide-react';
+import { ArrowLeft, Plus, Repeat, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import StartWorkoutButton from '@/components/StartWorkoutButton';
 
 const WorkoutSelection: React.FC = () => {
   const { workoutTemplates } = useAppContext();
+  const navigate = useNavigate();
 
   return (
     <div className="app-container animate-fade-in">
@@ -32,22 +35,24 @@ const WorkoutSelection: React.FC = () => {
         </Card>
         
         <h2 className="font-semibold text-lg mt-6">Use Template</h2>
-        <div className="space-y-3">
-          {workoutTemplates.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground mb-4">
-                  No workout templates available
-                </p>
-                <Link to="/routines">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" /> Create Template
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            workoutTemplates.map(template => (
+        
+        {workoutTemplates.length === 0 ? (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No saved workouts found</AlertTitle>
+            <AlertDescription>
+              Please create a workout first before starting a session.
+            </AlertDescription>
+            <Button 
+              className="mt-3" 
+              onClick={() => navigate("/workouts/new")}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Create Workout
+            </Button>
+          </Alert>
+        ) : (
+          <div className="space-y-3">
+            {workoutTemplates.map(template => (
               <Card key={template.id} className="hover:border-primary">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
@@ -57,17 +62,16 @@ const WorkoutSelection: React.FC = () => {
                         {template.exercises.length} exercises
                       </p>
                     </div>
-                    <Link to={`/live-workout/${template.id}`} state={{ isTemplate: true }}>
-                      <Button size="sm">
-                        <Repeat className="h-4 w-4 mr-1" /> Start
-                      </Button>
-                    </Link>
+                    <StartWorkoutButton 
+                      workoutId={template.id} 
+                      isTemplate={true} 
+                    />
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

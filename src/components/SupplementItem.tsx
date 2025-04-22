@@ -1,13 +1,14 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { PillIcon, Check, X, Clock, CalendarCheck } from "lucide-react";
+import { PillIcon, Check, X, Clock, CalendarCheck, Edit, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { Supplement, SupplementLog, useAppContext } from "@/context/AppContext";
 
 interface SupplementItemProps {
@@ -19,6 +20,10 @@ interface SupplementItemProps {
 const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date = new Date() }) => {
   const { addSupplementLog, updateSupplementLog, addReminder, updateSupplement } = useAppContext();
   const [showTimePopover, setShowTimePopover] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(supplement.name);
+  const [editedDosage, setEditedDosage] = useState(supplement.dosage);
+  const [editedNotes, setEditedNotes] = useState(supplement.notes || "");
   
   const handleToggle = () => {
     if (!log) {
@@ -73,6 +78,27 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
     setShowTimePopover(false);
   };
 
+  const handleStartEditing = () => {
+    setEditedName(supplement.name);
+    setEditedDosage(supplement.dosage);
+    setEditedNotes(supplement.notes || "");
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    updateSupplement({
+      ...supplement,
+      name: editedName,
+      dosage: editedDosage,
+      notes: editedNotes || undefined
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
   // Get formatted schedule times if available
   const scheduleTimes = supplement.schedule?.times?.map(time => {
     const [hours, minutes] = time.split(':').map(Number);
@@ -80,6 +106,56 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
     timeDate.setHours(hours, minutes, 0, 0);
     return format(timeDate, "h:mm a");
   }).join(', ');
+
+  if (isEditing) {
+    return (
+      <div className="p-4 border-b bg-muted/30">
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium mb-1 block">Name</label>
+            <Input 
+              value={editedName} 
+              onChange={(e) => setEditedName(e.target.value)} 
+              className="h-8"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-1 block">Dosage</label>
+            <Input 
+              value={editedDosage} 
+              onChange={(e) => setEditedDosage(e.target.value)} 
+              className="h-8"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-1 block">Notes (optional)</label>
+            <Input 
+              value={editedNotes} 
+              onChange={(e) => setEditedNotes(e.target.value)} 
+              className="h-8"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button 
+              size="sm" 
+              onClick={handleSaveEdit}
+              className="h-8"
+            >
+              <Save className="h-4 w-4 mr-1" /> Save
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCancelEdit}
+              className="h-8"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between p-4 border-b">
@@ -128,6 +204,15 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
             </div>
           </PopoverContent>
         </Popover>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 text-muted-foreground hover:text-primary"
+          onClick={handleStartEditing}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
         
         <button
           onClick={handleToggle}

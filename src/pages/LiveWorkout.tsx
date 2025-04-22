@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   Play, Pause, CheckCircle2, ChevronRight, 
   Clock, Timer, ArrowUp, ArrowDown, XCircle 
@@ -16,8 +15,10 @@ import { formatDuration } from "date-fns";
 const LiveWorkout = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isTemplate = searchParams.get("isTemplate") === "true";
   const { toast } = useToast();
-  const { workouts, updateWorkout } = useAppContext();
+  const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -36,7 +37,27 @@ const LiveWorkout = () => {
   // Find the workout from the ID
   useEffect(() => {
     if (id) {
-      const foundWorkout = workouts.find(w => w.id === id);
+      let foundWorkout: Workout | null = null;
+      
+      if (isTemplate) {
+        const template = workoutTemplates.find(t => t.id === id);
+        if (template) {
+          // Create a new workout instance from the template
+          foundWorkout = {
+            id: crypto.randomUUID(),
+            name: template.name,
+            exercises: [...template.exercises],
+            date: new Date(),
+            completed: false
+          } as Workout;
+          
+          // Add the new workout to the workouts list
+          addWorkout(foundWorkout);
+        }
+      } else {
+        foundWorkout = workouts.find(w => w.id === id) || null;
+      }
+      
       if (foundWorkout) {
         setWorkout(foundWorkout);
         
@@ -52,7 +73,7 @@ const LiveWorkout = () => {
         foundWorkout.exercises.forEach(exercise => {
           // Find previous workout with the same exercise for comparison
           const previousWorkout = workouts
-            .filter(w => w.id !== id && w.completed && w.exercises.some(e => e.name === exercise.name))
+            .filter(w => w.id !== foundWorkout?.id && w.completed && w.exercises.some(e => e.name === exercise.name))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
           
           const previousExercise = previousWorkout?.exercises.find(e => e.name === exercise.name);
@@ -74,7 +95,7 @@ const LiveWorkout = () => {
         navigate("/workouts");
       }
     }
-  }, [id, workouts, navigate, toast]);
+  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
 
   // Workout timer
   useEffect(() => {
@@ -235,15 +256,7 @@ const LiveWorkout = () => {
       description: "Your workout has been logged successfully!",
     });
     
-    navigate(`/workouts/${id}/summary`, { 
-      state: { 
-        duration: workoutTime,
-        exercises: updatedExercises,
-        previousStats: Object.fromEntries(
-          updatedExercises.map(e => [e.id, exerciseData[e.id]?.previousStats])
-        )
-      } 
-    });
+    navigate("/workout-history");
   };
 
   const renderProgressIndicator = (exerciseId: string, setIndex: number) => {
