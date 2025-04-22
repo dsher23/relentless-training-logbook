@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -19,28 +20,66 @@ const WorkoutDetail: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
   
-  // Find the workout by ID
-  const workout = id ? getWorkoutById(id) : undefined;
+  // Find the workout by ID - now using useEffect to continuously check until found or max retries
+  const [workout, setWorkout] = useState(() => id ? getWorkoutById(id) : undefined);
   
   useEffect(() => {
-    // Small delay to allow context to update
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      
-      // Only navigate away if workout is still not found after loading
-      if (!workout?.id && id) {
-        toast({
-          title: "Workout Not Found",
-          description: "The workout couldn't be loaded or doesn't exist.",
-          variant: "destructive"
-        });
-        navigate("/workouts");
-      }
-    }, 500); // Slightly longer delay to ensure context is updated
+    // Retry mechanism to find the workout
+    const maxRetries = 5;
+    const retryDelay = 300; // ms
     
-    return () => clearTimeout(timer);
-  }, [workout, id, navigate, toast]);
+    if (!workout?.id && id && retryCount < maxRetries) {
+      const timer = setTimeout(() => {
+        const foundWorkout = getWorkoutById(id);
+        setWorkout(foundWorkout);
+        
+        if (foundWorkout?.id) {
+          setIsLoading(false);
+          console.log("Workout found:", foundWorkout);
+        } else {
+          setRetryCount(prev => prev + 1);
+        }
+      }, retryDelay);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Either found the workout or hit max retries
+      setIsLoading(false);
+    }
+  }, [id, workout, getWorkoutById, retryCount]);
+  
+  // Update workout reference when workouts context changes
+  useEffect(() => {
+    if (id && workouts.length > 0) {
+      const foundWorkout = getWorkoutById(id);
+      if (foundWorkout?.id) {
+        setWorkout(foundWorkout);
+      }
+    }
+  }, [workouts, id, getWorkoutById]);
+  
+  // Log workout status for debugging
+  useEffect(() => {
+    if (id) {
+      console.log(`Looking for workout with ID: ${id}`);
+      console.log(`Current workout loaded:`, workout);
+      console.log(`Available workouts:`, workouts.map(w => ({id: w.id, name: w.name})));
+    }
+  }, [id, workout, workouts]);
+  
+  // Show error and navigate away if workout is still not found after loading
+  useEffect(() => {
+    if (!isLoading && !workout?.id && id) {
+      toast({
+        title: "Workout Not Found",
+        description: "The workout couldn't be loaded or doesn't exist.",
+        variant: "destructive"
+      });
+      navigate("/workouts");
+    }
+  }, [isLoading, workout, id, navigate, toast]);
   
   if (isLoading) {
     return (

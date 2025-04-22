@@ -25,8 +25,9 @@ interface CreateWorkoutFormValues {
 const CreateWorkout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addWorkout, workouts, updateWorkout } = useAppContext();
+  const { addWorkout, workouts, updateWorkout, getWorkoutById } = useAppContext();
   const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
 
   // Get edit ID from query params (if any)
   const searchParams = new URLSearchParams(location.search);
@@ -34,7 +35,7 @@ const CreateWorkout: React.FC = () => {
   const templateId = searchParams.get('templateId');
   
   // Find workout if in edit mode
-  const existingWorkout = editId ? workouts.find(w => w.id === editId) : null;
+  const existingWorkout = editId ? getWorkoutById(editId) : null;
   
   // Setup form
   const form = useForm<CreateWorkoutFormValues>({
@@ -56,43 +57,63 @@ const CreateWorkout: React.FC = () => {
     }
   }, [editId, existingWorkout, form]);
 
-  const handleSubmit = (values: CreateWorkoutFormValues) => {
-    if (existingWorkout) {
-      // Update existing workout
-      const updatedWorkout: Workout = {
-        ...existingWorkout,
-        name: values.name,
-        date: values.date,
-        notes: values.notes || ""
-      };
-      
-      updateWorkout(updatedWorkout);
-      
+  const handleSubmit = async (values: CreateWorkoutFormValues) => {
+    setSubmitting(true);
+    
+    try {
+      if (existingWorkout) {
+        // Update existing workout
+        const updatedWorkout: Workout = {
+          ...existingWorkout,
+          name: values.name,
+          date: values.date,
+          notes: values.notes || ""
+        };
+        
+        updateWorkout(updatedWorkout);
+        
+        toast({
+          title: "Workout Updated",
+          description: `${values.name} has been updated.`
+        });
+        
+        // Add a slight delay before navigation to ensure context is updated
+        setTimeout(() => {
+          navigate(`/workouts/${updatedWorkout.id}`);
+          setSubmitting(false);
+        }, 100);
+      } else {
+        // Create new workout
+        const newWorkout: Workout = {
+          id: uuidv4(),
+          name: values.name,
+          date: values.date,
+          exercises: [],
+          completed: false,
+          notes: values.notes || ""
+        };
+        
+        addWorkout(newWorkout);
+        
+        toast({
+          title: "Workout Created",
+          description: `${values.name} has been created.`
+        });
+        
+        // Add a slight delay before navigation to ensure context is updated
+        setTimeout(() => {
+          navigate(`/workouts/${newWorkout.id}`);
+          setSubmitting(false);
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error saving workout:", error);
       toast({
-        title: "Workout Updated",
-        description: `${values.name} has been updated.`
+        title: "Error",
+        description: "Failed to save workout. Please try again.",
+        variant: "destructive"
       });
-      
-      navigate(`/workouts/${updatedWorkout.id}`);
-    } else {
-      // Create new workout
-      const newWorkout: Workout = {
-        id: uuidv4(),
-        name: values.name,
-        date: values.date,
-        exercises: [],
-        completed: false,
-        notes: values.notes || ""
-      };
-      
-      addWorkout(newWorkout);
-      
-      toast({
-        title: "Workout Created",
-        description: `${values.name} has been created.`
-      });
-      
-      navigate(`/workouts/${newWorkout.id}`);
+      setSubmitting(false);
     }
   };
 
@@ -174,9 +195,13 @@ const CreateWorkout: React.FC = () => {
                 />
                 
                 <div className="flex justify-end">
-                  <Button type="submit" className="bg-gym-purple hover:bg-gym-darkPurple">
+                  <Button 
+                    type="submit" 
+                    className="bg-gym-purple hover:bg-gym-darkPurple"
+                    disabled={submitting}
+                  >
                     <Save className="mr-2 h-4 w-4" />
-                    {existingWorkout ? "Update Workout" : "Create Workout"}
+                    {submitting ? "Saving..." : existingWorkout ? "Update Workout" : "Create Workout"}
                   </Button>
                 </div>
               </form>
