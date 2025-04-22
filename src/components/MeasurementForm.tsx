@@ -53,11 +53,11 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
       weight: Number(data.weight),
       chest: data.chest ? Number(data.chest) : undefined,
       waist: data.waist ? Number(data.waist) : undefined,
-      armsLeft: data.armsLeft ? Number(data.armsLeft) : undefined,
-      armsRight: data.armsRight ? Number(data.armsRight) : undefined,
-      legsLeft: data.legsLeft ? Number(data.legsLeft) : undefined,
-      legsRight: data.legsRight ? Number(data.legsRight) : undefined,
-      bodyFatPercentage: data.bodyFatPercentage ? Number(data.bodyFatPercentage) : undefined,
+      // Combine arm measurements if both are provided, or use left arm if only that's provided
+      arms: data.armsLeft ? Number(data.armsLeft) : undefined,
+      // Combine leg measurements if both are provided, or use left leg if only that's provided
+      legs: data.legsLeft ? Number(data.legsLeft) : undefined,
+      bodyFat: data.bodyFatPercentage ? Number(data.bodyFatPercentage) : undefined,
       notes: data.notes || undefined
     };
 
