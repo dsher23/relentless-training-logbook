@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Edit, Plus } from "lucide-react";
@@ -9,12 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import StartWorkoutButton from "@/components/StartWorkoutButton";
 import { useAppContext } from "@/context/AppContext";
+import AddExerciseForm from "@/components/AddExerciseForm";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { workouts } = useAppContext();
+  const { workouts, updateWorkout } = useAppContext();
+  const [showExerciseForm, setShowExerciseForm] = useState(false);
   
   const workout = workouts.find(w => w.id === id);
   
@@ -31,6 +33,15 @@ const WorkoutDetail: React.FC = () => {
       </div>
     );
   }
+  
+  const handleSaveExercise = (exercise) => {
+    const updatedWorkout = {
+      ...workout,
+      exercises: [...workout.exercises, exercise],
+    };
+    
+    updateWorkout(updatedWorkout);
+  };
   
   return (
     <div className="app-container animate-fade-in pb-16">
@@ -70,7 +81,11 @@ const WorkoutDetail: React.FC = () => {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Exercises</h2>
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowExerciseForm(true)}
+            >
               <Plus className="h-4 w-4 mr-1" /> Add Exercise
             </Button>
           </div>
@@ -79,7 +94,7 @@ const WorkoutDetail: React.FC = () => {
             <Card className="border-dashed">
               <CardContent className="p-6 text-center">
                 <p className="text-muted-foreground mb-4">No exercises added yet</p>
-                <Button>
+                <Button onClick={() => setShowExerciseForm(true)}>
                   <Plus className="h-4 w-4 mr-1" /> Add Your First Exercise
                 </Button>
               </CardContent>
@@ -91,8 +106,14 @@ const WorkoutDetail: React.FC = () => {
                   <CardContent className="p-3">
                     <div className="font-medium">{exercise.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {exercise.sets.length} sets
+                      {exercise.sets.length} sets x {exercise.sets[0]?.reps || 0} reps
+                      {exercise.sets[0]?.weight ? ` x ${exercise.sets[0].weight}kg` : ''}
                     </div>
+                    {exercise.restTime && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Rest: {exercise.restTime}s
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -104,6 +125,12 @@ const WorkoutDetail: React.FC = () => {
           <StartWorkoutButton workoutId={workout.id} className="w-full" />
         </div>
       </div>
+      
+      <AddExerciseForm 
+        isOpen={showExerciseForm}
+        onClose={() => setShowExerciseForm(false)}
+        onSave={handleSaveExercise}
+      />
     </div>
   );
 };
