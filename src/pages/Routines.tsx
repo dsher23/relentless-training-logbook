@@ -1,377 +1,271 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, ArrowRight, AlertTriangle, Copy, Archive, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-// Update this import to use the correct path
-import HeaderExtended from "@/components/Header"; // Change from HeaderExtended to Header
+import HeaderExtended from "@/components/Header";  // Corrected import
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext, WeeklyRoutine, TrainingBlock } from "@/context/AppContext";
 import TrainingBlockForm from "@/components/TrainingBlockForm";
 import { format, addWeeks, isBefore } from "date-fns";
 import DataExport from "@/components/DataExport";
 
 const Routines: React.FC = () => {
-  const navigate = useNavigate();
-  const { 
-    workoutTemplates, 
-    weakPoints, 
-    weeklyRoutines, 
-    trainingBlocks,
-    checkTrainingBlockStatus,
-    getStagnantExercises,
-    duplicateWorkoutTemplate,
-    duplicateWeeklyRoutine,
-    archiveWeeklyRoutine
-  } = useAppContext();
-  
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
-  const [showTrainingBlockDialog, setShowTrainingBlockDialog] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [showingArchived, setShowingArchived] = useState(false);
+  const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine, trainingBlocks, addTrainingBlock, updateTrainingBlock, deleteTrainingBlock, checkTrainingBlockStatus } = useAppContext();
+  const [open, setOpen] = React.useState(false);
+  const [editRoutineId, setEditRoutineId] = useState<string | null>(null);
+  const [isCreatingBlock, setIsCreatingBlock] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<TrainingBlock | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   
   const { needsUpdate, trainingBlock } = checkTrainingBlockStatus();
-  const stagnantExercises = getStagnantExercises();
-
-  const today = new Date();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   
-  const activeTrainingBlocks = trainingBlocks
-    .filter(block => {
-      const endDate = addWeeks(new Date(block.startDate), block.durationWeeks);
-      return isBefore(today, endDate);
-    })
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-  
-  const handleEditTemplate = (id: string) => {
-    setSelectedTemplateId(id);
-    setShowTemplateBuilder(true);
+  const handleRoutineSave = () => {
+    setEditRoutineId(null);
   };
-
-  const filteredRoutines = showingArchived
-    ? weeklyRoutines.filter(r => r.archived)
-    : weeklyRoutines.filter(r => !r.archived);
+  
+  const handleCreateBlock = () => {
+    setIsCreatingBlock(true);
+  };
+  
+  const handleEditBlock = () => {
+    if (trainingBlock) {
+      setEditingBlock(trainingBlock);
+    }
+  };
+  
+  const handleBlockClose = () => {
+    setIsCreatingBlock(false);
+    setEditingBlock(null);
+  };
+  
+  const handleDeleteBlock = (id: string) => {
+    deleteTrainingBlock(id);
+    handleBlockClose();
+  };
+  
+  const handleArchiveRoutine = (id: string, archived: boolean) => {
+    archiveWeeklyRoutine(id, archived);
+  };
+  
+  const getNextBlockStartDate = (): Date => {
+    if (!trainingBlock) {
+      return new Date();
+    }
+    
+    const endDate = addWeeks(new Date(trainingBlock.startDate), trainingBlock.durationWeeks);
+    
+    if (isBefore(endDate, new Date())) {
+      return new Date();
+    }
+    
+    return endDate;
+  };
 
   return (
     <div className="app-container animate-fade-in">
-      <HeaderExtended 
-        title="Training Routines" 
-        rightContent={<DataExport />}
-      />
+      <HeaderExtended title="Routines" />
       
-      {(needsUpdate && trainingBlock) && (
-        <div className="px-4 mb-6">
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                <div>
-                  <h3 className="font-medium">Training Block Completed</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your "{trainingBlock.name}" training block has ended. Time to create a new one!
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => setShowTrainingBlockDialog(true)}
+      <div className="px-4 mt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Training Block</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {trainingBlock ? (
+              <div className="space-y-2">
+                <p>
+                  Current Block: <strong>{trainingBlock.name}</strong>
+                </p>
+                <p>
+                  Start Date:{" "}
+                  {format(new Date(trainingBlock.startDate), "MMM dd, yyyy")}
+                </p>
+                <p>
+                  Duration: {trainingBlock.durationWeeks} weeks
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleEditBlock}>
+                    Edit Block
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => trainingBlock.id ? handleDeleteBlock(trainingBlock.id) : null}
                   >
-                    Create New Training Block
+                    Delete Block
                   </Button>
                 </div>
+                {needsUpdate && (
+                  <div className="mt-4 text-yellow-500">
+                    <p>
+                      Your current training block has ended. Please create a new
+                      one.
+                    </p>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      {stagnantExercises.length > 0 && (
-        <div className="px-4 mb-6">
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Stagnation Warning</h3>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    These exercises haven't shown progress in 3+ sessions:
-                  </p>
-                  <ul className="text-sm list-disc pl-5 space-y-1">
-                    {stagnantExercises.slice(0, 3).map((item, i) => (
-                      <li key={i}>
-                        {item.exercise.name} ({item.workout.name})
-                      </li>
-                    ))}
-                    {stagnantExercises.length > 3 && (
-                      <li>+{stagnantExercises.length - 3} more</li>
-                    )}
-                  </ul>
-                  <p className="text-xs mt-2 text-muted-foreground">
-                    Consider changing rep ranges or switching to variations.
-                  </p>
-                </div>
+            ) : (
+              <div className="space-y-2">
+                <p>No active training block.</p>
+                <Button size="sm" onClick={handleCreateBlock}>
+                  Create Training Block
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      <Tabs defaultValue="templates" className="px-4">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="routines">Training Blocks</TabsTrigger>
-        </TabsList>
+            )}
+          </CardContent>
+        </Card>
         
-        <TabsContent value="templates" className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Workout Templates</h2>
-            <Button
-              size="sm"
-              onClick={() => {
-                setSelectedTemplateId(null);
-                setShowTemplateBuilder(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-1" /> New Template
-            </Button>
-          </div>
-          
-          {workoutTemplates.length === 0 ? (
-            <Card className="mb-4">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium mb-1">No Templates Yet</h3>
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                  Create workout templates to build your weekly training routine
-                </p>
-                <Button 
-                  onClick={() => {
-                    setSelectedTemplateId(null);
-                    setShowTemplateBuilder(true);
-                  }}
+        <Tabs defaultValue="routines" className="w-full mt-4">
+          <TabsList>
+            <TabsTrigger value="routines">Routines</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
+          </TabsList>
+          <TabsContent value="routines" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-medium">Weekly Routines</h2>
+              <div className="flex items-center space-x-2">
+                <label
+                  htmlFor="show-archived"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  <Plus className="mr-1 h-4 w-4" /> Create First Template
+                  Show Archived
+                </label>
+                <input
+                  type="checkbox"
+                  id="show-archived"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                />
+                <Button size="sm" onClick={() => setOpen(true)}>
+                  <Plus size={16} className="mr-2" />
+                  Add Routine
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {workoutTemplates.map((template) => (
-                <Card key={template.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2 bg-secondary flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base font-medium">
-                        {template.name}
-                        {template.dayName && <span className="ml-2 text-sm text-muted-foreground">({template.dayName})</span>}
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="mb-3">
-                      <h4 className="text-sm font-medium mb-2">Exercises:</h4>
-                      <ul className="space-y-1">
-                        {template.exercises.slice(0, 5).map((exercise) => (
-                          <li key={exercise.id} className="text-sm flex items-center">
-                            <span className="w-2 h-2 bg-iron-blue rounded-full mr-2"></span>
-                            {exercise.name}
-                            {exercise.isWeakPoint && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded-full">
-                                Weak Point
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                        {template.exercises.length > 5 && (
-                          <li className="text-sm text-muted-foreground">
-                            + {template.exercises.length - 5} more
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => duplicateWorkoutTemplate(template.id)}
-                      >
-                        <Copy className="h-3.5 w-3.5 mr-1" /> Duplicate
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditTemplate(template.id)}
-                      >
-                        <Edit className="h-3.5 w-3.5 mr-1" /> Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              </div>
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="routines" className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-semibold">Training Blocks</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowingArchived(!showingArchived)}
-              >
-                {showingArchived ? "Show Active" : "Show Archived"}
-              </Button>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowTrainingBlockDialog(true)}
-            >
-              <Plus className="h-4 w-4 mr-1" /> New Block
-            </Button>
-          </div>
-          
-          {activeTrainingBlocks.length === 0 && !showingArchived ? (
-            <Card className="mb-4">
-              <CardContent className="p-6 flex flex-col items-center justify-center">
-                <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium mb-1">No Active Training Blocks</h3>
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                  Create a training block to organize your weekly workout routine
-                </p>
-                <Button onClick={() => setShowTrainingBlockDialog(true)}>
-                  <Plus className="mr-1 h-4 w-4" /> Create Training Block
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {activeTrainingBlocks.map((block) => {
-                const routine = weeklyRoutines.find(r => r.id === block.weeklyRoutineId);
-                const endDate = addWeeks(new Date(block.startDate), block.durationWeeks);
-                const remainingWeeks = Math.ceil((endDate.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000));
-                
-                return (
-                  <Card key={block.id} className="overflow-hidden">
-                    <CardHeader className="p-4 pb-2 bg-secondary flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="text-base font-medium">
-                          {block.name}
-                        </CardTitle>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.35 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-                            </svg>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => {}}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit Block
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {}}>
-                            <Copy className="mr-2 h-4 w-4" /> Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => {}}>
-                            <Archive className="mr-2 h-4 w-4" /> Archive
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+            
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {weeklyRoutines
+                .filter(routine => showArchived ? true : !routine.archived)
+                .map((routine) => (
+                  <Card key={routine.id}>
+                    <CardHeader>
+                      <CardTitle>{routine.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <h4 className="text-xs text-muted-foreground">Start Date</h4>
-                          <p className="text-sm">{format(new Date(block.startDate), "MMM d, yyyy")}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-xs text-muted-foreground">End Date</h4>
-                          <p className="text-sm">{format(endDate, "MMM d, yyyy")}</p>
-                        </div>
-                        <div>
-                          <h4 className="text-xs text-muted-foreground">Duration</h4>
-                          <p className="text-sm">{block.durationWeeks} weeks</p>
-                        </div>
-                        <div>
-                          <h4 className="text-xs text-muted-foreground">Remaining</h4>
-                          <p className="text-sm">{remainingWeeks} {remainingWeeks === 1 ? 'week' : 'weeks'}</p>
-                        </div>
+                    <CardContent className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        {routine.workoutDays.length} workouts per week
+                      </p>
+                      <div className="flex justify-end space-x-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-4 w-4"
+                              >
+                                <path d="M3 12h18" />
+                                <path d="M3 6h18" />
+                                <path d="M3 18h18" />
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setEditRoutineId(routine.id)}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => duplicateWeeklyRoutine(routine.id)}>
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleArchiveRoutine(routine.id, !routine.archived)}>
+                              {routine.archived ? "Unarchive" : "Archive"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:bg-destructive/20"
+                              onClick={() => deleteWeeklyRoutine(routine.id)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      
-                      {routine && (
-                        <div className="mb-3">
-                          <h4 className="text-sm font-medium mb-2">Weekly Schedule:</h4>
-                          {routine.workoutDays
-                            .filter(day => day.workoutTemplateId)
-                            .map((day) => {
-                              const template = workoutTemplates.find(t => t.id === day.workoutTemplateId);
-                              return template ? (
-                                <div key={day.dayOfWeek} className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium w-16">{dayNames[day.dayOfWeek]}:</span>
-                                  <span className="text-sm">{template.name}</span>
-                                </div>
-                              ) : null;
-                            })}
-                        </div>
-                      )}
-                      
-                      {block.notes && (
-                        <div className="mb-3">
-                          <h4 className="text-xs text-muted-foreground mb-1">Notes</h4>
-                          <p className="text-sm">{block.notes}</p>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
-                );
-              })}
+                ))}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
-      
-      {/* Template Builder Dialog */}
-      <Dialog open={showTemplateBuilder} onOpenChange={setShowTemplateBuilder}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedTemplateId ? "Edit Workout Template" : "Create Workout Template"}
-            </DialogTitle>
-          </DialogHeader>
-          <WeeklyRoutineBuilder 
-            templateId={selectedTemplateId || undefined}
-            onSave={() => setShowTemplateBuilder(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Training Block Dialog */}
-      <Dialog open={showTrainingBlockDialog} onOpenChange={setShowTrainingBlockDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Training Block</DialogTitle>
-          </DialogHeader>
-          <TrainingBlockForm onSave={() => setShowTrainingBlockDialog(false)} />
-        </DialogContent>
-      </Dialog>
+          </TabsContent>
+          
+          <TabsContent value="templates">
+            <WeeklyRoutineBuilder />
+          </TabsContent>
+          <TabsContent value="export">
+            <DataExport />
+          </TabsContent>
+        </Tabs>
+        
+        {/* Routine Builder Modal */}
+        <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${open ? '' : 'hidden'}`}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+              <h2 className="text-lg font-medium mb-4">Create Weekly Routine</h2>
+              <WeeklyRoutineBuilder onSave={() => { setOpen(false); handleRoutineSave(); }} />
+              <div className="flex justify-end mt-4">
+                <Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Routine Edit Modal */}
+        <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${editRoutineId ? '' : 'hidden'}`}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+              {editRoutineId && (
+                <>
+                  <h2 className="text-lg font-medium mb-4">Edit Weekly Routine</h2>
+                  <WeeklyRoutineBuilder templateId={editRoutineId} onSave={() => { setEditRoutineId(null); handleRoutineSave(); }} />
+                  <div className="flex justify-end mt-4">
+                    <Button variant="secondary" onClick={() => setEditRoutineId(null)}>Cancel</Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Training Block Form Modal */}
+        <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${isCreatingBlock || editingBlock ? '' : 'hidden'}`}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+              <TrainingBlockForm 
+                block={editingBlock}
+                onClose={handleBlockClose}
+                nextSuggestedDate={getNextBlockStartDate()}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
