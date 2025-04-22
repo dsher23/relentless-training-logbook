@@ -1,17 +1,48 @@
+
 import React, { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Exercise } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
+import { MoveVertical } from "lucide-react";
 
 interface WeeklyRoutineBuilderProps {
   onSave: (exercises: Exercise[]) => void;
   onCancel: () => void;
   templateId?: string;
 }
+
+const SortableExerciseItem = ({ exercise, onRemove }: { exercise: Exercise; onRemove: (id: string) => void }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: exercise.id });
+  
+  const style = {
+    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
+  
+  return (
+    <li 
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm"
+    >
+      <div className="flex items-center space-x-2">
+        <span className="cursor-grab" {...attributes} {...listeners}>
+          <MoveVertical size={16} />
+        </span>
+        <span>{exercise.name}</span>
+      </div>
+      <Button variant="ghost" size="sm" onClick={() => onRemove(exercise.id)}>
+        Remove
+      </Button>
+    </li>
+  );
+};
 
 const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({ 
   onSave, 
@@ -23,6 +54,13 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
   const [exerciseNotes, setExerciseNotes] = useState("");
   const [isWeakPoint, setIsWeakPoint] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   useEffect(() => {
     // Load exercises from local storage on component mount
@@ -63,11 +101,6 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     setShowAddExercise(false);
   };
   
-  const handleExerciseSelect = (exerciseId: string) => {
-    // This function would use context to find exercises if implemented
-    // For now we'll keep it simple
-  };
-  
   const handleRemoveExercise = (exerciseId: string) => {
     setSelectedExercises(selectedExercises.filter(exercise => exercise.id !== exerciseId));
   };
@@ -81,17 +114,18 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     onSave(exercises);
   };
   
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      setSelectedExercises((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
-    
-    const items = Array.from(selectedExercises);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    setSelectedExercises(items);
-  };
+  }
   
   return (
     <div className="space-y-4">
@@ -101,32 +135,27 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
           <CardDescription>Drag and drop to reorder, or add new exercises.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="exercises">
-              {(provided) => (
-                <ul {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-                  {selectedExercises.map((exercise, index) => (
-                    <Draggable key={exercise.id} draggableId={exercise.id} index={index}>
-                      {(provided) => (
-                        <li
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm"
-                        >
-                          <span>{exercise.name}</span>
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveExercise(exercise.id)}>
-                            Remove
-                          </Button>
-                        </li>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </ul>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+            modifiers={[restrictToVerticalAxis]}
+          >
+            <SortableContext 
+              items={selectedExercises.map(ex => ex.id)} 
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="space-y-2">
+                {selectedExercises.map((exercise) => (
+                  <SortableExerciseItem 
+                    key={exercise.id}
+                    exercise={exercise}
+                    onRemove={handleRemoveExercise}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
           
           {showAddExercise && (
             <div className="space-y-3 p-3 border rounded-md">
