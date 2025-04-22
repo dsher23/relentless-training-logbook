@@ -18,12 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import Header from "@/components/Header";
+// Update this import to use the correct path
+import HeaderExtended from "@/components/Header"; // Change from HeaderExtended to Header
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext } from "@/context/AppContext";
 import TrainingBlockForm from "@/components/TrainingBlockForm";
 import { format, addWeeks, isBefore } from "date-fns";
-import HeaderExtended from "@/components/HeaderExtended";
 import DataExport from "@/components/DataExport";
 
 const Routines: React.FC = () => {
