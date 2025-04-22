@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import WeeklyCalendarView from "@/components/WeeklyCalendarView";
+import WeeklyLiftsGraph from "@/components/WeeklyLiftsGraph";
 
 const WeeklyOverview: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -45,10 +46,13 @@ const WeeklyOverview: React.FC = () => {
           </Button>
         </div>
         
-        <WeeklyCalendarView 
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-        />
+        <div className="space-y-6">
+          <WeeklyLiftsGraph currentDate={currentDate} />
+          <WeeklyCalendarView 
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+        </div>
       </div>
     </div>
   );
