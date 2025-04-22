@@ -1,16 +1,30 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, ArrowRight, AlertTriangle } from "lucide-react";
+import { Plus, Calendar, ArrowRight, AlertTriangle, Copy, Archive, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import Header from "@/components/Header";
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext } from "@/context/AppContext";
 import TrainingBlockForm from "@/components/TrainingBlockForm";
 import { format, addWeeks, isBefore } from "date-fns";
+import HeaderExtended from "@/components/HeaderExtended";
+import DataExport from "@/components/DataExport";
 
 const Routines: React.FC = () => {
   const navigate = useNavigate();
@@ -20,12 +34,16 @@ const Routines: React.FC = () => {
     weeklyRoutines, 
     trainingBlocks,
     checkTrainingBlockStatus,
-    getStagnantExercises
+    getStagnantExercises,
+    duplicateWorkoutTemplate,
+    duplicateWeeklyRoutine,
+    archiveWeeklyRoutine
   } = useAppContext();
   
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [showTrainingBlockDialog, setShowTrainingBlockDialog] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [showingArchived, setShowingArchived] = useState(false);
   
   const { needsUpdate, trainingBlock } = checkTrainingBlockStatus();
   const stagnantExercises = getStagnantExercises();
@@ -45,9 +63,16 @@ const Routines: React.FC = () => {
     setShowTemplateBuilder(true);
   };
 
+  const filteredRoutines = showingArchived
+    ? weeklyRoutines.filter(r => r.archived)
+    : weeklyRoutines.filter(r => !r.archived);
+
   return (
     <div className="app-container animate-fade-in">
-      <Header title="Training Routines" />
+      <HeaderExtended 
+        title="Training Routines" 
+        rightContent={<DataExport />}
+      />
       
       {(needsUpdate && trainingBlock) && (
         <div className="px-4 mb-6">
@@ -178,13 +203,20 @@ const Routines: React.FC = () => {
                         )}
                       </ul>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => duplicateWorkoutTemplate(template.id)}
+                      >
+                        <Copy className="h-3.5 w-3.5 mr-1" /> Duplicate
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => handleEditTemplate(template.id)}
                       >
-                        Edit Template
+                        <Edit className="h-3.5 w-3.5 mr-1" /> Edit
                       </Button>
                     </div>
                   </CardContent>
@@ -196,7 +228,16 @@ const Routines: React.FC = () => {
         
         <TabsContent value="routines" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Training Blocks</h2>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-lg font-semibold">Training Blocks</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowingArchived(!showingArchived)}
+              >
+                {showingArchived ? "Show Active" : "Show Archived"}
+              </Button>
+            </div>
             <Button
               size="sm"
               onClick={() => setShowTrainingBlockDialog(true)}
@@ -205,7 +246,7 @@ const Routines: React.FC = () => {
             </Button>
           </div>
           
-          {activeTrainingBlocks.length === 0 ? (
+          {activeTrainingBlocks.length === 0 && !showingArchived ? (
             <Card className="mb-4">
               <CardContent className="p-6 flex flex-col items-center justify-center">
                 <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
@@ -233,6 +274,27 @@ const Routines: React.FC = () => {
                           {block.name}
                         </CardTitle>
                       </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.35 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                            </svg>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => {}}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit Block
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {}}>
+                            <Copy className="mr-2 h-4 w-4" /> Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => {}}>
+                            <Archive className="mr-2 h-4 w-4" /> Archive
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="grid grid-cols-2 gap-4 mb-3">
@@ -277,16 +339,6 @@ const Routines: React.FC = () => {
                           <p className="text-sm">{block.notes}</p>
                         </div>
                       )}
-                      
-                      <div className="flex justify-end">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {/* Edit training block */}}
-                        >
-                          Edit Block
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 );

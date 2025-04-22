@@ -17,6 +17,7 @@ export interface Workout {
   notes?: string;
   completed?: boolean;
   isDeload?: boolean;
+  scheduledTime?: string;
 }
 
 export interface WorkoutTemplate {
@@ -24,6 +25,7 @@ export interface WorkoutTemplate {
   name: string;
   dayName?: string;
   exercises: Omit<Exercise, "sets">[];
+  scheduledTime?: string;
 }
 
 export interface BodyMeasurement {
@@ -49,6 +51,7 @@ export interface Supplement {
   reminder?: Date;
   schedule?: {
     workoutDays?: boolean;
+    times?: string[];
   };
 }
 
@@ -89,6 +92,7 @@ export interface WeeklyRoutine {
   id: string;
   name: string;
   workoutDays: WorkoutDay[];
+  archived?: boolean;
 }
 
 export interface TrainingBlock {
@@ -98,6 +102,18 @@ export interface TrainingBlock {
   durationWeeks: number;
   weeklyRoutineId: string;
   notes?: string;
+  reminderEnabled?: boolean;
+}
+
+export interface Reminder {
+  id: string;
+  type: "supplement" | "workout" | "routineChange";
+  referenceId: string;
+  dateTime: Date;
+  title: string;
+  message: string;
+  seen: boolean;
+  dismissed: boolean;
 }
 
 interface AppContextType {
@@ -105,6 +121,7 @@ interface AppContextType {
   addWorkout: (workout: Workout) => void;
   updateWorkout: (workout: Workout) => void;
   deleteWorkout: (id: string) => void;
+  duplicateWorkout: (id: string) => void;
   bodyMeasurements: BodyMeasurement[];
   addBodyMeasurement: (measurement: BodyMeasurement) => void;
   updateBodyMeasurement: (measurement: BodyMeasurement) => void;
@@ -129,10 +146,13 @@ interface AppContextType {
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (template: WorkoutTemplate) => void;
   deleteWorkoutTemplate: (id: string) => void;
+  duplicateWorkoutTemplate: (id: string) => void;
   weeklyRoutines: WeeklyRoutine[];
   addWeeklyRoutine: (routine: WeeklyRoutine) => void;
   updateWeeklyRoutine: (routine: WeeklyRoutine) => void;
   deleteWeeklyRoutine: (id: string) => void;
+  duplicateWeeklyRoutine: (id: string) => void;
+  archiveWeeklyRoutine: (id: string, archived: boolean) => void;
   trainingBlocks: TrainingBlock[];
   addTrainingBlock: (block: TrainingBlock) => void;
   updateTrainingBlock: (block: TrainingBlock) => void;
@@ -140,6 +160,14 @@ interface AppContextType {
   checkTrainingBlockStatus: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | undefined };
   getStagnantExercises: () => { workout: Workout; exercise: Exercise }[];
   toggleDeloadMode: (workoutId: string, isDeload: boolean) => void;
+  reminders: Reminder[];
+  addReminder: (reminder: Reminder) => void;
+  updateReminder: (reminder: Reminder) => void;
+  deleteReminder: (id: string) => void;
+  getDueReminders: () => Reminder[];
+  markReminderAsSeen: (id: string) => void;
+  dismissReminder: (id: string) => void;
+  exportData: (type: "workouts" | "measurements" | "supplements") => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -162,6 +190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
   const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
   const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
 
   useEffect(() => {
     loadInitialData();
@@ -224,6 +253,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteWorkout = (id: string) => {
     setWorkouts(workouts.filter(w => w.id !== id));
+  };
+
+  const duplicateWorkout = (id: string) => {
+    const workoutToDuplicate = workouts.find(w => w.id === id);
+    if (workoutToDuplicate) {
+      const newWorkout = {
+        ...workoutToDuplicate,
+        id: uuidv4(),
+        name: `${workoutToDuplicate.name} (Copy)`,
+        date: new Date()
+      };
+      setWorkouts([...workouts, newWorkout]);
+    }
   };
 
   const addBodyMeasurement = (measurement: BodyMeasurement) => {
@@ -298,6 +340,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkoutTemplates(workoutTemplates.filter(wt => wt.id !== id));
   };
 
+  const duplicateWorkoutTemplate = (id: string) => {
+    const templateToDuplicate = workoutTemplates.find(t => t.id === id);
+    if (templateToDuplicate) {
+      const newTemplate = {
+        ...templateToDuplicate,
+        id: uuidv4(),
+        name: `${templateToDuplicate.name} (Copy)`
+      };
+      setWorkoutTemplates([...workoutTemplates, newTemplate]);
+    }
+  };
+
   const addWeeklyRoutine = (routine: WeeklyRoutine) => {
     setWeeklyRoutines([...weeklyRoutines, routine]);
   };
@@ -308,6 +362,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteWeeklyRoutine = (id: string) => {
     setWeeklyRoutines(weeklyRoutines.filter(wr => wr.id !== id));
+  };
+
+  const duplicateWeeklyRoutine = (id: string) => {
+    const routineToDuplicate = weeklyRoutines.find(r => r.id === id);
+    if (routineToDuplicate) {
+      const newRoutine = {
+        ...routineToDuplicate,
+        id: uuidv4(),
+        name: `${routineToDuplicate.name} (Copy)`,
+        archived: false
+      };
+      setWeeklyRoutines([...weeklyRoutines, newRoutine]);
+    }
+  };
+
+  const archiveWeeklyRoutine = (id: string, archived: boolean) => {
+    setWeeklyRoutines(
+      weeklyRoutines.map(routine => 
+        routine.id === id ? { ...routine, archived } : routine
+      )
+    );
   };
 
   const addTrainingBlock = (block: TrainingBlock) => {
@@ -373,11 +448,110 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ));
   };
 
+  const addReminder = (reminder: Reminder) => {
+    setReminders([...reminders, reminder]);
+  };
+
+  const updateReminder = (reminder: Reminder) => {
+    setReminders(reminders.map(r => r.id === reminder.id ? reminder : r));
+  };
+
+  const deleteReminder = (id: string) => {
+    setReminders(reminders.filter(r => r.id !== id));
+  };
+
+  const getDueReminders = () => {
+    const now = new Date();
+    return reminders.filter(r => 
+      new Date(r.dateTime) <= now && !r.dismissed
+    );
+  };
+
+  const markReminderAsSeen = (id: string) => {
+    setReminders(reminders.map(r => 
+      r.id === id ? { ...r, seen: true } : r
+    ));
+  };
+
+  const dismissReminder = (id: string) => {
+    setReminders(reminders.map(r => 
+      r.id === id ? { ...r, dismissed: true } : r
+    ));
+  };
+
+  const exportData = (type: "workouts" | "measurements" | "supplements") => {
+    let data: any[] = [];
+    let headers: string[] = [];
+    
+    if (type === "workouts") {
+      headers = ["Date", "Workout", "Exercise", "Sets", "Reps", "Weight", "Notes", "Completed"];
+      workouts.forEach(workout => {
+        workout.exercises.forEach(exercise => {
+          exercise.sets.forEach((set, index) => {
+            data.push({
+              Date: new Date(workout.date).toLocaleDateString(),
+              Workout: workout.name,
+              Exercise: exercise.name,
+              Sets: index + 1,
+              Reps: set.reps,
+              Weight: set.weight,
+              Notes: workout.notes || "",
+              Completed: workout.completed ? "Yes" : "No"
+            });
+          });
+        });
+      });
+    } else if (type === "measurements") {
+      headers = ["Date", "Weight", "Body Fat", "Muscle Mass", "Arms", "Chest", "Waist", "Legs", "Notes"];
+      data = bodyMeasurements.map(m => ({
+        Date: new Date(m.date).toLocaleDateString(),
+        Weight: m.weight,
+        "Body Fat": m.bodyFat || "",
+        "Muscle Mass": m.muscleMass || "",
+        Arms: m.arms || "",
+        Chest: m.chest || "",
+        Waist: m.waist || "",
+        Legs: m.legs || "",
+        Notes: m.notes || ""
+      }));
+    } else if (type === "supplements") {
+      headers = ["Date", "Supplement", "Dosage", "Taken", "Time", "Notes"];
+      supplementLogs.forEach(log => {
+        const supplement = supplements.find(s => s.id === log.supplementId);
+        if (supplement) {
+          data.push({
+            Date: new Date(log.date).toLocaleDateString(),
+            Supplement: supplement.name,
+            Dosage: log.dosageTaken,
+            Taken: log.taken ? "Yes" : "No",
+            Time: log.time ? new Date(log.time).toLocaleTimeString() : "",
+            Notes: log.notes || ""
+          });
+        }
+      });
+    }
+    
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    
+    for (const row of data) {
+      const values = headers.map(header => {
+        const value = row[header] || '';
+        const escaped = String(value).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+    
+    return csvRows.join('\n');
+  };
+
   const value: AppContextType = {
     workouts,
     addWorkout,
     updateWorkout,
     deleteWorkout,
+    duplicateWorkout,
     bodyMeasurements,
     addBodyMeasurement,
     updateBodyMeasurement,
@@ -402,17 +576,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkoutTemplate,
     updateWorkoutTemplate,
     deleteWorkoutTemplate,
+    duplicateWorkoutTemplate,
     weeklyRoutines,
     addWeeklyRoutine,
     updateWeeklyRoutine,
     deleteWeeklyRoutine,
+    duplicateWeeklyRoutine,
+    archiveWeeklyRoutine,
     trainingBlocks,
     addTrainingBlock,
     updateTrainingBlock,
     deleteTrainingBlock,
     checkTrainingBlockStatus,
     getStagnantExercises,
-    toggleDeloadMode
+    toggleDeloadMode,
+    reminders,
+    addReminder,
+    updateReminder,
+    deleteReminder,
+    getDueReminders,
+    markReminderAsSeen,
+    dismissReminder,
+    exportData
   };
 
   return (

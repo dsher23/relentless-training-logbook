@@ -1,7 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
-import { PillIcon, Check, X } from "lucide-react";
+import { PillIcon, Check, X, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Supplement, SupplementLog, useAppContext } from "@/context/AppContext";
 
 interface SupplementItemProps {
@@ -11,8 +17,9 @@ interface SupplementItemProps {
 }
 
 const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date = new Date() }) => {
-  const { addSupplementLog, updateSupplementLog } = useAppContext();
-
+  const { addSupplementLog, updateSupplementLog, addReminder, updateSupplement } = useAppContext();
+  const [showTimePopover, setShowTimePopover] = useState(false);
+  
   const handleToggle = () => {
     if (!log) {
       addSupplementLog({
@@ -31,6 +38,39 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
       } as SupplementLog);
     }
   };
+  
+  const handleAddReminder = (time: string) => {
+    // Create a date object for today with the specified time
+    const [hours, minutes] = time.split(':').map(Number);
+    const reminderDate = new Date();
+    reminderDate.setHours(hours, minutes, 0, 0);
+    
+    // Add reminder
+    addReminder({
+      id: crypto.randomUUID(),
+      type: "supplement",
+      referenceId: supplement.id,
+      dateTime: reminderDate,
+      title: `Time to take ${supplement.name}`,
+      message: `${supplement.dosage} as scheduled`,
+      seen: false,
+      dismissed: false
+    });
+    
+    // Update supplement with time
+    const times = supplement.schedule?.times || [];
+    if (!times.includes(time)) {
+      updateSupplement({
+        ...supplement,
+        schedule: {
+          ...supplement.schedule,
+          times: [...times, time]
+        }
+      });
+    }
+    
+    setShowTimePopover(false);
+  };
 
   return (
     <div className="flex items-center justify-between p-4 border-b">
@@ -48,14 +88,46 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
           </p>
         </div>
       </div>
-      <button
-        onClick={handleToggle}
-        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-          log?.taken ? "bg-gym-success text-white" : "bg-secondary text-muted-foreground"
-        }`}
-      >
-        {log?.taken ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-      </button>
+      <div className="flex items-center gap-2">
+        <Popover open={showTimePopover} onOpenChange={setShowTimePopover}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+            >
+              <Clock className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-3" side="top">
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm">Set reminder time</h4>
+              <div className="grid grid-cols-3 gap-1">
+                {["08:00", "12:00", "15:00", "18:00", "21:00", "23:00"].map(time => (
+                  <Button 
+                    key={time}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => handleAddReminder(time)}
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        
+        <button
+          onClick={handleToggle}
+          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            log?.taken ? "bg-gym-success text-white" : "bg-secondary text-muted-foreground"
+          }`}
+        >
+          {log?.taken ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+        </button>
+      </div>
     </div>
   );
 };

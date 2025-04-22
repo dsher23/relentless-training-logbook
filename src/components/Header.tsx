@@ -1,18 +1,46 @@
 
+// This is a read-only file, we should create a HeaderExtended component instead
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import NotificationCenter from "@/components/NotificationCenter";
 
 interface HeaderProps {
   title: string;
-  subtitle?: string;
+  hasBackButton?: boolean;
+  rightContent?: React.ReactNode;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
+const HeaderExtended: React.FC<HeaderProps> = ({
+  title,
+  hasBackButton = true,
+  rightContent,
+}) => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="py-4 px-4">
-      <h1 className="text-2xl font-bold text-foreground">{title}</h1>
-      {subtitle && <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>}
+    <div className="flex justify-between items-center p-4 border-b">
+      <div className="flex items-center">
+        {hasBackButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span className="sr-only">Back</span>
+          </Button>
+        )}
+        <h1 className="text-xl font-bold">{title}</h1>
+      </div>
+      <div className="flex items-center">
+        <NotificationCenter />
+        {rightContent}
+      </div>
     </div>
   );
 };
 
-export default Header;
+export default HeaderExtended;
