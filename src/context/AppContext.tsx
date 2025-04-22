@@ -1,14 +1,29 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Workout, WorkoutTemplate, WorkoutPlan, Supplement, SupplementLog, SteroidCycle } from '@/types';
+import { 
+  Workout, Exercise, BodyMeasurement, Supplement, 
+  SupplementLog, SteroidCycle, Reminder, SteroidCompound,
+  MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, 
+  BodyMeasurement, Exercise
+} from '@/types';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
 import { useSupplements } from '@/hooks/useSupplements';
 import { useCompounds } from '@/hooks/useCompounds';
 import { useReminders } from '@/hooks/useReminders';
-import { Reminder } from '@/types';
+import { useBodyMeasurements } from '@/hooks/useBodyMeasurements';
+import { useMoodLogs } from '@/hooks/useMoodLogs';
+import { useWeakPoints } from '@/hooks/useWeakPoints';
+import { useWeeklyRoutines } from '@/hooks/useWeeklyRoutines';
+import { useTrainingBlocks } from '@/hooks/useTrainingBlocks';
+
+export type { 
+  Workout, Exercise, BodyMeasurement, Supplement, 
+  SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
+  WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
+  SteroidCompound, WorkoutPlan, CycleCompound
+} from '@/types';
 
 export interface AppContextType {
   workouts: Workout[];
@@ -16,18 +31,24 @@ export interface AppContextType {
   addWorkout: (workout: Workout) => void;
   updateWorkout: (workout: Workout) => void;
   deleteWorkout: (id: string) => void;
+  getWorkoutById: (id: string) => Workout;
   
   workoutTemplates: WorkoutTemplate[];
   setWorkoutTemplates: React.Dispatch<React.SetStateAction<WorkoutTemplate[]>>;
   addWorkoutTemplate: (workoutTemplate: WorkoutTemplate) => void;
   updateWorkoutTemplate: (workoutTemplate: WorkoutTemplate) => void;
   deleteWorkoutTemplate: (id: string) => void;
+  duplicateWorkoutTemplate?: (id: string) => void;
   
   workoutPlans: WorkoutPlan[];
   setWorkoutPlans: React.Dispatch<React.SetStateAction<WorkoutPlan[]>>;
   addWorkoutPlan: (workoutPlan: WorkoutPlan) => void;
   updateWorkoutPlan: (workoutPlan: WorkoutPlan) => void;
   deleteWorkoutPlan: (id: string) => void;
+  duplicateWorkoutPlan?: (id: string) => void;
+  setActivePlan?: (id: string) => void;
+  addTemplateToPlan?: (planId: string, templateId: string) => void;
+  removeTemplateFromPlan?: (planId: string, templateId: string) => void;
   
   supplements: Supplement[];
   setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>;
@@ -46,14 +67,13 @@ export interface AppContextType {
   updateSteroidCycle: (cycle: SteroidCycle) => void;
   deleteSteroidCycle: (id: string) => void;
   
-  compounds: any[];
-  setCompounds: React.Dispatch<React.SetStateAction<any[]>>;
-  addCompound: (compound: any) => void;
-  updateCompound: (compound: any) => void;
+  compounds: SteroidCompound[];
+  setCompounds: React.Dispatch<React.SetStateAction<SteroidCompound[]>>;
+  addCompound: (compound: SteroidCompound) => void;
+  updateCompound: (compound: SteroidCompound) => void;
   deleteCompound: (id: string) => void;
-  getCompoundsByCycleId: (cycleId: string) => any[];
+  getCompoundsByCycleId: (cycleId: string) => SteroidCompound[];
 
-  // Reminders functionality
   reminders: Reminder[];
   setReminders: React.Dispatch<React.SetStateAction<Reminder[]>>;
   addReminder: (reminder: Reminder) => void;
@@ -62,6 +82,47 @@ export interface AppContextType {
   getDueReminders: () => Reminder[];
   markReminderAsSeen: (id: string) => void;
   dismissReminder: (id: string) => void;
+
+  bodyMeasurements: BodyMeasurement[];
+  setBodyMeasurements: React.Dispatch<React.SetStateAction<BodyMeasurement[]>>;
+  addBodyMeasurement: (measurement: BodyMeasurement) => void;
+  updateBodyMeasurement: (measurement: BodyMeasurement) => void;
+  deleteBodyMeasurement: (id: string) => void;
+  getBodyMeasurementById?: (id: string) => BodyMeasurement;
+
+  moodLogs: MoodLog[];
+  setMoodLogs: React.Dispatch<React.SetStateAction<MoodLog[]>>;
+  addMoodLog: (log: MoodLog) => void;
+  updateMoodLog: (log: MoodLog) => void;
+  deleteMoodLog: (id: string) => void;
+  getMoodLogById?: (id: string) => MoodLog;
+
+  weakPoints: WeakPoint[];
+  setWeakPoints: React.Dispatch<React.SetStateAction<WeakPoint[]>>;
+  addWeakPoint: (weakPoint: WeakPoint) => void;
+  updateWeakPoint: (weakPoint: WeakPoint) => void;
+  deleteWeakPoint: (id: string) => void;
+  getWeakPointById?: (id: string) => WeakPoint;
+
+  weeklyRoutines: WeeklyRoutine[];
+  setWeeklyRoutines: React.Dispatch<React.SetStateAction<WeeklyRoutine[]>>;
+  addWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  updateWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  deleteWeeklyRoutine: (id: string) => void;
+  getWeeklyRoutineById?: (id: string) => WeeklyRoutine;
+  duplicateWeeklyRoutine?: (id: string) => void;
+  archiveWeeklyRoutine?: (id: string, archived: boolean) => void;
+
+  trainingBlocks: TrainingBlock[];
+  setTrainingBlocks: React.Dispatch<React.SetStateAction<TrainingBlock[]>>;
+  addTrainingBlock: (block: TrainingBlock) => void;
+  updateTrainingBlock: (block: TrainingBlock) => void;
+  deleteTrainingBlock: (id: string) => void;
+  getTrainingBlockById?: (id: string) => TrainingBlock;
+  checkTrainingBlockStatus?: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | null };
+
+  toggleDeloadMode?: (workoutId: string, isDeload: boolean) => void;
+  exportData?: (type: string) => string;
 }
 
 export const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -73,6 +134,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkout,
     updateWorkout,
     deleteWorkout,
+    getWorkoutById = (id) => workouts.find(w => w.id === id) || {} as Workout,
+    toggleDeloadMode = (workoutId, isDeload) => {
+      const workout = workouts.find(w => w.id === workoutId);
+      if (workout) {
+        updateWorkout({ ...workout, isDeload });
+      }
+    }
   } = useWorkouts();
   
   const {
@@ -81,6 +149,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkoutTemplate,
     updateWorkoutTemplate,
     deleteWorkoutTemplate,
+    duplicateWorkoutTemplate = (id) => {
+      const template = workoutTemplates.find(t => t.id === id);
+      if (template) {
+        const newTemplate = {
+          ...template,
+          id: uuidv4(),
+          name: `${template.name} (Copy)`,
+        };
+        addWorkoutTemplate(newTemplate);
+      }
+    }
   } = useWorkoutTemplates();
   
   const {
@@ -89,6 +168,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkoutPlan,
     updateWorkoutPlan,
     deleteWorkoutPlan,
+    duplicateWorkoutPlan = (id) => {
+      const plan = workoutPlans.find(p => p.id === id);
+      if (plan) {
+        const newPlan = {
+          ...plan,
+          id: uuidv4(),
+          name: `${plan.name} (Copy)`,
+          isActive: false
+        };
+        addWorkoutPlan(newPlan);
+      }
+    },
+    setActivePlan = (id) => {
+      workoutPlans.forEach(plan => {
+        if (plan.id === id) {
+          updateWorkoutPlan({ ...plan, isActive: true });
+        } else if (plan.isActive) {
+          updateWorkoutPlan({ ...plan, isActive: false });
+        }
+      });
+    },
+    addTemplateToPlan = (planId, templateId) => {
+      const plan = workoutPlans.find(p => p.id === planId);
+      const template = workoutTemplates.find(t => t.id === templateId);
+      if (plan && template) {
+        updateWorkoutPlan({
+          ...plan,
+          workoutTemplates: [...plan.workoutTemplates, template]
+        });
+      }
+    },
+    removeTemplateFromPlan = (planId, templateId) => {
+      const plan = workoutPlans.find(p => p.id === planId);
+      if (plan) {
+        updateWorkoutPlan({
+          ...plan,
+          workoutTemplates: plan.workoutTemplates.filter(t => t.id !== templateId)
+        });
+      }
+    }
   } = useWorkoutPlans();
   
   const {
@@ -127,7 +246,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getCompoundsByCycleId
   } = useCompounds();
 
-  // Add reminders hook
   const {
     reminders,
     setReminders,
@@ -139,8 +257,102 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     dismissReminder,
   } = useReminders();
 
+  const {
+    bodyMeasurements = [],
+    setBodyMeasurements = () => {},
+    addBodyMeasurement = () => {},
+    updateBodyMeasurement = () => {},
+    deleteBodyMeasurement = () => {},
+    getBodyMeasurementById = (id) => bodyMeasurements.find(m => m.id === id) || {} as BodyMeasurement
+  } = useBodyMeasurements ? useBodyMeasurements() : {} as any;
+
+  const {
+    moodLogs = [],
+    setMoodLogs = () => {},
+    addMoodLog = () => {},
+    updateMoodLog = () => {},
+    deleteMoodLog = () => {},
+    getMoodLogById = (id) => moodLogs.find(m => m.id === id) || {} as MoodLog
+  } = useMoodLogs ? useMoodLogs() : {} as any;
+
+  const {
+    weakPoints = [],
+    setWeakPoints = () => {},
+    addWeakPoint = () => {},
+    updateWeakPoint = () => {},
+    deleteWeakPoint = () => {},
+    getWeakPointById = (id) => weakPoints.find(w => w.id === id) || {} as WeakPoint
+  } = useWeakPoints ? useWeakPoints() : {} as any;
+
+  const {
+    weeklyRoutines = [],
+    setWeeklyRoutines = () => {},
+    addWeeklyRoutine = () => {},
+    updateWeeklyRoutine = () => {},
+    deleteWeeklyRoutine = () => {},
+    getWeeklyRoutineById = (id) => weeklyRoutines.find(r => r.id === id) || {} as WeeklyRoutine,
+    duplicateWeeklyRoutine = (id) => {
+      const routine = weeklyRoutines.find(r => r.id === id);
+      if (routine) {
+        const newRoutine = {
+          ...routine,
+          id: uuidv4(),
+          name: `${routine.name} (Copy)`,
+        };
+        addWeeklyRoutine(newRoutine);
+      }
+    },
+    archiveWeeklyRoutine = (id, archived) => {
+      const routine = weeklyRoutines.find(r => r.id === id);
+      if (routine) {
+        updateWeeklyRoutine({ ...routine, archived });
+      }
+    }
+  } = useWeeklyRoutines ? useWeeklyRoutines() : {} as any;
+
+  const {
+    trainingBlocks = [],
+    setTrainingBlocks = () => {},
+    addTrainingBlock = () => {},
+    updateTrainingBlock = () => {},
+    deleteTrainingBlock = () => {},
+    getTrainingBlockById = (id) => trainingBlocks.find(b => b.id === id) || {} as TrainingBlock,
+    checkTrainingBlockStatus = () => ({ needsUpdate: false, trainingBlock: null })
+  } = useTrainingBlocks ? useTrainingBlocks() : {} as any;
+
+  const exportData = (type: string): string => {
+    let csvData = '';
+    switch (type) {
+      case 'workouts':
+        csvData = 'Date,Name,Exercises,Sets,Reps,Weight,Completed\n';
+        workouts.forEach(workout => {
+          workout.exercises.forEach(exercise => {
+            exercise.sets.forEach((set, index) => {
+              csvData += `${new Date(workout.date).toISOString()},${workout.name},${exercise.name},${index + 1},${set.reps},${set.weight},${workout.completed}\n`;
+            });
+          });
+        });
+        break;
+      case 'measurements':
+        csvData = 'Date,Weight,BodyFat,MuscleMass,Arms,Chest,Waist,Legs,Notes\n';
+        bodyMeasurements.forEach(m => {
+          csvData += `${new Date(m.date).toISOString()},${m.weight},${m.bodyFat || ''},${m.muscleMass || ''},${m.arms || ''},${m.chest || ''},${m.waist || ''},${m.legs || ''},${m.notes || ''}\n`;
+        });
+        break;
+      case 'supplements':
+        csvData = 'Date,Supplement,Dosage,Taken,Notes\n';
+        supplementLogs.forEach(log => {
+          const supplement = supplements.find(s => s.id === log.supplementId);
+          csvData += `${new Date(log.date).toISOString()},${supplement?.name || ''},${log.dosageTaken},${log.taken},${log.notes || ''}\n`;
+        });
+        break;
+      default:
+        csvData = 'No data to export';
+    }
+    return csvData;
+  };
+
   useEffect(() => {
-    // Load data from localStorage on component mount
     const storedWorkouts = localStorage.getItem('workouts');
     if (storedWorkouts) {
       setWorkouts(JSON.parse(storedWorkouts));
@@ -176,15 +388,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCompounds(JSON.parse(storedCompounds));
     }
 
-    // Load reminders
     const storedReminders = localStorage.getItem('reminders');
     if (storedReminders) {
       setReminders(JSON.parse(storedReminders));
     }
-  }, [setWorkouts, setWorkoutTemplates, setWorkoutPlans, setSupplements, setSupplementLogs, setSteroidCycles, setCompounds, setReminders]);
+    
+    const storedBodyMeasurements = localStorage.getItem('bodyMeasurements');
+    if (storedBodyMeasurements && setBodyMeasurements) {
+      setBodyMeasurements(JSON.parse(storedBodyMeasurements));
+    }
+    
+    const storedMoodLogs = localStorage.getItem('moodLogs');
+    if (storedMoodLogs && setMoodLogs) {
+      setMoodLogs(JSON.parse(storedMoodLogs));
+    }
+    
+    const storedWeakPoints = localStorage.getItem('weakPoints');
+    if (storedWeakPoints && setWeakPoints) {
+      setWeakPoints(JSON.parse(storedWeakPoints));
+    }
+    
+    const storedWeeklyRoutines = localStorage.getItem('weeklyRoutines');
+    if (storedWeeklyRoutines && setWeeklyRoutines) {
+      setWeeklyRoutines(JSON.parse(storedWeeklyRoutines));
+    }
+    
+    const storedTrainingBlocks = localStorage.getItem('trainingBlocks');
+    if (storedTrainingBlocks && setTrainingBlocks) {
+      setTrainingBlocks(JSON.parse(storedTrainingBlocks));
+    }
+  }, [
+    setWorkouts, setWorkoutTemplates, setWorkoutPlans, 
+    setSupplements, setSupplementLogs, setSteroidCycles, 
+    setCompounds, setReminders, setBodyMeasurements,
+    setMoodLogs, setWeakPoints, setWeeklyRoutines, setTrainingBlocks
+  ]);
 
   useEffect(() => {
-    // Save data to localStorage whenever it changes
     localStorage.setItem('workouts', JSON.stringify(workouts));
     localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
     localStorage.setItem('workoutPlans', JSON.stringify(workoutPlans));
@@ -193,7 +433,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('steroidCycles', JSON.stringify(steroidCycles));
     localStorage.setItem('compounds', JSON.stringify(compounds));
     localStorage.setItem('reminders', JSON.stringify(reminders));
-  }, [workouts, workoutTemplates, workoutPlans, supplements, supplementLogs, steroidCycles, compounds, reminders]);
+    
+    if (bodyMeasurements.length > 0) {
+      localStorage.setItem('bodyMeasurements', JSON.stringify(bodyMeasurements));
+    }
+    
+    if (moodLogs.length > 0) {
+      localStorage.setItem('moodLogs', JSON.stringify(moodLogs));
+    }
+    
+    if (weakPoints.length > 0) {
+      localStorage.setItem('weakPoints', JSON.stringify(weakPoints));
+    }
+    
+    if (weeklyRoutines.length > 0) {
+      localStorage.setItem('weeklyRoutines', JSON.stringify(weeklyRoutines));
+    }
+    
+    if (trainingBlocks.length > 0) {
+      localStorage.setItem('trainingBlocks', JSON.stringify(trainingBlocks));
+    }
+  }, [
+    workouts, workoutTemplates, workoutPlans, 
+    supplements, supplementLogs, steroidCycles, 
+    compounds, reminders, bodyMeasurements,
+    moodLogs, weakPoints, weeklyRoutines, trainingBlocks
+  ]);
 
   const value = {
     workouts,
@@ -201,18 +466,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkout,
     updateWorkout,
     deleteWorkout,
+    getWorkoutById,
+    toggleDeloadMode,
     
     workoutTemplates,
     setWorkoutTemplates,
     addWorkoutTemplate,
     updateWorkoutTemplate,
     deleteWorkoutTemplate,
+    duplicateWorkoutTemplate,
     
     workoutPlans,
     setWorkoutPlans,
     addWorkoutPlan,
     updateWorkoutPlan,
     deleteWorkoutPlan,
+    duplicateWorkoutPlan,
+    setActivePlan,
+    addTemplateToPlan,
+    removeTemplateFromPlan,
     
     supplements,
     setSupplements,
@@ -238,7 +510,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteCompound,
     getCompoundsByCycleId,
 
-    // Add reminders to context value
     reminders,
     setReminders,
     addReminder,
@@ -247,6 +518,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getDueReminders,
     markReminderAsSeen,
     dismissReminder,
+    
+    bodyMeasurements,
+    setBodyMeasurements,
+    addBodyMeasurement,
+    updateBodyMeasurement,
+    deleteBodyMeasurement,
+    getBodyMeasurementById,
+    
+    moodLogs,
+    setMoodLogs,
+    addMoodLog,
+    updateMoodLog,
+    deleteMoodLog,
+    getMoodLogById,
+    
+    weakPoints,
+    setWeakPoints,
+    addWeakPoint,
+    updateWeakPoint,
+    deleteWeakPoint,
+    getWeakPointById,
+    
+    weeklyRoutines,
+    setWeeklyRoutines,
+    addWeeklyRoutine,
+    updateWeeklyRoutine,
+    deleteWeeklyRoutine,
+    getWeeklyRoutineById,
+    duplicateWeeklyRoutine,
+    archiveWeeklyRoutine,
+    
+    trainingBlocks,
+    setTrainingBlocks,
+    addTrainingBlock,
+    updateTrainingBlock,
+    deleteTrainingBlock,
+    getTrainingBlockById,
+    checkTrainingBlockStatus,
+    
+    exportData
   };
 
   return (
