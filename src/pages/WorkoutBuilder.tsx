@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -60,7 +61,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  const totalSets = workout.exercises.reduce((acc: number, exercise) => {
+  const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
     return acc + exercise.sets.length;
   }, 0);
 

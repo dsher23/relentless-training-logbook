@@ -25,9 +25,9 @@ const Home: React.FC = () => {
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
-                <Link to="/workouts">
+                <Link to="/training">
                   <Button className="w-full" variant="outline">
-                    <Dumbbell className="mr-2 h-4 w-4" /> View Workouts
+                    <Dumbbell className="mr-2 h-4 w-4" /> Training Hub
                   </Button>
                 </Link>
                 <Link to="/plans">

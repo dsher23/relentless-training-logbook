@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
@@ -14,6 +15,7 @@ import WorkoutSelection from './pages/WorkoutSelection';
 import WorkoutBuilder from './pages/WorkoutBuilder';
 import PlanDetail from './pages/PlanDetail';
 import Index from './pages/Index';
+import Training from './pages/Training';
 
 function App() {
   return (
@@ -22,6 +24,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/training" element={<Training />} />
           
           <Route path="/workouts" element={<Workouts />} />
           <Route path="/workouts/new" element={<CreateWorkout />} />
