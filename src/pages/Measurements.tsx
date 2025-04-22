@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { Ruler, Camera } from "lucide-react";
+import { Ruler, Camera, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import ProgressChart from "@/components/ProgressChart";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
 import MeasurementForm from "@/components/MeasurementForm";
+import { BodyMeasurement } from "@/types";
 
 const Measurements: React.FC = () => {
   const { bodyMeasurements, addBodyMeasurement } = useAppContext();

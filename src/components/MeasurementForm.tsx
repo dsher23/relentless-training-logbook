@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -49,7 +49,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel })
   const handleSubmit = form.handleSubmit((data) => {
     const measurement: BodyMeasurement = {
       id: uuidv4(),
-      date: data.date.toISOString(),
+      date: data.date, // We're passing the Date object directly
       weight: Number(data.weight),
       chest: data.chest ? Number(data.chest) : undefined,
       waist: data.waist ? Number(data.waist) : undefined,
