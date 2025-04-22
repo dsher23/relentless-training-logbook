@@ -10,36 +10,60 @@ import Header from "@/components/Header";
 import AddExerciseForm from "@/components/AddExerciseForm";
 import { useAppContext } from "@/context/AppContext";
 import { Exercise } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { workouts, updateWorkout, deleteWorkout } = useAppContext();
+  const { workouts, updateWorkout, deleteWorkout, getWorkoutById } = useAppContext();
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Find the workout by ID
-  const workout = workouts.find(w => w.id === id);
+  const workout = id ? getWorkoutById(id) : undefined;
   
-  // If no workout is found, create one with this ID or redirect
   useEffect(() => {
-    if (!workout && id) {
-      toast({
-        title: "Error",
-        description: "The workout you're looking for doesn't exist.",
-        variant: "destructive"
-      });
-      navigate("/workouts");
-    }
+    // Small delay to allow context to update
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      
+      if (!workout?.id && id) {
+        toast({
+          title: "Error",
+          description: "The workout you're looking for doesn't exist.",
+          variant: "destructive"
+        });
+        navigate("/workouts");
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [workout, id, navigate, toast]);
   
-  if (!workout) {
+  if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
         <Header title="Loading..." />
+        <div className="p-4">
+          <Skeleton className="h-12 w-full mb-4" />
+          <Skeleton className="h-24 w-full mb-4" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
+  
+  if (!workout || !workout.id) {
+    return (
+      <div className="app-container animate-fade-in">
+        <Header title="Workout Not Found" />
         <div className="p-4 text-center">
-          <p className="mb-4">Loading workout details...</p>
+          <p className="mb-4">Unable to load workout details.</p>
+          <Button onClick={() => navigate("/workouts")}>
+            Return to Workouts
+          </Button>
         </div>
       </div>
     );
