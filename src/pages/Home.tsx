@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays, Dumbbell, LineChart } from 'lucide-react';
+import { CalendarDays, Dumbbell, LineChart, LayoutDashboard } from 'lucide-react';
 
 const Home: React.FC = () => {
   return (
@@ -20,8 +20,13 @@ const Home: React.FC = () => {
                 Track your workouts, monitor progress, and reach your fitness goals.
               </p>
               <div className="flex flex-col space-y-2">
-                <Link to="/workouts">
+                <Link to="/dashboard">
                   <Button className="w-full">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </Button>
+                </Link>
+                <Link to="/workouts">
+                  <Button className="w-full" variant="outline">
                     <Dumbbell className="mr-2 h-4 w-4" /> View Workouts
                   </Button>
                 </Link>
