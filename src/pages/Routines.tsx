@@ -230,9 +230,10 @@ const Routines: React.FC = () => {
           </TabsContent>
         </Tabs>
         
+        {/* Create New Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${open ? '' : 'hidden'}`}>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto w-full">
               <h2 className="text-lg font-medium mb-4">Create Weekly Routine</h2>
               <WeeklyRoutineBuilder 
                 onSave={() => { setOpen(false); handleRoutineSave(); }} 
@@ -242,9 +243,10 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
+        {/* Edit Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${editRoutineId ? '' : 'hidden'}`}>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto w-full">
               {editRoutineId && (
                 <>
                   <h2 className="text-lg font-medium mb-4">Edit Weekly Routine</h2>
@@ -259,9 +261,10 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
+        {/* Training Block Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${isCreatingBlock || editingBlock ? '' : 'hidden'}`}>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto w-full">
               <TrainingBlockForm 
                 blockId={editingBlock?.id}
                 nextSuggestedDate={getNextBlockStartDate()}

@@ -149,7 +149,7 @@ const Training: React.FC = () => {
                         <div>
                           <h3 className="font-medium">{template.name}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {template.exercises.length} exercises
+                            {template.exercises?.length || 0} exercises
                           </p>
                         </div>
                       </div>
