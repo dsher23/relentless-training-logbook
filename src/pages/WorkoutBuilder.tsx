@@ -64,8 +64,7 @@ const WorkoutBuilder: React.FC = () => {
   };
 
   // Calculate total sets correctly
-  const totalSets = workout.exercises.reduce((acc, exercise) => {
-    // Make sure we're adding a number to our accumulator, not an Exercise object
+  const totalSets = workout.exercises.reduce((acc: number, exercise) => {
     return acc + exercise.sets.length;
   }, 0);
 
