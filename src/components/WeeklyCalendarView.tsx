@@ -23,13 +23,8 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
   const startOfTheWeek = startOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfTheWeek, i));
   
-  // Get active training block and its routine
-  const activeBlock = trainingBlocks
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
-  
-  const activeRoutine = activeBlock 
-    ? weeklyRoutines.find(r => r.id === activeBlock.weeklyRoutineId)
-    : null;
+  // Get active routine (non-archived)
+  const activeRoutine = weeklyRoutines.find(r => !r.archived);
   
   // Find workouts for each day of the week
   const getWorkoutForDay = (date: Date): Workout | undefined => {
@@ -53,6 +48,16 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
     
     if (workout) {
       navigate(`/workouts/${workout.id}`);
+    } else {
+      // Check if there's a scheduled template for this day
+      const dayOfWeek = date.getDay();
+      const template = getScheduledWorkoutTemplate(dayOfWeek);
+      
+      if (template) {
+        navigate(`/workouts/new?templateId=${template.id}&date=${format(date, 'yyyy-MM-dd')}`);
+      } else {
+        navigate(`/workouts/new?date=${format(date, 'yyyy-MM-dd')}`);
+      }
     }
   };
   
@@ -133,8 +138,8 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
                       )}
                     </div>
                   ) : template ? (
-                    <div className="text-xs text-muted-foreground">
-                      <span className="italic">{template.name}</span>
+                    <div className="text-xs font-medium truncate">
+                      <span className="text-muted-foreground">{template.name}</span>
                       {template.scheduledTime && (
                         <div className="text-xs text-muted-foreground">
                           {template.scheduledTime}

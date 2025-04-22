@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Exercise } from "@/types";
 
@@ -40,6 +41,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
   const [weight, setWeight] = useState<number | undefined>(undefined);
   const [restTime, setRestTime] = useState<string>("90");
   const [notes, setNotes] = useState("");
+  const [isWeakPoint, setIsWeakPoint] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +65,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
       restTime: restTime !== "custom" ? parseInt(restTime) : undefined,
       notes: notes.trim() || undefined,
       lastProgressDate: new Date(),
-      isWeakPoint: false
+      isWeakPoint: isWeakPoint
     };
 
     onSave(newExercise);
@@ -83,6 +85,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
     setWeight(undefined);
     setRestTime("90");
     setNotes("");
+    setIsWeakPoint(false);
   };
 
   return (
@@ -163,6 +166,17 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
                 You can set a custom rest time during your workout.
               </p>
             )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="weak-point" 
+              checked={isWeakPoint}
+              onCheckedChange={(checked) => setIsWeakPoint(checked === true)}
+            />
+            <Label htmlFor="weak-point" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Mark as weak point exercise
+            </Label>
           </div>
           
           <div className="space-y-2">

@@ -7,7 +7,18 @@ export const useWeeklyRoutines = () => {
   const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
 
   const addWeeklyRoutine = (routine: WeeklyRoutine) => {
-    setWeeklyRoutines([...weeklyRoutines, routine]);
+    // Make sure the routine has the required structure
+    const validatedRoutine: WeeklyRoutine = {
+      id: routine.id || uuidv4(),
+      name: routine.name || "Weekly Plan",
+      workoutDays: routine.workoutDays || Array.from({ length: 7 }).map((_, i) => ({ 
+        dayOfWeek: i, 
+        workoutTemplateId: null
+      })),
+      archived: routine.archived || false
+    };
+    
+    setWeeklyRoutines([...weeklyRoutines, validatedRoutine]);
   };
 
   const updateWeeklyRoutine = (routine: WeeklyRoutine) => {

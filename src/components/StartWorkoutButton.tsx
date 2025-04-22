@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 
 interface StartWorkoutButtonProps {
   workoutId: string;
+  isTemplate?: boolean;
   disabled?: boolean;
   className?: string;
 }
 
 const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({ 
   workoutId, 
+  isTemplate = false,
   disabled = false,
   className = ""
 }) => {
@@ -19,7 +21,11 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
 
   const handleStartWorkout = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/workouts/${workoutId}/live`);
+    if (isTemplate) {
+      navigate(`/workouts/new?templateId=${workoutId}&start=true`);
+    } else {
+      navigate(`/workouts/${workoutId}/live`);
+    }
   };
 
   return (
