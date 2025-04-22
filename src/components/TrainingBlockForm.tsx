@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -32,6 +31,8 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
   const { workoutTemplates } = useAppContext();
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   
+  const REST_DAY_VALUE = "rest_day";
+  
   const handleDayUpdate = (dayOfWeek: number, templateId: string | null) => {
     if (!value) return;
     
@@ -39,12 +40,12 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
     const existingDayIndex = updatedDays.findIndex(d => d.dayOfWeek === dayOfWeek);
     
     if (existingDayIndex >= 0) {
-      if (templateId === null) {
+      if (templateId === null || templateId === REST_DAY_VALUE) {
         updatedDays.splice(existingDayIndex, 1);
       } else {
         updatedDays[existingDayIndex].workoutTemplateId = templateId;
       }
-    } else if (templateId !== null) {
+    } else if (templateId !== null && templateId !== REST_DAY_VALUE) {
       updatedDays.push({ dayOfWeek, workoutTemplateId: templateId });
     }
     
@@ -60,14 +61,14 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
         <div key={day} className="flex items-center gap-3">
           <div className="w-20 text-sm font-medium">{day}</div>
           <Select
-            value={value?.workoutDays.find(d => d.dayOfWeek === index)?.workoutTemplateId || ""}
+            value={value?.workoutDays.find(d => d.dayOfWeek === index)?.workoutTemplateId || REST_DAY_VALUE}
             onValueChange={(val) => handleDayUpdate(index, val || null)}
           >
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Rest Day" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Rest Day</SelectItem>
+              <SelectItem value={REST_DAY_VALUE}>Rest Day</SelectItem>
               {workoutTemplates.map((template) => (
                 <SelectItem key={template.id} value={template.id}>
                   {template.name}
