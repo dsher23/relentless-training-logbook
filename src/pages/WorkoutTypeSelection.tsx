@@ -1,15 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { BookOpen, Plus, ArrowLeft, Calendar, ClipboardList } from "lucide-react";
+import { BookOpen, Plus, ArrowLeft, Calendar, ClipboardList, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 const WorkoutTypeSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { workoutTemplates, weeklyRoutines } = useAppContext();
+  const { workoutTemplates, weeklyRoutines, workoutPlans } = useAppContext();
+  const [activeTab, setActiveTab] = useState("suggested");
+  
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
   
@@ -19,6 +27,9 @@ const WorkoutTypeSelection: React.FC = () => {
   const todaysWorkout = todaysWorkoutDay?.workoutTemplateId 
     ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
     : undefined;
+  
+  // Get active workout plan
+  const activePlan = workoutPlans.find(p => p.isActive);
 
   return (
     <div className="app-container animate-fade-in">
@@ -95,60 +106,127 @@ const WorkoutTypeSelection: React.FC = () => {
           </div>
         </div>
 
-        {workoutTemplates.length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold mb-4">
-              Saved Routines <span className="text-sm font-normal text-muted-foreground ml-2">({workoutTemplates.length})</span>
-            </h2>
-            
-            <div className="space-y-3">
-              {workoutTemplates.map(template => (
-                <Card 
-                  key={template.id} 
-                  className="hover:border-primary cursor-pointer"
-                  onClick={() => navigate(`/workouts/new?templateId=${template.id}`)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">{template.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {template.exercises.length} exercises
-                        </p>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="suggested">Suggested</TabsTrigger>
+            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="all">All Routines</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="suggested">
+            {todaysWorkout ? (
+              <div className="text-center p-4 text-muted-foreground">
+                Today's workout is already shown above
+              </div>
+            ) : (
+              <div className="text-center p-4 text-muted-foreground">
+                No specific workout scheduled for today
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="plans">
+            {workoutPlans.length > 0 ? (
+              <div className="space-y-3 mt-4">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Select from Workout Plans
+                </h3>
+                {workoutPlans.map(plan => (
+                  <Card 
+                    key={plan.id}
+                    className={`${plan.isActive ? "border-primary" : ""} hover:border-primary cursor-pointer`}
+                    onClick={() => navigate(`/plans/${plan.id}`)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">
+                            {plan.name}
+                            {plan.isActive && (
+                              <span className="ml-2 text-xs text-primary">(Active)</span>
+                            )}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {plan.workoutTemplates.length} workout{plan.workoutTemplates.length !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                        >
+                          Select
+                        </Button>
                       </div>
-                      <Button 
-                        size="sm" 
-                        className="bg-gym-blue text-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/workouts/new?templateId=${template.id}&start=true`);
-                        }}
-                      >
-                        Start
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {workoutTemplates.length === 0 && (
-          <div className="text-center p-6 border rounded-lg border-dashed">
-            <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-lg font-medium mb-1">No Saved Routines</h3>
-            <p className="text-muted-foreground mb-4">
-              Create and save workout routines for quick access.
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/workouts/new")}
-            >
-              Create Your First Routine
-            </Button>
-          </div>
-        )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-6 border rounded-lg border-dashed mt-4">
+                <ClipboardList className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <h3 className="text-lg font-medium mb-2">No Plans Created</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Create a workout plan to organize multiple workouts together.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/plans")}
+                >
+                  Create Your First Plan
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="all">
+            {workoutTemplates.length > 0 ? (
+              <div className="space-y-3 mt-4">
+                {workoutTemplates.map(template => (
+                  <Card 
+                    key={template.id} 
+                    className="hover:border-primary cursor-pointer"
+                    onClick={() => navigate(`/workouts/new?templateId=${template.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">{template.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {template.exercises.length} exercises
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          className="bg-gym-blue text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/workouts/new?templateId=${template.id}&start=true`);
+                          }}
+                        >
+                          Start
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-6 border rounded-lg border-dashed mt-4">
+                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-lg font-medium mb-1">No Saved Routines</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create and save workout routines for quick access.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/workouts/new")}
+                >
+                  Create Your First Routine
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

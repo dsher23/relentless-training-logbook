@@ -17,7 +17,9 @@ import {
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
-  SelectValue 
+  SelectValue,
+  SelectGroup,
+  SelectLabel
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { WeeklyRoutine, WorkoutTemplate } from "@/types";
@@ -26,7 +28,7 @@ import StartWorkoutButton from "./StartWorkoutButton";
 import { useNavigate } from "react-router-dom";
 
 const WeeklyPlanView: React.FC = () => {
-  const { weeklyRoutines, workoutTemplates, addWeeklyRoutine, updateWeeklyRoutine } = useAppContext();
+  const { weeklyRoutines, workoutTemplates, workoutPlans, addWeeklyRoutine, updateWeeklyRoutine } = useAppContext();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -34,6 +36,7 @@ const WeeklyPlanView: React.FC = () => {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("none");
   
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
@@ -46,7 +49,8 @@ const WeeklyPlanView: React.FC = () => {
     workoutDays: Array.from({ length: 7 }).map((_, i) => ({ 
       dayOfWeek: i, 
       workoutTemplateId: null
-    }))
+    })),
+    archived: false
   };
   
   const handlePreviousWeek = () => {
@@ -62,6 +66,7 @@ const WeeklyPlanView: React.FC = () => {
     const selectedDay = currentRoutine.workoutDays.find(day => day.dayOfWeek === dayIndex);
     setSelectedRoutineId(selectedDay?.workoutTemplateId || null);
     setIsDialogOpen(true);
+    setSelectedPlanId("none");
   };
   
   const handleAssignWorkout = () => {
@@ -77,7 +82,8 @@ const WeeklyPlanView: React.FC = () => {
           day.dayOfWeek === selectedDayIndex 
             ? { ...day, workoutTemplateId: selectedRoutineId }
             : day
-        )
+        ),
+        archived: false
       };
       addWeeklyRoutine(updatedRoutine);
     } else {
@@ -112,6 +118,30 @@ const WeeklyPlanView: React.FC = () => {
   const getTemplateById = (id: string | null) => {
     if (!id) return null;
     return workoutTemplates.find(t => t.id === id);
+  };
+
+  // Handle selecting a workout from a plan
+  const handlePlanChange = (value: string) => {
+    setSelectedPlanId(value);
+    setSelectedRoutineId(null); // Reset workout selection when changing plans
+  };
+
+  // Get workouts from the selected plan
+  const getWorkoutsFromPlan = () => {
+    if (selectedPlanId === "none") return [];
+    const plan = workoutPlans.find(p => p.id === selectedPlanId);
+    return plan ? plan.workoutTemplates : [];
+  };
+
+  // Get all individual workouts not in plans
+  const getIndividualWorkouts = () => {
+    // Get IDs of all workouts that are in plans
+    const planWorkoutIds = workoutPlans.flatMap(p => 
+      p.workoutTemplates.map(t => t.id)
+    );
+    
+    // Return workouts that aren't in any plan
+    return workoutTemplates.filter(t => !planWorkoutIds.includes(t.id));
   };
 
   return (
@@ -214,23 +244,60 @@ const WeeklyPlanView: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="py-4">
-            <Select
-              value={selectedRoutineId || "none"}
-              onValueChange={(value) => setSelectedRoutineId(value === "none" ? null : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a routine" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Workout (Rest Day)</SelectItem>
-                {workoutTemplates.map(template => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name} ({template.exercises.length} exercises)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="py-4 space-y-4">
+            {/* Step 1: Select Workout Plan */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">
+                Step 1: Select Workout Plan
+              </label>
+              <Select value={selectedPlanId} onValueChange={handlePlanChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a workout plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Individual Workouts</SelectItem>
+                  {workoutPlans.map(plan => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} ({plan.workoutTemplates.length} workouts)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Step 2: Select Workout */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">
+                Step 2: Select Workout
+              </label>
+              <Select 
+                value={selectedRoutineId || "none"} 
+                onValueChange={(value) => setSelectedRoutineId(value === "none" ? null : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a workout" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Workout (Rest Day)</SelectItem>
+                  
+                  {selectedPlanId === "none" ? (
+                    // Show individual workouts
+                    getIndividualWorkouts().map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name} ({template.exercises.length} exercises)
+                      </SelectItem>
+                    ))
+                  ) : (
+                    // Show workouts from selected plan
+                    getWorkoutsFromPlan().map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name} ({template.exercises.length} exercises)
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             
             {selectedRoutineId && (
               <div className="mt-4 p-3 bg-secondary rounded-md">

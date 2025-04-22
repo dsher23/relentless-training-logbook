@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon } from "lucide-react";
+import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 
@@ -23,6 +24,11 @@ const TabNavigationExtended: React.FC = () => {
       icon: <Dumbbell className="w-5 h-5" />,
     },
     {
+      path: "/plans",
+      label: "Plans",
+      icon: <ClipboardList className="w-5 h-5" />,
+    },
+    {
       path: "/weekly",
       label: "Weekly",
       icon: <CalendarDays className="w-5 h-5" />,
@@ -39,11 +45,6 @@ const TabNavigationExtended: React.FC = () => {
       icon: <Heart className="w-5 h-5" />,
     },
     {
-      path: "/routines",
-      label: "Routines",
-      icon: <Calendar className="w-5 h-5" />,
-    },
-    {
       path: "/settings",
       label: "Settings",
       icon: <SettingsIcon className="w-5 h-5" />,
@@ -58,7 +59,8 @@ const TabNavigationExtended: React.FC = () => {
           to={tab.path}
           className={cn(
             "flex flex-col items-center py-2 px-3 relative",
-            location.pathname === tab.path
+            location.pathname === tab.path || 
+            (location.pathname.startsWith(tab.path + "/") && tab.path !== "/dashboard")
               ? "text-gym-purple"
               : "text-muted-foreground"
           )}

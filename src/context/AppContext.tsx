@@ -7,7 +7,7 @@ import type {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
   WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
-  CycleCompound
+  CycleCompound, WorkoutPlan
 } from '@/types';
 import { useBodyMeasurements } from '@/hooks/useBodyMeasurements';
 import { useMoodLogs } from '@/hooks/useMoodLogs';
@@ -15,6 +15,7 @@ import { useWeakPoints } from '@/hooks/useWeakPoints';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWeeklyRoutines } from '@/hooks/useWeeklyRoutines';
 import { useTrainingBlocks } from '@/hooks/useTrainingBlocks';
+import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
 
 interface AppContextType {
   workouts: Workout[];
@@ -73,6 +74,14 @@ interface AppContextType {
   updateSteroidCycle: (cycle: SteroidCycle) => void;
   deleteSteroidCycle: (id: string) => void;
   duplicateSteroidCycle: (id: string) => void;
+  workoutPlans: WorkoutPlan[];
+  addWorkoutPlan: (plan: WorkoutPlan) => void;
+  updateWorkoutPlan: (plan: WorkoutPlan) => void;
+  deleteWorkoutPlan: (id: string) => void;
+  duplicateWorkoutPlan: (id: string) => void;
+  addTemplateToPlan: (planId: string, template: WorkoutTemplate) => void;
+  removeTemplateFromPlan: (planId: string, templateId: string) => void;
+  setActivePlan: (planId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -96,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const workoutTemplateHooks = useWorkoutTemplates();
   const weeklyRoutineHooks = useWeeklyRoutines();
   const trainingBlockHooks = useTrainingBlocks();
+  const workoutPlanHooks = useWorkoutPlans();
   
   const [stagnantExercises, setStagnantExercises] = useState<{ workout: Workout; exercise: Exercise }[]>([]);
 
@@ -217,7 +227,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     saveToLocalStorage();
-  }, [workoutHooks.workouts, supplementHooks.supplements, cycleHooks.steroidCycles, reminderHooks.reminders, bodyMeasurementHooks.bodyMeasurements, moodLogHooks.moodLogs, weakPointHooks.weakPoints, workoutTemplateHooks.workoutTemplates, weeklyRoutineHooks.weeklyRoutines, trainingBlockHooks.trainingBlocks]);
+  }, [workoutHooks.workouts, supplementHooks.supplements, cycleHooks.steroidCycles, reminderHooks.reminders, bodyMeasurementHooks.bodyMeasurements, moodLogHooks.moodLogs, weakPointHooks.weakPoints, workoutTemplateHooks.workoutTemplates, weeklyRoutineHooks.weeklyRoutines, trainingBlockHooks.trainingBlocks, workoutPlanHooks.workoutPlans]);
 
   const loadInitialData = () => {
     try {
@@ -231,6 +241,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedWeeklyRoutines = localStorage.getItem('ironlog_weeklyRoutines');
       const savedTrainingBlocks = localStorage.getItem('ironlog_trainingBlocks');
       const savedSteroidCycles = localStorage.getItem('ironlog_steroidCycles');
+      const savedWorkoutPlans = localStorage.getItem('ironlog_workoutPlans');
       
       workoutHooks.setWorkouts(savedWorkouts ? JSON.parse(savedWorkouts) : []);
       bodyMeasurementHooks.setBodyMeasurements(savedBodyMeasurements ? JSON.parse(savedBodyMeasurements) : []);
@@ -242,6 +253,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       weeklyRoutineHooks.setWeeklyRoutines(savedWeeklyRoutines ? JSON.parse(savedWeeklyRoutines) : []);
       trainingBlockHooks.setTrainingBlocks(savedTrainingBlocks ? JSON.parse(savedTrainingBlocks) : []);
       cycleHooks.setSteroidCycles(savedSteroidCycles ? JSON.parse(savedSteroidCycles) : []);
+      workoutPlanHooks.setWorkoutPlans(savedWorkoutPlans ? JSON.parse(savedWorkoutPlans) : []);
     } catch (error) {
       console.error('Error loading initial data:', error);
       workoutHooks.setWorkouts([]);
@@ -254,6 +266,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       weeklyRoutineHooks.setWeeklyRoutines([]);
       trainingBlockHooks.setTrainingBlocks([]);
       cycleHooks.setSteroidCycles([]);
+      workoutPlanHooks.setWorkoutPlans([]);
     }
   };
 
@@ -268,6 +281,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('ironlog_weeklyRoutines', JSON.stringify(weeklyRoutineHooks.weeklyRoutines));
     localStorage.setItem('ironlog_trainingBlocks', JSON.stringify(trainingBlockHooks.trainingBlocks));
     localStorage.setItem('ironlog_steroidCycles', JSON.stringify(cycleHooks.steroidCycles));
+    localStorage.setItem('ironlog_workoutPlans', JSON.stringify(workoutPlanHooks.workoutPlans));
   };
 
   const value: AppContextType = {
@@ -281,6 +295,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ...workoutTemplateHooks,
     ...weeklyRoutineHooks,
     ...trainingBlockHooks,
+    ...workoutPlanHooks,
     checkTrainingBlockStatus,
     getStagnantExercises,
     exportData,
@@ -297,5 +312,5 @@ export type {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
   WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
-  CycleCompound 
+  CycleCompound, WorkoutPlan
 };

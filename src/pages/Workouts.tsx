@@ -1,6 +1,7 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Plus, Calendar, ClipboardList, Star } from "lucide-react";
+import { Dumbbell, Plus, Calendar, ClipboardList, Star, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
@@ -12,7 +13,7 @@ import WeeklyPlanView from "@/components/WeeklyPlanView";
 
 const Workouts: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts, workoutTemplates } = useAppContext();
+  const { workouts, workoutTemplates, workoutPlans } = useAppContext();
   
   // Sort templates to show favorites first
   const sortedTemplates = [...workoutTemplates].sort((a, b) => {
@@ -26,6 +27,9 @@ const Workouts: React.FC = () => {
   const completedWorkouts = workouts
     .filter(w => w.completed)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  // Get active workout plan
+  const activePlan = workoutPlans.find(p => p.isActive);
   
   return (
     <div className="app-container animate-fade-in">
@@ -50,13 +54,39 @@ const Workouts: React.FC = () => {
         </div>
       </div>
       
+      {activePlan && (
+        <div className="px-4 mb-6">
+          <Card className="bg-secondary/50">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium flex items-center">
+                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                    Active Plan: {activePlan.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {activePlan.workoutTemplates.length} workouts in plan
+                  </p>
+                </div>
+                <Button 
+                  size="sm"
+                  onClick={() => navigate(`/plans/${activePlan.id}`)}
+                >
+                  View Plan
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
       <Tabs defaultValue="routines" className="w-full">
         <TabsList className="grid grid-cols-2 mx-4">
           <TabsTrigger value="routines">
             <ClipboardList className="h-4 w-4 mr-2" /> Saved Routines
           </TabsTrigger>
           <TabsTrigger value="weekly">
-            <Calendar className="h-4 w-4 mr-2" /> Weekly Plan
+            <CalendarDays className="h-4 w-4 mr-2" /> Weekly Plan
           </TabsTrigger>
         </TabsList>
         
@@ -68,18 +98,32 @@ const Workouts: React.FC = () => {
               <p className="text-muted-foreground mb-6">
                 Start by creating your first workout routine.
               </p>
-              <Button onClick={() => navigate("/workouts/new")}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Routine
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => navigate("/workouts/new")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Routine
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/plans")}
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  View Plans
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="px-4 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">My Saved Routines</h2>
-                <Button size="sm" variant="outline" onClick={() => navigate("/workouts/new")}>
-                  <Plus className="h-4 w-4 mr-1" /> New
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate("/plans")}>
+                    Plan Manager
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/workouts/new")}>
+                    <Plus className="h-4 w-4 mr-1" /> New
+                  </Button>
+                </div>
               </div>
               {sortedTemplates.map(template => (
                 <Card 

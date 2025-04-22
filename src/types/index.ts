@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -6,6 +7,7 @@ export interface Workout {
   notes?: string;
   completed: boolean;
   isDeload?: boolean;
+  scheduledTime?: string;
 }
 
 export interface Exercise {
@@ -15,6 +17,7 @@ export interface Exercise {
   notes?: string;
   lastProgressDate: Date;
   isWeakPoint?: boolean;
+  restTime?: number;
 }
 
 export interface BodyMeasurement {
@@ -28,6 +31,7 @@ export interface BodyMeasurement {
   waist?: number;
   legs?: number;
   notes?: string;
+  photoUrl?: string;
 }
 
 export interface Supplement {
@@ -35,6 +39,7 @@ export interface Supplement {
   name: string;
   dosage: string;
   notes?: string;
+  schedule?: string;
 }
 
 export interface SupplementLog {
@@ -55,12 +60,17 @@ export interface MoodLog {
   sleepQuality: number;
   stressLevel: number;
   notes?: string;
+  sleep?: number;
+  energy?: number;
 }
 
 export interface WeakPoint {
   id: string;
   name: string;
   description?: string;
+  muscleGroup?: string;
+  priority?: number;
+  sessionsPerWeekGoal?: number;
 }
 
 export interface WorkoutTemplate {
@@ -88,6 +98,7 @@ export interface TrainingBlock {
   durationWeeks: number;
   goal: string;
   notes?: string;
+  weeklyRoutineId?: string;
 }
 
 export interface Reminder {
@@ -97,6 +108,9 @@ export interface Reminder {
   dueDate: Date;
   seen: boolean;
   dismissed: boolean;
+  type?: string;
+  message?: string;
+  dateTime?: Date;
 }
 
 export interface SteroidCycle {
@@ -106,6 +120,9 @@ export interface SteroidCycle {
   endDate: Date;
   notes?: string;
   compounds: CycleCompound[];
+  isPrivate?: boolean;
+  currentWeek?: number;
+  totalWeeks?: number;
 }
 
 export interface CycleCompound {
@@ -113,4 +130,12 @@ export interface CycleCompound {
   name: string;
   dosage: string;
   frequency: string;
+}
+
+export interface WorkoutPlan {
+  id: string;
+  name: string;
+  description?: string;
+  workoutTemplates: WorkoutTemplate[];
+  isActive: boolean;
 }
