@@ -1,47 +1,115 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Edit, Plus } from "lucide-react";
+import { Edit, Plus, Save, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
-import StartWorkoutButton from "@/components/StartWorkoutButton";
-import { useAppContext } from "@/context/AppContext";
 import AddExerciseForm from "@/components/AddExerciseForm";
+import { useAppContext } from "@/context/AppContext";
+import { Exercise } from "@/types";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { workouts, updateWorkout } = useAppContext();
+  const { workouts, updateWorkout, deleteWorkout } = useAppContext();
   const [showExerciseForm, setShowExerciseForm] = useState(false);
+  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   
+  // Find the workout by ID
   const workout = workouts.find(w => w.id === id);
+  
+  // If no workout is found, create one with this ID or redirect
+  useEffect(() => {
+    if (!workout && id) {
+      toast({
+        title: "Error",
+        description: "The workout you're looking for doesn't exist.",
+        variant: "destructive"
+      });
+      navigate("/workouts");
+    }
+  }, [workout, id, navigate, toast]);
   
   if (!workout) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Workout Not Found" />
+        <Header title="Loading..." />
         <div className="p-4 text-center">
-          <p className="mb-4">The workout you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate("/workouts")}>
-            Back to Workouts
-          </Button>
+          <p className="mb-4">Loading workout details...</p>
         </div>
       </div>
     );
   }
   
-  const handleSaveExercise = (exercise) => {
+  const handleSaveExercise = (exercise: Exercise) => {
+    if (editingExerciseId) {
+      // Update existing exercise
+      const updatedExercises = workout.exercises.map(ex => 
+        ex.id === editingExerciseId ? exercise : ex
+      );
+      
+      const updatedWorkout = {
+        ...workout,
+        exercises: updatedExercises,
+      };
+      
+      updateWorkout(updatedWorkout);
+      setEditingExerciseId(null);
+      toast({
+        title: "Exercise updated",
+        description: `${exercise.name} has been updated.`
+      });
+    } else {
+      // Add new exercise
+      const updatedWorkout = {
+        ...workout,
+        exercises: [...workout.exercises, exercise],
+      };
+      
+      updateWorkout(updatedWorkout);
+      toast({
+        title: "Exercise added",
+        description: `${exercise.name} has been added to your workout.`
+      });
+    }
+  };
+  
+  const handleEditExercise = (exerciseId: string) => {
+    setEditingExerciseId(exerciseId);
+    setShowExerciseForm(true);
+  };
+  
+  const handleDeleteExercise = (exerciseId: string) => {
     const updatedWorkout = {
       ...workout,
-      exercises: [...workout.exercises, exercise],
+      exercises: workout.exercises.filter(ex => ex.id !== exerciseId)
     };
     
     updateWorkout(updatedWorkout);
+    toast({
+      title: "Exercise removed",
+      description: "Exercise has been removed from your workout."
+    });
   };
+  
+  const handleDeleteWorkout = () => {
+    if (confirm("Are you sure you want to delete this workout?")) {
+      deleteWorkout(id);
+      toast({
+        title: "Workout deleted",
+        description: `${workout.name} has been deleted.`
+      });
+      navigate("/workouts");
+    }
+  };
+  
+  const editingExercise = editingExerciseId 
+    ? workout.exercises.find(ex => ex.id === editingExerciseId) 
+    : null;
   
   return (
     <div className="app-container animate-fade-in pb-16">
@@ -56,6 +124,7 @@ const WorkoutDetail: React.FC = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-muted-foreground"
+                onClick={() => navigate(`/workouts/new?edit=${workout.id}`)}
               >
                 <Edit className="h-4 w-4 mr-1" /> Edit
               </Button>
@@ -84,7 +153,10 @@ const WorkoutDetail: React.FC = () => {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => setShowExerciseForm(true)}
+              onClick={() => {
+                setEditingExerciseId(null);
+                setShowExerciseForm(true);
+              }}
             >
               <Plus className="h-4 w-4 mr-1" /> Add Exercise
             </Button>
@@ -103,17 +175,46 @@ const WorkoutDetail: React.FC = () => {
             <div className="space-y-3">
               {workout.exercises.map((exercise) => (
                 <Card key={exercise.id}>
-                  <CardContent className="p-3">
-                    <div className="font-medium">{exercise.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {exercise.sets.length} sets x {exercise.sets[0]?.reps || 0} reps
-                      {exercise.sets[0]?.weight ? ` x ${exercise.sets[0].weight}kg` : ''}
-                    </div>
-                    {exercise.restTime && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Rest: {exercise.restTime}s
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium flex items-center gap-2">
+                          🏋️ {exercise.name}
+                          {exercise.isWeakPoint && (
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">
+                              Weak Point
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {exercise.sets.length} sets × {exercise.sets[0]?.reps || 0} reps
+                          {exercise.sets[0]?.weight ? ` × ${exercise.sets[0].weight}kg` : ''}
+                          {exercise.restTime ? ` – Rest: ${exercise.restTime}s` : ''}
+                        </div>
+                        {exercise.notes && (
+                          <div className="text-xs text-muted-foreground mt-1 italic">
+                            📝 Notes: {exercise.notes}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleEditExercise(exercise.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteExercise(exercise.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -121,15 +222,35 @@ const WorkoutDetail: React.FC = () => {
           )}
         </div>
         
+        <div className="pt-4">
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleDeleteWorkout}
+            className="w-full"
+          >
+            Delete Workout
+          </Button>
+        </div>
+        
         <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t">
-          <StartWorkoutButton workoutId={workout.id} className="w-full" />
+          <Button 
+            className="w-full bg-gym-purple hover:bg-gym-darkPurple"
+            onClick={() => navigate(`/live-workout/${workout.id}`)}
+          >
+            Start Workout
+          </Button>
         </div>
       </div>
       
       <AddExerciseForm 
         isOpen={showExerciseForm}
-        onClose={() => setShowExerciseForm(false)}
+        onClose={() => {
+          setShowExerciseForm(false);
+          setEditingExerciseId(null);
+        }}
         onSave={handleSaveExercise}
+        exercise={editingExercise || undefined}
       />
     </div>
   );

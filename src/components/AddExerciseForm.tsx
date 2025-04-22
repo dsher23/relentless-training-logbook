@@ -1,12 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +28,14 @@ interface AddExerciseFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (exercise: Exercise) => void;
+  exercise?: Exercise; // Optional for edit mode
 }
 
 const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ 
   isOpen, 
   onClose, 
-  onSave 
+  onSave,
+  exercise
 }) => {
   const { toast } = useToast();
   const [name, setName] = useState("");
@@ -42,6 +45,23 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
   const [restTime, setRestTime] = useState<string>("90");
   const [notes, setNotes] = useState("");
   const [isWeakPoint, setIsWeakPoint] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Populate form when in edit mode
+  useEffect(() => {
+    if (exercise) {
+      setName(exercise.name);
+      setSets(exercise.sets.length);
+      setReps(exercise.sets[0]?.reps || 10);
+      setWeight(exercise.sets[0]?.weight);
+      setRestTime(exercise.restTime ? exercise.restTime.toString() : "90");
+      setNotes(exercise.notes || "");
+      setIsWeakPoint(exercise.isWeakPoint || false);
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+    }
+  }, [exercise, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +76,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
     }
 
     const newExercise: Exercise = {
-      id: uuidv4(),
+      id: exercise?.id || uuidv4(),
       name: name.trim(),
       sets: Array(sets).fill({
         reps,
@@ -64,17 +84,19 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
       }),
       restTime: restTime !== "custom" ? parseInt(restTime) : undefined,
       notes: notes.trim() || undefined,
-      lastProgressDate: new Date(),
+      lastProgressDate: exercise?.lastProgressDate || new Date(),
       isWeakPoint: isWeakPoint
     };
 
     onSave(newExercise);
-    resetForm();
+    if (!isEditing) {
+      resetForm();
+    }
     onClose();
 
     toast({
-      title: "Exercise added",
-      description: `${name} has been added to your workout.`,
+      title: isEditing ? "Exercise updated" : "Exercise added",
+      description: `${name} has been ${isEditing ? "updated" : "added to your workout"}.`,
     });
   };
 
@@ -89,10 +111,13 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => { onClose(); resetForm(); }}>
+    <Dialog open={isOpen} onOpenChange={() => { onClose(); if (!isEditing) resetForm(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Exercise</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Exercise" : "Add Exercise"}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Update the details for this exercise." : "Add a new exercise to your workout."}
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,7 +219,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
               Cancel
             </Button>
             <Button type="submit">
-              Save Exercise
+              {isEditing ? "Update Exercise" : "Save Exercise"}
             </Button>
           </DialogFooter>
         </form>

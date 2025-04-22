@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -24,40 +24,81 @@ interface CreateWorkoutFormValues {
 
 const CreateWorkout: React.FC = () => {
   const navigate = useNavigate();
-  const { addWorkout } = useAppContext();
+  const location = useLocation();
+  const { addWorkout, workouts, updateWorkout } = useAppContext();
   const { toast } = useToast();
 
+  // Get edit ID from query params (if any)
+  const searchParams = new URLSearchParams(location.search);
+  const editId = searchParams.get('edit');
+  const templateId = searchParams.get('templateId');
+  
+  // Find workout if in edit mode
+  const existingWorkout = editId ? workouts.find(w => w.id === editId) : null;
+  
+  // Setup form
   const form = useForm<CreateWorkoutFormValues>({
     defaultValues: {
-      name: "",
-      date: new Date(),
-      notes: ""
+      name: existingWorkout?.name || "",
+      date: existingWorkout?.date ? new Date(existingWorkout.date) : new Date(),
+      notes: existingWorkout?.notes || ""
     }
   });
+  
+  // Load data when edit ID changes
+  useEffect(() => {
+    if (existingWorkout) {
+      form.reset({
+        name: existingWorkout.name,
+        date: new Date(existingWorkout.date),
+        notes: existingWorkout.notes || ""
+      });
+    }
+  }, [editId, existingWorkout, form]);
 
   const handleSubmit = (values: CreateWorkoutFormValues) => {
-    const newWorkout: Workout = {
-      id: uuidv4(),
-      name: values.name,
-      date: values.date,
-      exercises: [],
-      completed: false,
-      notes: values.notes || ""
-    };
-
-    addWorkout(newWorkout);
-    
-    toast({
-      title: "Workout Created",
-      description: `${values.name} has been created.`
-    });
-    
-    navigate(`/workouts/${newWorkout.id}`);
+    if (existingWorkout) {
+      // Update existing workout
+      const updatedWorkout: Workout = {
+        ...existingWorkout,
+        name: values.name,
+        date: values.date,
+        notes: values.notes || ""
+      };
+      
+      updateWorkout(updatedWorkout);
+      
+      toast({
+        title: "Workout Updated",
+        description: `${values.name} has been updated.`
+      });
+      
+      navigate(`/workouts/${updatedWorkout.id}`);
+    } else {
+      // Create new workout
+      const newWorkout: Workout = {
+        id: uuidv4(),
+        name: values.name,
+        date: values.date,
+        exercises: [],
+        completed: false,
+        notes: values.notes || ""
+      };
+      
+      addWorkout(newWorkout);
+      
+      toast({
+        title: "Workout Created",
+        description: `${values.name} has been created.`
+      });
+      
+      navigate(`/workouts/${newWorkout.id}`);
+    }
   };
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title="Create Workout" />
+      <Header title={existingWorkout ? "Edit Workout" : "Create Workout"} />
       
       <div className="p-4">
         <Card>
@@ -135,7 +176,7 @@ const CreateWorkout: React.FC = () => {
                 <div className="flex justify-end">
                   <Button type="submit" className="bg-gym-purple hover:bg-gym-darkPurple">
                     <Save className="mr-2 h-4 w-4" />
-                    Create Workout
+                    {existingWorkout ? "Update Workout" : "Create Workout"}
                   </Button>
                 </div>
               </form>
