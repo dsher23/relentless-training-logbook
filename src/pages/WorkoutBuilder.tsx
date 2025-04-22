@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, Move, GripVertical } from "lucide-react";
@@ -158,6 +159,7 @@ const WorkoutBuilder: React.FC = () => {
       id: uuidv4(),
       name: exerciseName,
       sets: [],
+      lastProgressDate: new Date(), // Adding the required property
     };
 
     setExercises([...exercises, newExercise]);
@@ -226,7 +228,6 @@ const WorkoutBuilder: React.FC = () => {
         name: workoutName,
         exercises: exercises,
         isFavorite: false,
-        lastPerformed: null,
       };
 
       if (id) {
