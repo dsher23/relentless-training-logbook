@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CalendarDays, Dumbbell, LineChart, LayoutDashboard } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const Home: React.FC = () => {
   return (
@@ -13,6 +14,10 @@ const Home: React.FC = () => {
       
       <div className="p-4">
         <div className="grid gap-4">
+          <div className="flex justify-center mb-8">
+            <Logo size="lg" />
+          </div>
+          
           <Card>
             <CardContent className="p-6">
               <h2 className="text-2xl font-bold mb-4">Welcome to Your Fitness Journey</h2>

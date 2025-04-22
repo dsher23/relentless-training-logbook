@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
+import HeaderExtended from "@/components/HeaderExtended";
 import ActivityStats from "@/components/dashboard/ActivityStats";
 import WeeklyProgress from "@/components/dashboard/WeeklyProgress";
 import { motion } from "framer-motion";
@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title="Dashboard" />
+      <HeaderExtended title="Dashboard" hasBackButton={false} />
       
       <div className="px-4 space-y-8">
         {/* Training Hub and Start Workout Buttons */}
