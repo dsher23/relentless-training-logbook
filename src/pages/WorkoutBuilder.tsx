@@ -61,6 +61,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
+  // Fix the type error by providing an initial value of 0 and explicitly typing the accumulator as number
   const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
     return acc + exercise.sets.length;
   }, 0);
