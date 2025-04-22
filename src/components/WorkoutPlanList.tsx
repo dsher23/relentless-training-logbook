@@ -28,12 +28,12 @@ const EmptyState = ({ onCreatePlan }) => (
         <div className="rounded-full bg-secondary p-3 mb-4">
           <Plus className="h-6 w-6" />
         </div>
-        <h3 className="text-lg font-medium mb-2">Create Your First Plan</h3>
+        <h3 className="text-lg font-medium mb-2">Create Your First Exercise Plan</h3>
         <p className="text-muted-foreground mb-4 max-w-sm">
-          Organize your workouts into a structured training plan. Perfect for tracking progress over time.
+          Organize your workout days into a structured training plan. Perfect for tracking progress over time.
         </p>
         <Button onClick={onCreatePlan}>
-          Create Training Plan
+          New Exercise Plan
         </Button>
       </div>
     </CardContent>
@@ -72,7 +72,7 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
               e.stopPropagation();
               onEdit(plan);
             }}>
-              <Edit className="h-4 w-4 mr-2" /> Edit
+              <Edit className="h-4 w-4 mr-2" /> Edit Details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation();
@@ -112,7 +112,7 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
       <div className="flex justify-between items-center">
         <p className="text-sm">
           <span className="font-medium">{plan.workoutTemplates.length}</span>{" "}
-          {plan.workoutTemplates.length === 1 ? "workout" : "workouts"}
+          {plan.workoutTemplates.length === 1 ? "workout day" : "workout days"}
         </p>
         <Button 
           size="sm" 
@@ -171,7 +171,7 @@ const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{plan ? "Edit Training Plan" : "Create New Training Plan"}</DialogTitle>
+          <DialogTitle>{plan ? "Edit Exercise Plan" : "Create New Exercise Plan"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div>
@@ -235,7 +235,7 @@ const WorkoutPlanList: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Workout plan updated successfully",
+        description: "Exercise plan updated successfully",
       });
       
       setEditingPlan(null);
@@ -244,11 +244,11 @@ const WorkoutPlanList: React.FC = () => {
       
       toast({
         title: "Success",
-        description: "Workout plan created successfully",
+        description: "Exercise plan created successfully",
       });
       
       setIsCreateDialogOpen(false);
-      navigate(`/plans/${plan.id}`);
+      navigate(`/exercise-plans/${plan.id}/days`);
     }
   };
 
@@ -257,7 +257,7 @@ const WorkoutPlanList: React.FC = () => {
     
     toast({
       title: "Success",
-      description: "Workout plan deleted successfully",
+      description: "Exercise plan deleted successfully",
     });
   };
 
@@ -266,7 +266,7 @@ const WorkoutPlanList: React.FC = () => {
     
     toast({
       title: "Success",
-      description: "Workout plan duplicated successfully",
+      description: "Exercise plan duplicated successfully",
     });
   };
 
@@ -282,7 +282,7 @@ const WorkoutPlanList: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium">Workout Plans</h2>
+        <h2 className="text-lg font-medium">Exercise Plans</h2>
         <Button 
           size="sm" 
           onClick={handleCreatePlan}
@@ -303,7 +303,7 @@ const WorkoutPlanList: React.FC = () => {
               onDuplicate={handleDuplicatePlan}
               onDelete={handleDeletePlan}
               onSetActive={handleSetActive}
-              onClick={() => navigate(`/plans/${plan.id}`)}
+              onClick={() => navigate(`/exercise-plans/${plan.id}/days`)}
             />
           ))}
         </div>

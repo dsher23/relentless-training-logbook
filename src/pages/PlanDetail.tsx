@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Calendar, Copy, Star } from "lucide-react";
@@ -40,7 +41,7 @@ const PlanDetail: React.FC = () => {
       <div className="app-container animate-fade-in">
         <Header title="Plan Not Found" />
         <div className="p-4">
-          <Button onClick={() => navigate("/plans")} variant="outline">
+          <Button onClick={() => navigate("/exercise-plans")} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Plans
           </Button>
         </div>
@@ -96,7 +97,7 @@ const PlanDetail: React.FC = () => {
     });
     
     // Navigate to edit the new template
-    navigate(`/routines/${newTemplate.id}`);
+    navigate(`/exercise-plans/${plan.id}/days/${newTemplate.id}`);
   };
   
   const handleRemoveTemplate = (templateId: string) => {
@@ -111,7 +112,11 @@ const PlanDetail: React.FC = () => {
   };
   
   const handleEditTemplate = (templateId: string) => {
-    navigate(`/routines/${templateId}`);
+    navigate(`/exercise-plans/${plan.id}/days/${templateId}`);
+  };
+  
+  const handleViewWorkoutDays = () => {
+    navigate(`/exercise-plans/${plan.id}/days`);
   };
   
   const handleDuplicateTemplate = (templateId: string) => {
@@ -137,7 +142,7 @@ const PlanDetail: React.FC = () => {
       
       <div className="p-4 space-y-4">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/plans")}>
+          <Button variant="outline" onClick={() => navigate("/exercise-plans")}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
           {!plan.isActive && (
@@ -145,6 +150,12 @@ const PlanDetail: React.FC = () => {
               <Star className="h-4 w-4 mr-1" /> Set as Active
             </Button>
           )}
+          <Button 
+            onClick={handleViewWorkoutDays}
+            className="ml-auto"
+          >
+            Manage Workout Days
+          </Button>
         </div>
         
         {plan.description && (
@@ -294,10 +305,10 @@ const PlanDetail: React.FC = () => {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create New Workout</DialogTitle>
+            <DialogTitle>Create New Workout Day</DialogTitle>
           </DialogHeader>
           <div>
-            <Label htmlFor="template-name">Workout Name</Label>
+            <Label htmlFor="template-name">Workout Day Name</Label>
             <Input
               id="template-name"
               value={newTemplateName}

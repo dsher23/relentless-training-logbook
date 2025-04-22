@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
@@ -15,6 +16,8 @@ import WorkoutBuilder from './pages/WorkoutBuilder';
 import PlanDetail from './pages/PlanDetail';
 import Index from './pages/Index';
 import Training from './pages/Training';
+import WorkoutDays from './pages/WorkoutDays';
+import DayExercises from './pages/DayExercises';
 
 function App() {
   return (
@@ -25,6 +28,11 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/training" element={<Training />} />
           
+          <Route path="/exercise-plans" element={<Plans />} />
+          <Route path="/exercise-plans/:planId" element={<PlanDetail />} />
+          <Route path="/exercise-plans/:planId/days" element={<WorkoutDays />} />
+          <Route path="/exercise-plans/:planId/days/:dayId" element={<DayExercises />} />
+          
           <Route path="/workouts" element={<Workouts />} />
           <Route path="/workouts/new" element={<CreateWorkout />} />
           <Route path="/workouts/builder" element={<WorkoutBuilder />} />
@@ -32,9 +40,6 @@ function App() {
           <Route path="/workouts/builder/:id" element={<WorkoutBuilder />} />
           <Route path="/live-workout/:id" element={<LiveWorkout />} />
           <Route path="/workout-history" element={<WorkoutHistory />} />
-
-          <Route path="/plans" element={<Plans />} />
-          <Route path="/plans/:id" element={<PlanDetail />} />
 
           <Route path="/routines" element={<Routines />} />
           <Route path="/routines/:id" element={<Routines />} />

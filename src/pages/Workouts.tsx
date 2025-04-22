@@ -65,12 +65,12 @@ const Workouts: React.FC = () => {
                     Active Plan: {activePlan.name}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {activePlan.workoutTemplates.length} workouts in plan
+                    {activePlan.workoutTemplates.length} workout days in plan
                   </p>
                 </div>
                 <Button 
                   size="sm"
-                  onClick={() => navigate(`/plans/${activePlan.id}`)}
+                  onClick={() => navigate(`/exercise-plans/${activePlan.id}/days`)}
                 >
                   View Plan
                 </Button>
@@ -83,7 +83,7 @@ const Workouts: React.FC = () => {
       <Tabs defaultValue="routines" className="w-full">
         <TabsList className="grid grid-cols-2 mx-4">
           <TabsTrigger value="routines">
-            <ClipboardList className="h-4 w-4 mr-2" /> Saved Routines
+            <ClipboardList className="h-4 w-4 mr-2" /> Workout Days
           </TabsTrigger>
           <TabsTrigger value="weekly">
             <CalendarDays className="h-4 w-4 mr-2" /> Weekly Plan
@@ -94,31 +94,31 @@ const Workouts: React.FC = () => {
           {sortedTemplates.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-6 text-center">
               <Dumbbell className="h-12 w-12 text-gym-purple mb-4" />
-              <h2 className="text-xl font-bold mb-2">No Routines Yet</h2>
+              <h2 className="text-xl font-bold mb-2">No Workout Days Yet</h2>
               <p className="text-muted-foreground mb-6">
-                Start by creating your first workout routine.
+                Start by creating your first workout day or exercise plan.
               </p>
               <div className="flex gap-2">
                 <Button onClick={() => navigate("/workouts/new")}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Routine
+                  Create Workout Day
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/plans")}
+                  onClick={() => navigate("/exercise-plans")}
                 >
                   <ClipboardList className="h-4 w-4 mr-2" />
-                  View Plans
+                  View Exercise Plans
                 </Button>
               </div>
             </div>
           ) : (
             <div className="px-4 space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">My Saved Routines</h2>
+                <h2 className="text-lg font-semibold">My Workout Days</h2>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => navigate("/plans")}>
-                    Plan Manager
+                  <Button size="sm" variant="outline" onClick={() => navigate("/exercise-plans")}>
+                    Exercise Plans
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => navigate("/workouts/new")}>
                     <Plus className="h-4 w-4 mr-1" /> New
@@ -129,7 +129,7 @@ const Workouts: React.FC = () => {
                 <Card 
                   key={template.id} 
                   className="hover:border-primary cursor-pointer"
-                  onClick={() => navigate(`/routines/${template.id}`)}
+                  onClick={() => navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -150,7 +150,7 @@ const Workouts: React.FC = () => {
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/workouts/new?templateId=${template.id}`);
+                            navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`);
                           }}
                         >
                           Edit
