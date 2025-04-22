@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { 
-  Play, Pause, CheckCircle2, ChevronRight, 
-  Clock, Timer, ArrowUp, ArrowDown, XCircle 
-} from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useAppContext, Workout, Exercise } from "@/context/AppContext";
-import { formatDuration } from "date-fns";
+import { useAppContext, Workout } from "@/context/AppContext";
+import { WorkoutHeader } from "@/components/workout/WorkoutHeader";
+import { RestTimer } from "@/components/workout/RestTimer";
+import { ExerciseLog } from "@/components/workout/ExerciseLog";
+import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
 
 const LiveWorkout = () => {
   const { id } = useParams();
@@ -22,9 +19,7 @@ const LiveWorkout = () => {
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [workoutTime, setWorkoutTime] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
-  const [restTime, setRestTime] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
@@ -34,7 +29,8 @@ const LiveWorkout = () => {
     }
   }>({});
 
-  // Find the workout from the ID
+  const { workoutTime, restTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
+
   useEffect(() => {
     if (id) {
       let foundWorkout: Workout | null = null;
@@ -42,7 +38,6 @@ const LiveWorkout = () => {
       if (isTemplate) {
         const template = workoutTemplates.find(t => t.id === id);
         if (template) {
-          // Create a new workout instance from the template
           foundWorkout = {
             id: crypto.randomUUID(),
             name: template.name,
@@ -51,7 +46,6 @@ const LiveWorkout = () => {
             completed: false
           } as Workout;
           
-          // Add the new workout to the workouts list
           addWorkout(foundWorkout);
         }
       } else {
@@ -61,7 +55,6 @@ const LiveWorkout = () => {
       if (foundWorkout) {
         setWorkout(foundWorkout);
         
-        // Initialize exercise data
         const initialData: {
           [key: string]: {
             sets: { reps: number; weight: number }[];
@@ -71,7 +64,6 @@ const LiveWorkout = () => {
         } = {};
         
         foundWorkout.exercises.forEach(exercise => {
-          // Find previous workout with the same exercise for comparison
           const previousWorkout = workouts
             .filter(w => w.id !== foundWorkout?.id && w.completed && w.exercises.some(e => e.name === exercise.name))
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -96,38 +88,6 @@ const LiveWorkout = () => {
       }
     }
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
-
-  // Workout timer
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
-    if (isTimerRunning && !isResting) {
-      interval = setInterval(() => {
-        setWorkoutTime(prev => prev + 1);
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isTimerRunning, isResting]);
-
-  // Rest timer
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
-    if (isResting && restTime > 0) {
-      interval = setInterval(() => {
-        setRestTime(prev => {
-          if (prev <= 1) {
-            setIsResting(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isResting, restTime]);
 
   const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
     setExerciseData(prev => {
@@ -203,11 +163,6 @@ const LiveWorkout = () => {
     });
   };
 
-  const startRest = (duration = 90) => {
-    setIsResting(true);
-    setRestTime(duration);
-  };
-
   const toggleTimer = () => {
     setIsTimerRunning(!isTimerRunning);
   };
@@ -229,7 +184,6 @@ const LiveWorkout = () => {
   const finishWorkout = () => {
     if (!workout) return;
     
-    // Update exercises with logged data
     const updatedExercises = workout.exercises.map(exercise => {
       const data = exerciseData[exercise.id];
       if (!data) return exercise;
@@ -242,7 +196,6 @@ const LiveWorkout = () => {
       };
     });
     
-    // Update the workout
     const updatedWorkout: Workout = {
       ...workout,
       exercises: updatedExercises,
@@ -259,42 +212,17 @@ const LiveWorkout = () => {
     navigate("/workout-history");
   };
 
-  const renderProgressIndicator = (exerciseId: string, setIndex: number) => {
-    const currentData = exerciseData[exerciseId];
-    if (!currentData?.previousStats || !currentData.previousStats[setIndex]) {
-      return null;
-    }
-    
-    const prevSet = currentData.previousStats[setIndex];
-    const currentSet = currentData.sets[setIndex];
-    
-    // Compare volume (reps * weight)
-    const prevVolume = prevSet.reps * prevSet.weight;
-    const currentVolume = currentSet.reps * currentSet.weight;
-    
-    if (currentVolume > prevVolume) {
-      return <ArrowUp className="h-4 w-4 text-green-500" />;
-    } else if (currentVolume < prevVolume) {
-      return <ArrowDown className="h-4 w-4 text-red-500" />;
-    }
-    
-    return null;
-  };
-
   if (!workout) {
     return <div className="p-4 text-center">Loading workout...</div>;
   }
 
-  // Make sure we have a valid currentExerciseIndex
   const safeCurrentExerciseIndex = Math.min(
     currentExerciseIndex,
     workout.exercises.length - 1
   );
   
-  // Make sure we have a current exercise
   const currentExercise = workout.exercises[safeCurrentExerciseIndex];
   
-  // Only proceed if we have a valid current exercise
   if (!currentExercise) {
     return (
       <div className="p-4 text-center">
@@ -305,182 +233,67 @@ const LiveWorkout = () => {
   
   const currentExerciseData = exerciseData[currentExercise.id];
 
-  // If we don't have exercise data yet, show loading
   if (!currentExerciseData) {
     return <div className="p-4 text-center">Loading exercise data...</div>;
   }
 
   return (
     <div className="app-container pb-8 animate-fade-in">
-      <div className="sticky top-0 bg-background z-10 border-b">
-        <div className="flex items-center justify-between p-4">
-          <div>
-            <h1 className="text-lg font-semibold">{workout.name}</h1>
-            <div className="text-muted-foreground text-sm">Live Workout</div>
-          </div>
-          <div className="flex items-center gap-2">
+      <WorkoutHeader
+        workoutName={workout.name}
+        workoutTime={workoutTime}
+        isTimerRunning={isTimerRunning}
+        onToggleTimer={toggleTimer}
+      />
+      
+      <div className="px-4 pb-2">
+        <div className="text-sm flex justify-between items-center">
+          <span>Exercise {safeCurrentExerciseIndex + 1} of {workout.exercises.length}</span>
+          <div className="flex gap-1">
             <Button 
-              variant="outline" 
-              size="icon" 
-              className="rounded-full" 
-              onClick={toggleTimer}
+              variant="ghost" 
+              size="sm" 
+              onClick={previousExercise} 
+              disabled={safeCurrentExerciseIndex === 0}
             >
-              {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              Prev
             </Button>
-            <div className="text-sm font-mono">
-              {formatDuration({
-                hours: Math.floor(workoutTime / 3600),
-                minutes: Math.floor((workoutTime % 3600) / 60),
-                seconds: workoutTime % 60
-              }).replace(/,/g, '')}
-            </div>
-          </div>
-        </div>
-        
-        <div className="px-4 pb-2">
-          <div className="text-sm flex justify-between items-center">
-            <span>Exercise {safeCurrentExerciseIndex + 1} of {workout.exercises.length}</span>
-            <div className="flex gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={previousExercise} 
-                disabled={safeCurrentExerciseIndex === 0}
-              >
-                Prev
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={nextExercise} 
-                disabled={safeCurrentExerciseIndex === workout.exercises.length - 1}
-              >
-                Next
-              </Button>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={nextExercise} 
+              disabled={safeCurrentExerciseIndex === workout.exercises.length - 1}
+            >
+              Next
+            </Button>
           </div>
         </div>
       </div>
       
       {isResting ? (
-        <div className="p-4">
-          <Card className="border-2 border-primary">
-            <div className="p-6 text-center">
-              <h2 className="text-lg font-semibold mb-2">Rest Time</h2>
-              <div className="text-4xl font-bold mb-4">{restTime}s</div>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsResting(false)}
-              >
-                Skip Rest
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <RestTimer 
+          restTime={restTime}
+          onSkipRest={() => setIsResting(false)}
+        />
       ) : (
-        <div className="p-4 space-y-6">
-          <h2 className="text-xl font-bold">{currentExercise.name}</h2>
+        <>
+          <ExerciseLog
+            exercise={currentExercise}
+            previousStats={currentExerciseData.previousStats}
+            notes={currentExerciseData.notes}
+            onAddSet={() => handleAddSet(currentExercise.id)}
+            onUpdateSet={(setIndex, field, value) => 
+              handleSetUpdate(currentExercise.id, setIndex, field, value)
+            }
+            onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
+            onUpdateNotes={(notes) => handleNoteChange(currentExercise.id, notes)}
+            onStartRest={() => {
+              setIsResting(true);
+              startRest();
+            }}
+          />
           
-          {currentExerciseData?.previousStats && (
-            <div className="bg-muted/50 p-3 rounded-lg mb-4">
-              <h3 className="text-sm font-medium mb-2">Previous Session</h3>
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div className="font-medium">Set</div>
-                <div className="font-medium">Weight</div>
-                <div className="font-medium">Reps</div>
-                
-                {currentExerciseData.previousStats.map((set, idx) => (
-                  <React.Fragment key={`prev-${idx}`}>
-                    <div>{idx + 1}</div>
-                    <div>{set.weight}</div>
-                    <div>{set.reps}</div>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="space-y-3">
-            <div className="grid grid-cols-12 gap-2 text-sm font-medium">
-              <div className="col-span-1">Set</div>
-              <div className="col-span-4">Weight</div>
-              <div className="col-span-4">Reps</div>
-              <div className="col-span-3">Progress</div>
-            </div>
-            
-            {currentExerciseData.sets.map((set, idx) => (
-              <div key={`set-${idx}`} className="grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-1 text-sm">{idx + 1}</div>
-                <div className="col-span-4">
-                  <Input 
-                    type="number"
-                    value={set.weight || ''}
-                    onChange={(e) => handleSetUpdate(
-                      currentExercise.id, 
-                      idx, 
-                      'weight', 
-                      parseInt(e.target.value) || 0
-                    )}
-                    className="h-9"
-                  />
-                </div>
-                <div className="col-span-4">
-                  <Input 
-                    type="number"
-                    value={set.reps || ''}
-                    onChange={(e) => handleSetUpdate(
-                      currentExercise.id, 
-                      idx, 
-                      'reps', 
-                      parseInt(e.target.value) || 0
-                    )}
-                    className="h-9"
-                  />
-                </div>
-                <div className="col-span-2 flex items-center">
-                  {renderProgressIndicator(currentExercise.id, idx)}
-                </div>
-                <div className="col-span-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7"
-                    onClick={() => handleRemoveSet(currentExercise.id, idx)}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            
-            <div className="flex gap-2 pt-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleAddSet(currentExercise.id)}
-              >
-                Add Set
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => startRest()}
-              >
-                <Timer className="h-4 w-4 mr-1" /> Start Rest
-              </Button>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Notes</h3>
-            <Textarea 
-              placeholder="How did this exercise feel?"
-              value={currentExerciseData?.notes || ''}
-              onChange={(e) => handleNoteChange(currentExercise.id, e.target.value)}
-            />
-          </div>
-          
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between p-4">
             {safeCurrentExerciseIndex === workout.exercises.length - 1 ? (
               <Button onClick={finishWorkout} className="bg-green-600 hover:bg-green-700 text-white flex items-center">
                 <CheckCircle2 className="h-4 w-4 mr-2" /> Complete Workout
@@ -491,7 +304,7 @@ const LiveWorkout = () => {
               </Button>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>
   );

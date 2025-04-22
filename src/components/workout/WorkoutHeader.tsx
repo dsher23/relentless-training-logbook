@@ -1,0 +1,47 @@
+
+import React from 'react';
+import { formatDuration } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Play, Pause } from 'lucide-react';
+
+interface WorkoutHeaderProps {
+  workoutName: string;
+  workoutTime: number;
+  isTimerRunning: boolean;
+  onToggleTimer: () => void;
+}
+
+export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
+  workoutName,
+  workoutTime,
+  isTimerRunning,
+  onToggleTimer,
+}) => {
+  return (
+    <div className="sticky top-0 bg-background z-10 border-b">
+      <div className="flex items-center justify-between p-4">
+        <div>
+          <h1 className="text-lg font-semibold">{workoutName}</h1>
+          <div className="text-muted-foreground text-sm">Live Workout</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full" 
+            onClick={onToggleTimer}
+          >
+            {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <div className="text-sm font-mono">
+            {formatDuration({
+              hours: Math.floor(workoutTime / 3600),
+              minutes: Math.floor((workoutTime % 3600) / 60),
+              seconds: workoutTime % 60
+            }).replace(/,/g, '')}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
