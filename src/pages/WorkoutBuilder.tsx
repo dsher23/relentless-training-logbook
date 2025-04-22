@@ -63,8 +63,11 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Calculate total sets - fixed TypeScript error here
-  const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+  // Calculate total sets correctly
+  const totalSets = workout.exercises.reduce((acc, exercise) => {
+    // Make sure we're adding a number to our accumulator, not an Exercise object
+    return acc + exercise.sets.length;
+  }, 0);
 
   return (
     <div className="app-container animate-fade-in">
