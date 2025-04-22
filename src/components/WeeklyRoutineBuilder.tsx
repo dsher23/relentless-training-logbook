@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -28,13 +29,19 @@ const SortableExerciseItem = ({ exercise, onRemove }: { exercise: Exercise; onRe
     <li 
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm"
+      className="flex items-center justify-between p-3 border rounded-md bg-white shadow-sm mb-2"
     >
       <div className="flex items-center space-x-2">
         <span className="cursor-grab" {...attributes} {...listeners}>
           <MoveVertical size={16} />
         </span>
-        <span>{exercise.name}</span>
+        <div>
+          <span className="font-medium">{exercise.name}</span>
+          <div className="text-sm text-muted-foreground">
+            {exercise.sets.length} sets × {exercise.sets[0]?.reps || 0} reps
+            {exercise.restTime ? ` – Rest: ${exercise.restTime}s` : ''}
+          </div>
+        </div>
       </div>
       <Button variant="ghost" size="sm" onClick={() => onRemove(exercise.id)}>
         Remove
@@ -50,6 +57,7 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
 }) => {
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [showAddExercise, setShowAddExercise] = useState(false);
+  const [routineName, setRoutineName] = useState("New Routine");
   
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -64,7 +72,20 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     if (storedExercises) {
       setSelectedExercises(JSON.parse(storedExercises));
     }
-  }, []);
+    
+    // If templateId is provided, try to load that routine from local storage
+    if (templateId) {
+      const storedRoutines = localStorage.getItem('workoutTemplates');
+      if (storedRoutines) {
+        const routines = JSON.parse(storedRoutines);
+        const targetRoutine = routines.find((r: any) => r.id === templateId);
+        if (targetRoutine) {
+          setRoutineName(targetRoutine.name);
+          setSelectedExercises(targetRoutine.exercises || []);
+        }
+      }
+    }
+  }, [templateId]);
   
   useEffect(() => {
     // Save exercises to local storage whenever selectedExercises changes
@@ -77,6 +98,7 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
   
   const handleSaveExercise = (exercise: Exercise) => {
     setSelectedExercises([...selectedExercises, exercise]);
+    setShowAddExercise(false);
   };
   
   const handleRemoveExercise = (exerciseId: string) => {
@@ -96,42 +118,98 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     }
   }
   
+  const handleSaveRoutine = () => {
+    // Create a workout template object
+    const workoutTemplate = {
+      id: templateId || uuidv4(),
+      name: routineName,
+      exercises: selectedExercises,
+      isFavorite: false
+    };
+    
+    // Save to localStorage for persistence between sessions
+    const storedTemplates = localStorage.getItem('workoutTemplates');
+    let templates = [];
+    
+    if (storedTemplates) {
+      templates = JSON.parse(storedTemplates);
+      // Update existing or add new
+      const existingIndex = templates.findIndex((t: any) => t.id === workoutTemplate.id);
+      if (existingIndex >= 0) {
+        templates[existingIndex] = workoutTemplate;
+      } else {
+        templates.push(workoutTemplate);
+      }
+    } else {
+      templates = [workoutTemplate];
+    }
+    
+    localStorage.setItem('workoutTemplates', JSON.stringify(templates));
+    
+    // Pass the exercises to the parent component
+    onSave(selectedExercises);
+  };
+  
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Create Your Workout</CardTitle>
+          <CardTitle>Create Your Workout Routine</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <DndContext 
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis]}
-          >
-            <SortableContext 
-              items={selectedExercises.map(ex => ex.id)} 
-              strategy={verticalListSortingStrategy}
-            >
-              <ul className="space-y-2">
-                {selectedExercises.map((exercise) => (
-                  <SortableExerciseItem 
-                    key={exercise.id}
-                    exercise={exercise}
-                    onRemove={handleRemoveExercise}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
+          <div>
+            <label htmlFor="routine-name" className="block text-sm font-medium mb-1">
+              Routine Name
+            </label>
+            <Input
+              id="routine-name"
+              value={routineName}
+              onChange={(e) => setRoutineName(e.target.value)}
+              placeholder="e.g., Push Day, Pull Day, Leg Day"
+              className="w-full"
+            />
+          </div>
           
-          <Button onClick={handleAddExercise} className="w-full">
-            <Plus className="h-4 w-4 mr-2" /> Add Exercise
-          </Button>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Exercises</h3>
+              <Button onClick={handleAddExercise} size="sm">
+                <Plus className="h-4 w-4 mr-2" /> Add Exercise
+              </Button>
+            </div>
+            
+            {selectedExercises.length === 0 ? (
+              <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+                No exercises added yet. Click "Add Exercise" to start building your routine.
+              </div>
+            ) : (
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+              >
+                <SortableContext 
+                  items={selectedExercises.map(ex => ex.id)} 
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="space-y-2">
+                    {selectedExercises.map((exercise) => (
+                      <SortableExerciseItem 
+                        key={exercise.id}
+                        exercise={exercise}
+                        onRemove={handleRemoveExercise}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
           
-          <div className="flex justify-between">
+          <div className="flex justify-between pt-4">
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button onClick={() => onSave(selectedExercises)}>Save Workout</Button>
+            <Button onClick={handleSaveRoutine}>Save Routine</Button>
           </div>
         </CardContent>
       </Card>
