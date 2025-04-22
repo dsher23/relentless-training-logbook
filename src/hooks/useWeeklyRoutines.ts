@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { WeeklyRoutine } from '@/types';
+import { WeeklyRoutine, WeeklyRoutineEntry } from '@/types';
 
 export const useWeeklyRoutines = () => {
   const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
@@ -12,8 +12,10 @@ export const useWeeklyRoutines = () => {
       id: routine.id || uuidv4(),
       name: routine.name || "Weekly Plan",
       workoutDays: routine.workoutDays || Array.from({ length: 7 }).map((_, i) => ({ 
+        id: uuidv4(),
         dayOfWeek: i, 
-        workoutTemplateId: null
+        workoutTemplateId: null,
+        workoutName: "Rest Day"
       })),
       archived: routine.archived || false
     };

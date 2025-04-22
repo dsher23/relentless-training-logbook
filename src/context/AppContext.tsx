@@ -4,7 +4,7 @@ import {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, SteroidCycle, Reminder, SteroidCompound,
   MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, 
-  WorkoutTemplate, WorkoutPlan, CycleCompound
+  WorkoutTemplate, WorkoutPlan, CycleCompound, ProgressPhoto
 } from '@/types';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
@@ -22,7 +22,7 @@ export type {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
   WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
-  SteroidCompound, WorkoutPlan, CycleCompound
+  SteroidCompound, WorkoutPlan, CycleCompound, ProgressPhoto
 } from '@/types';
 
 export interface AppContextType {
@@ -122,6 +122,12 @@ export interface AppContextType {
   deleteTrainingBlock: (id: string) => void;
   getTrainingBlockById?: (id: string) => TrainingBlock;
   checkTrainingBlockStatus?: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | null };
+
+  progressPhotos: ProgressPhoto[];
+  setProgressPhotos: React.Dispatch<React.SetStateAction<ProgressPhoto[]>>;
+  addProgressPhoto: (photo: ProgressPhoto) => void;
+  updateProgressPhoto: (photo: ProgressPhoto) => void;
+  deleteProgressPhoto: (id: string) => void;
 
   exportData?: (type: string) => string;
 }
@@ -260,6 +266,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addBodyMeasurement = () => {},
     updateBodyMeasurement = () => {},
     deleteBodyMeasurement = () => {},
+    progressPhotos = [],
+    setProgressPhotos = () => {},
+    addProgressPhoto = () => {},
+    updateProgressPhoto = () => {},
+    deleteProgressPhoto = () => {},
     getBodyMeasurementById = (id) => bodyMeasurements.find(m => m.id === id) || {} as BodyMeasurement
   } = useBodyMeasurements ? useBodyMeasurements() : {} as any;
 
@@ -343,6 +354,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           csvData += `${new Date(log.date).toISOString()},${supplement?.name || ''},${log.dosageTaken},${log.taken},${log.notes || ''}\n`;
         });
         break;
+      case 'progressPhotos':
+        csvData = 'Date,Photo\n';
+        progressPhotos.forEach(photo => {
+          csvData += `${new Date(photo.date).toISOString()},${photo.url}\n`;
+        });
+        break;
       default:
         csvData = 'No data to export';
     }
@@ -414,11 +431,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (storedTrainingBlocks && setTrainingBlocks) {
       setTrainingBlocks(JSON.parse(storedTrainingBlocks));
     }
+    
+    const storedProgressPhotos = localStorage.getItem('progressPhotos');
+    if (storedProgressPhotos && setProgressPhotos) {
+      setProgressPhotos(JSON.parse(storedProgressPhotos));
+    }
   }, [
     setWorkouts, setWorkoutTemplates, setWorkoutPlans, 
     setSupplements, setSupplementLogs, setSteroidCycles, 
     setCompounds, setReminders, setBodyMeasurements,
-    setMoodLogs, setWeakPoints, setWeeklyRoutines, setTrainingBlocks
+    setMoodLogs, setWeakPoints, setWeeklyRoutines, setTrainingBlocks,
+    setProgressPhotos
   ]);
 
   useEffect(() => {
@@ -450,11 +473,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (trainingBlocks.length > 0) {
       localStorage.setItem('trainingBlocks', JSON.stringify(trainingBlocks));
     }
+    
+    if (progressPhotos && progressPhotos.length > 0) {
+      localStorage.setItem('progressPhotos', JSON.stringify(progressPhotos));
+    }
   }, [
     workouts, workoutTemplates, workoutPlans, 
     supplements, supplementLogs, steroidCycles, 
     compounds, reminders, bodyMeasurements,
-    moodLogs, weakPoints, weeklyRoutines, trainingBlocks
+    moodLogs, weakPoints, weeklyRoutines, trainingBlocks,
+    progressPhotos
   ]);
 
   const value = {
@@ -554,6 +582,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteTrainingBlock,
     getTrainingBlockById,
     checkTrainingBlockStatus,
+    
+    progressPhotos,
+    setProgressPhotos,
+    addProgressPhoto,
+    updateProgressPhoto,
+    deleteProgressPhoto,
     
     exportData
   };

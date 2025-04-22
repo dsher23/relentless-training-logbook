@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -46,9 +45,18 @@ const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, on
         updatedDays.splice(existingDayIndex, 1);
       } else {
         updatedDays[existingDayIndex].workoutTemplateId = templateId;
+        
+        const selectedTemplate = workoutTemplates.find(t => t.id === templateId);
+        updatedDays[existingDayIndex].workoutName = selectedTemplate?.name || "Workout";
       }
     } else if (templateId !== null && templateId !== REST_DAY_VALUE) {
-      updatedDays.push({ dayOfWeek, workoutTemplateId: templateId });
+      const selectedTemplate = workoutTemplates.find(t => t.id === templateId);
+      updatedDays.push({ 
+        id: uuidv4(),
+        dayOfWeek, 
+        workoutTemplateId: templateId,
+        workoutName: selectedTemplate?.name || "Workout"
+      });
     }
     
     onChange({
