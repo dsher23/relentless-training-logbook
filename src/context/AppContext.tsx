@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -33,6 +32,8 @@ export interface AppContextType {
   updateWorkout: (workout: Workout) => void;
   deleteWorkout: (id: string) => void;
   getWorkoutById: (id: string) => Workout;
+  duplicateWorkout?: (id: string) => void;
+  toggleDeloadMode?: (workoutId: string, isDeload: boolean) => void;
   
   workoutTemplates: WorkoutTemplate[];
   setWorkoutTemplates: React.Dispatch<React.SetStateAction<WorkoutTemplate[]>>;
@@ -122,7 +123,6 @@ export interface AppContextType {
   getTrainingBlockById?: (id: string) => TrainingBlock;
   checkTrainingBlockStatus?: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | null };
 
-  toggleDeloadMode?: (workoutId: string, isDeload: boolean) => void;
   exportData?: (type: string) => string;
 }
 
@@ -135,13 +135,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addWorkout,
     updateWorkout,
     deleteWorkout,
-    getWorkoutById = (id) => workouts.find(w => w.id === id) || {} as Workout,
-    toggleDeloadMode = (workoutId, isDeload) => {
-      const workout = workouts.find(w => w.id === workoutId);
-      if (workout) {
-        updateWorkout({ ...workout, isDeload });
-      }
-    }
+    getWorkoutById,
+    duplicateWorkout,
+    toggleDeloadMode
   } = useWorkouts();
   
   const {
@@ -468,6 +464,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateWorkout,
     deleteWorkout,
     getWorkoutById,
+    duplicateWorkout,
     toggleDeloadMode,
     
     workoutTemplates,

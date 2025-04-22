@@ -37,6 +37,11 @@ export const useWorkouts = () => {
     ));
   };
 
+  // Add the missing getWorkoutById function
+  const getWorkoutById = (id: string): Workout => {
+    return workouts.find(w => w.id === id) || {} as Workout;
+  };
+
   return {
     workouts,
     setWorkouts,
@@ -44,6 +49,7 @@ export const useWorkouts = () => {
     updateWorkout,
     deleteWorkout,
     duplicateWorkout,
-    toggleDeloadMode
+    toggleDeloadMode,
+    getWorkoutById
   };
 };
