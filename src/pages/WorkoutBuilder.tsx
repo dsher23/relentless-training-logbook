@@ -59,8 +59,8 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Correctly calculate total sets using reduce with proper typing
-  const totalSets = workout.exercises.reduce(
+  // Updated totalSets calculation with explicit type casting and accumulator type
+  const totalSets: number = (workout.exercises as Exercise[]).reduce(
     (acc: number, curr: Exercise) => acc + curr.sets.length, 
     0
   );
