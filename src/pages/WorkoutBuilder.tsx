@@ -61,8 +61,8 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Explicitly use reduce with proper generic type parameters to calculate total sets
-  const totalSets = workout.exercises.reduce<number>((acc, exercise) => {
+  // Calculate total sets with properly typed reduce function
+  const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
     return acc + exercise.sets.length;
   }, 0);
 
