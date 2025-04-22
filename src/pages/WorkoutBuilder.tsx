@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, Move, GripVertical } from "lucide-react";
-import { useDrag, useDrop } from "react-dnd";
+import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { DndProvider } from "react-dnd";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,10 +76,20 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
   const opacity = isDragging ? 0 : 1;
 
-  drag(drop(document.getElementById(`exercise-${exercise.id}`)));
+  const dragDropRef = React.useRef(null);
+  const dragRef = (el: any) => {
+    drag(el);
+    dragDropRef.current = el;
+  };
+  const dropRef = (el: any) => drop(el);
+
+  React.useEffect(() => {
+    dropRef(dragDropRef.current);
+  }, [dropRef]);
 
   return (
     <Card
+      ref={dragRef}
       id={`exercise-${exercise.id}`}
       className="mb-2 cursor-move"
       style={{ opacity }}
