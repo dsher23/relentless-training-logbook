@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -19,10 +18,8 @@ const WorkoutBuilder: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   
-  // Get initial workout name from state if provided (for new workouts)
   const workoutName = location.state?.workoutName || "";
   
-  // Find existing workout if editing
   const workout = id ? workouts.find(w => w.id === id) : {
     id: "",
     name: workoutName,
@@ -63,8 +60,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Calculate total sets correctly
-  const totalSets = workout.exercises.reduce((acc: number, exercise) => {
+  const totalSets = workout.exercises.reduce<number>((acc, exercise) => {
     return acc + exercise.sets.length;
   }, 0);
 
