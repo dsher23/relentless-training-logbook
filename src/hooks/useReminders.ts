@@ -38,6 +38,7 @@ export const useReminders = () => {
 
   return {
     reminders,
+    setReminders,
     addReminder,
     updateReminder,
     deleteReminder,

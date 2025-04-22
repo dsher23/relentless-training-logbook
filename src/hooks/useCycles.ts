@@ -32,6 +32,7 @@ export const useCycles = () => {
 
   return {
     steroidCycles,
+    setSteroidCycles,
     addSteroidCycle,
     updateSteroidCycle,
     deleteSteroidCycle,

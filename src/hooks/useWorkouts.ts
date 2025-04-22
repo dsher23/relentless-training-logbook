@@ -39,6 +39,7 @@ export const useWorkouts = () => {
 
   return {
     workouts,
+    setWorkouts,
     addWorkout,
     updateWorkout,
     deleteWorkout,

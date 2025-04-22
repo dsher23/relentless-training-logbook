@@ -32,7 +32,9 @@ export const useSupplements = () => {
 
   return {
     supplements,
+    setSupplements,
     supplementLogs,
+    setSupplementLogs,
     addSupplement,
     updateSupplement,
     deleteSupplement,
