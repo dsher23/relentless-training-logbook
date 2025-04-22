@@ -111,6 +111,8 @@ const LiveWorkout = () => {
   const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
       const updatedSets = [...exercise.sets];
       updatedSets[setIndex] = { 
         ...updatedSets[setIndex], 
@@ -130,6 +132,8 @@ const LiveWorkout = () => {
   const handleAddSet = (exerciseId: string) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
       const lastSet = exercise.sets[exercise.sets.length - 1];
       
       return {
@@ -148,6 +152,8 @@ const LiveWorkout = () => {
   const handleRemoveSet = (exerciseId: string, setIndex: number) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
       const updatedSets = [...exercise.sets];
       updatedSets.splice(setIndex, 1);
       
@@ -162,13 +168,18 @@ const LiveWorkout = () => {
   };
 
   const handleNoteChange = (exerciseId: string, note: string) => {
-    setExerciseData(prev => ({
-      ...prev,
-      [exerciseId]: {
-        ...prev[exerciseId],
-        notes: note
-      }
-    }));
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          notes: note
+        }
+      };
+    });
   };
 
   const startRest = (duration = 90) => {
@@ -200,6 +211,8 @@ const LiveWorkout = () => {
     // Update exercises with logged data
     const updatedExercises = workout.exercises.map(exercise => {
       const data = exerciseData[exercise.id];
+      if (!data) return exercise;
+      
       return {
         ...exercise,
         sets: data.sets,
@@ -227,7 +240,7 @@ const LiveWorkout = () => {
         duration: workoutTime,
         exercises: updatedExercises,
         previousStats: Object.fromEntries(
-          updatedExercises.map(e => [e.id, exerciseData[e.id].previousStats])
+          updatedExercises.map(e => [e.id, exerciseData[e.id]?.previousStats])
         )
       } 
     });
@@ -259,8 +272,30 @@ const LiveWorkout = () => {
     return <div className="p-4 text-center">Loading workout...</div>;
   }
 
-  const currentExercise = workout.exercises[currentExerciseIndex];
-  const currentExerciseData = exerciseData[currentExercise?.id];
+  // Make sure we have a valid currentExerciseIndex
+  const safeCurrentExerciseIndex = Math.min(
+    currentExerciseIndex,
+    workout.exercises.length - 1
+  );
+  
+  // Make sure we have a current exercise
+  const currentExercise = workout.exercises[safeCurrentExerciseIndex];
+  
+  // Only proceed if we have a valid current exercise
+  if (!currentExercise) {
+    return (
+      <div className="p-4 text-center">
+        This workout doesn't have any exercises yet. Please add exercises first.
+      </div>
+    );
+  }
+  
+  const currentExerciseData = exerciseData[currentExercise.id];
+
+  // If we don't have exercise data yet, show loading
+  if (!currentExerciseData) {
+    return <div className="p-4 text-center">Loading exercise data...</div>;
+  }
 
   return (
     <div className="app-container pb-8 animate-fade-in">
@@ -291,13 +326,13 @@ const LiveWorkout = () => {
         
         <div className="px-4 pb-2">
           <div className="text-sm flex justify-between items-center">
-            <span>Exercise {currentExerciseIndex + 1} of {workout.exercises.length}</span>
+            <span>Exercise {safeCurrentExerciseIndex + 1} of {workout.exercises.length}</span>
             <div className="flex gap-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={previousExercise} 
-                disabled={currentExerciseIndex === 0}
+                disabled={safeCurrentExerciseIndex === 0}
               >
                 Prev
               </Button>
@@ -305,7 +340,7 @@ const LiveWorkout = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={nextExercise} 
-                disabled={currentExerciseIndex === workout.exercises.length - 1}
+                disabled={safeCurrentExerciseIndex === workout.exercises.length - 1}
               >
                 Next
               </Button>
@@ -360,7 +395,7 @@ const LiveWorkout = () => {
               <div className="col-span-3">Progress</div>
             </div>
             
-            {currentExerciseData?.sets.map((set, idx) => (
+            {currentExerciseData.sets.map((set, idx) => (
               <div key={`set-${idx}`} className="grid grid-cols-12 gap-2 items-center">
                 <div className="col-span-1 text-sm">{idx + 1}</div>
                 <div className="col-span-4">
@@ -433,7 +468,7 @@ const LiveWorkout = () => {
           </div>
           
           <div className="flex justify-between pt-4">
-            {currentExerciseIndex === workout.exercises.length - 1 ? (
+            {safeCurrentExerciseIndex === workout.exercises.length - 1 ? (
               <Button onClick={finishWorkout} className="bg-green-600 hover:bg-green-700 text-white flex items-center">
                 <CheckCircle2 className="h-4 w-4 mr-2" /> Complete Workout
               </Button>
