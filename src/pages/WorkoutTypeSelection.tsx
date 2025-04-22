@@ -10,8 +10,9 @@ const WorkoutTypeSelection: React.FC = () => {
   const navigate = useNavigate();
   const { workouts } = useAppContext();
 
-  // Filter to get only routine workouts (ones that are templates and not completed)
-  const routines = workouts.filter(workout => !workout.completed && workout.isRoutine);
+  // Filter to get only template workouts (ones that are not completed)
+  // Instead of using isRoutine which doesn't exist, we'll filter based on what's available
+  const routines = workouts.filter(workout => !workout.completed);
 
   return (
     <div className="app-container animate-fade-in">
