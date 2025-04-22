@@ -7,21 +7,57 @@ import {
   LineChart, 
   Clock, 
   Trophy,
-  Play
+  Play,
+  CalendarDays
 } from "lucide-react";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useAppContext } from "@/context/AppContext";
+import { format } from "date-fns";
 
 const Training: React.FC = () => {
   const navigate = useNavigate();
+  const { weeklyRoutines, workoutTemplates } = useAppContext();
+  
+  // Get today's workout if scheduled
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const activeRoutine = weeklyRoutines.find(r => !r.archived);
+  const todaysWorkoutDay = activeRoutine?.workoutDays.find(day => day.dayOfWeek === dayOfWeek);
+  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId 
+    ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
+    : null;
 
   return (
     <div className="app-container animate-fade-in">
       <Header title="Training Hub" />
       
       <div className="p-4 space-y-6">
+        {/* Today's workout if scheduled */}
+        {todaysWorkout && (
+          <Card className="bg-primary/10 mb-2">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-sm text-muted-foreground">
+                    {format(today, "EEEE, MMMM d")}
+                  </h3>
+                  <p className="font-medium">Today's Workout: {todaysWorkout.name}</p>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-gym-blue hover:bg-gym-blue/90 text-white"
+                  onClick={() => navigate(`/live-workout/${todaysWorkout.id}?isTemplate=true`)}
+                >
+                  Start
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -78,21 +114,21 @@ const Training: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/routines")}>
+            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/weekly-overview")}>
               <CardContent className="p-6 flex items-center space-x-4">
                 <div className="p-3 rounded-full bg-gym-purple/10">
-                  <LineChart className="h-6 w-6 text-gym-purple" />
+                  <CalendarDays className="h-6 w-6 text-gym-purple" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Routines</h3>
-                  <p className="text-muted-foreground">Create and manage your routines</p>
+                  <h3 className="font-bold text-lg">Weekly Schedule</h3>
+                  <p className="text-muted-foreground">Plan your workouts for the week</p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-4">
           <Card className="bg-gradient-to-r from-gym-blue to-gym-purple">
             <CardContent className="p-6">
               <div className="flex justify-between items-center">

@@ -11,12 +11,7 @@ export const useWeeklyRoutines = () => {
     const validatedRoutine: WeeklyRoutine = {
       id: routine.id || uuidv4(),
       name: routine.name || "Weekly Plan",
-      workoutDays: routine.workoutDays || Array.from({ length: 7 }).map((_, i) => ({ 
-        id: uuidv4(),
-        dayOfWeek: i, 
-        workoutTemplateId: null,
-        workoutName: "Rest Day"
-      })),
+      workoutDays: routine.workoutDays || [],
       archived: routine.archived || false
     };
     
@@ -48,6 +43,39 @@ export const useWeeklyRoutines = () => {
       r.id === id ? { ...r, archived } : r
     ));
   };
+  
+  const assignWorkoutToDay = (routineId: string, dayOfWeek: number, workoutTemplateId: string | null, workoutName: string = "") => {
+    setWeeklyRoutines(weeklyRoutines.map(routine => {
+      if (routine.id !== routineId) return routine;
+      
+      const existingDayIndex = routine.workoutDays.findIndex(day => day.dayOfWeek === dayOfWeek);
+      let updatedDays = [...routine.workoutDays];
+      
+      if (existingDayIndex >= 0) {
+        // Update existing day
+        if (workoutTemplateId) {
+          updatedDays[existingDayIndex] = {
+            ...updatedDays[existingDayIndex],
+            workoutTemplateId,
+            workoutName
+          };
+        } else {
+          // Remove the day if no workout selected (rest day)
+          updatedDays = updatedDays.filter((_, index) => index !== existingDayIndex);
+        }
+      } else if (workoutTemplateId) {
+        // Add new day
+        updatedDays.push({
+          id: uuidv4(),
+          dayOfWeek,
+          workoutTemplateId,
+          workoutName
+        });
+      }
+      
+      return { ...routine, workoutDays: updatedDays };
+    }));
+  };
 
   return {
     weeklyRoutines,
@@ -57,5 +85,6 @@ export const useWeeklyRoutines = () => {
     deleteWeeklyRoutine,
     duplicateWeeklyRoutine,
     archiveWeeklyRoutine,
+    assignWorkoutToDay
   };
 };

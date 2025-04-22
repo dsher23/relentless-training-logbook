@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Plus, ChevronDown, ChevronUp, Edit, Dumbbell, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,13 @@ import { WeeklyRoutine, WorkoutTemplate } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 import StartWorkoutButton from "./StartWorkoutButton";
 import { useNavigate } from "react-router-dom";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 const WeeklyPlanView: React.FC = () => {
   const { weeklyRoutines, workoutTemplates, workoutPlans, addWeeklyRoutine, updateWeeklyRoutine } = useAppContext();
@@ -41,14 +48,10 @@ const WeeklyPlanView: React.FC = () => {
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   
-  // Find or create the default weekly routine
   const currentRoutine = weeklyRoutines.find(r => !r.archived) || {
     id: uuidv4(),
     name: "My Weekly Plan",
-    workoutDays: Array.from({ length: 7 }).map((_, i) => ({ 
-      dayOfWeek: i, 
-      workoutTemplateId: null
-    })),
+    workoutDays: [],
     archived: false
   };
   
@@ -60,19 +63,15 @@ const WeeklyPlanView: React.FC = () => {
     setCurrentDate(prev => addDays(prev, 7));
   };
   
-  const getAvailableWorkouts = () => {
-    if (workoutTemplates.length === 0) {
-      return [];
-    }
-    return workoutTemplates.map(template => ({
-      id: template.id,
-      name: template.name,
-      exerciseCount: template.exercises.length
-    }));
+  const getWorkoutForDay = (dayIndex: number) => {
+    const day = currentRoutine.workoutDays.find(d => d.dayOfWeek === dayIndex);
+    if (!day?.workoutTemplateId) return null;
+    
+    return workoutTemplates.find(t => t.id === day.workoutTemplateId);
   };
-
+  
   const handleDayClick = (dayIndex: number) => {
-    const availableWorkouts = getAvailableWorkouts();
+    const availableWorkouts = workoutTemplates;
     if (availableWorkouts.length === 0) {
       toast({
         title: "No Workouts Available",
@@ -92,47 +91,102 @@ const WeeklyPlanView: React.FC = () => {
   const handleAssignWorkout = () => {
     if (selectedDayIndex === null) return;
     
-    // Create a new weekly routine if none exists
+    let workoutName = "Rest Day";
+    if (selectedRoutineId) {
+      const template = workoutTemplates.find(t => t.id === selectedRoutineId);
+      if (template) {
+        workoutName = template.name;
+      }
+    }
+    
     let updatedRoutine: WeeklyRoutine;
+    let existingDayIndex = currentRoutine.workoutDays.findIndex(day => day.dayOfWeek === selectedDayIndex);
     
     if (!weeklyRoutines.some(r => !r.archived)) {
-      updatedRoutine = {
-        ...currentRoutine,
-        workoutDays: currentRoutine.workoutDays.map(day => 
-          day.dayOfWeek === selectedDayIndex 
-            ? { ...day, workoutTemplateId: selectedRoutineId }
-            : day
-        ),
-        archived: false
-      };
+      if (existingDayIndex >= 0) {
+        const updatedDays = [...currentRoutine.workoutDays];
+        updatedDays[existingDayIndex] = { 
+          ...updatedDays[existingDayIndex],
+          workoutTemplateId: selectedRoutineId,
+          workoutName: workoutName 
+        };
+        
+        updatedRoutine = {
+          ...currentRoutine,
+          workoutDays: updatedDays,
+          archived: false
+        };
+      } else if (selectedRoutineId) {
+        updatedRoutine = {
+          ...currentRoutine,
+          workoutDays: [
+            ...currentRoutine.workoutDays,
+            { 
+              id: uuidv4(),
+              dayOfWeek: selectedDayIndex, 
+              workoutTemplateId: selectedRoutineId,
+              workoutName: workoutName 
+            }
+          ],
+          archived: false
+        };
+      } else {
+        updatedRoutine = {
+          ...currentRoutine,
+          workoutDays: currentRoutine.workoutDays.filter(day => day.dayOfWeek !== selectedDayIndex),
+          archived: false
+        };
+      }
+      
       addWeeklyRoutine(updatedRoutine);
     } else {
-      updatedRoutine = {
-        ...currentRoutine,
-        workoutDays: currentRoutine.workoutDays.map(day => 
-          day.dayOfWeek === selectedDayIndex 
-            ? { ...day, workoutTemplateId: selectedRoutineId }
-            : day
-        )
-      };
-      updateWeeklyRoutine(updatedRoutine);
+      if (existingDayIndex >= 0) {
+        const updatedDays = [...currentRoutine.workoutDays];
+        
+        if (selectedRoutineId) {
+          updatedDays[existingDayIndex] = { 
+            ...updatedDays[existingDayIndex],
+            workoutTemplateId: selectedRoutineId,
+            workoutName: workoutName 
+          };
+        } else {
+          updatedDays.splice(existingDayIndex, 1);
+        }
+        
+        updatedRoutine = {
+          ...currentRoutine,
+          workoutDays: updatedDays
+        };
+      } else if (selectedRoutineId) {
+        updatedRoutine = {
+          ...currentRoutine,
+          workoutDays: [
+            ...currentRoutine.workoutDays,
+            { 
+              id: uuidv4(),
+              dayOfWeek: selectedDayIndex, 
+              workoutTemplateId: selectedRoutineId,
+              workoutName: workoutName 
+            }
+          ]
+        };
+      } else {
+        updatedRoutine = currentRoutine;
+      }
+      
+      if (updatedRoutine !== currentRoutine) {
+        updateWeeklyRoutine(updatedRoutine);
+      }
     }
     
     toast({
       title: "Schedule Updated",
       description: selectedRoutineId 
         ? `Workout assigned to ${dayNames[selectedDayIndex]}` 
-        : `Workout removed from ${dayNames[selectedDayIndex]}`,
+        : `${dayNames[selectedDayIndex]} set as Rest Day`,
     });
     
     setIsDialogOpen(false);
-  };
-  
-  const getWorkoutForDay = (dayIndex: number) => {
-    const day = currentRoutine.workoutDays.find(d => d.dayOfWeek === dayIndex);
-    if (!day?.workoutTemplateId) return null;
-    
-    return workoutTemplates.find(t => t.id === day.workoutTemplateId);
   };
   
   const getTemplateById = (id: string | null) => {
@@ -140,28 +194,37 @@ const WeeklyPlanView: React.FC = () => {
     return workoutTemplates.find(t => t.id === id);
   };
 
-  // Handle selecting a workout from a plan
   const handlePlanChange = (value: string) => {
     setSelectedPlanId(value);
-    setSelectedRoutineId(null); // Reset workout selection when changing plans
+    setSelectedRoutineId(null);
   };
 
-  // Get workouts from the selected plan
   const getWorkoutsFromPlan = () => {
     if (selectedPlanId === "none") return [];
     const plan = workoutPlans.find(p => p.id === selectedPlanId);
     return plan ? plan.workoutTemplates : [];
   };
 
-  // Get all individual workouts not in plans
   const getIndividualWorkouts = () => {
-    // Get IDs of all workouts that are in plans
-    const planWorkoutIds = workoutPlans.flatMap(p => 
-      p.workoutTemplates.map(t => t.id)
-    );
+    return workoutTemplates;
+  };
+  
+  const handleViewWorkout = (workoutTemplateId: string) => {
+    navigate(`/exercise-plans/days/${workoutTemplateId}`);
+  };
+  
+  const isCurrentWeek = (date: Date) => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const startOfCurrentWeek = new Date(today);
+    startOfCurrentWeek.setDate(today.getDate() - dayOfWeek);
+    startOfCurrentWeek.setHours(0, 0, 0, 0);
     
-    // Return workouts that aren't in any plan
-    return workoutTemplates.filter(t => !planWorkoutIds.includes(t.id));
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+    endOfCurrentWeek.setHours(23, 59, 59, 999);
+    
+    return date >= startOfCurrentWeek && date <= endOfCurrentWeek;
   };
 
   return (
@@ -172,76 +235,117 @@ const WeeklyPlanView: React.FC = () => {
         </Button>
         <span className="text-sm font-medium">
           {format(weekStart, "MMM d")} - {format(weekDays[6], "MMM d, yyyy")}
+          {isCurrentWeek(weekStart) && (
+            <Badge variant="outline" className="ml-2 bg-primary/10">Current Week</Badge>
+          )}
         </span>
         <Button variant="outline" size="icon" onClick={handleNextWeek}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 gap-2">
+      <Accordion type="multiple" defaultValue={["0", "1", "2", "3", "4", "5", "6"]} className="space-y-2">
         {weekDays.map((day, index) => {
           const workoutTemplate = getWorkoutForDay(index);
           const isToday = format(new Date(), "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
           
           return (
-            <Card 
-              key={day.toString()}
-              className={`${isToday ? "border-primary" : ""}`}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className={`font-medium ${isToday ? "text-primary" : ""}`}>
-                      {dayNames[index]}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(day, "MMM d")}
-                    </div>
-                  </div>
-                  
-                  {workoutTemplate ? (
-                    <div className="flex gap-2 items-center">
-                      <div className="text-sm">
-                        {workoutTemplate.name}
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({workoutTemplate.exercises.length})
-                        </span>
+            <AccordionItem key={day.toString()} value={index.toString()} className="border rounded-md overflow-hidden">
+              <Card className={`${isToday ? "border-primary bg-primary/5" : ""} border-0`}>
+                <CardHeader className="p-0">
+                  <AccordionTrigger className="px-4 py-2 hover:no-underline">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        {isToday && <div className="w-2 h-2 rounded-full bg-primary mr-2"></div>}
+                        <div>
+                          <div className={`font-medium ${isToday ? "text-primary" : ""}`}>
+                            {dayNames[index]}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(day, "MMM d")}
+                          </div>
+                        </div>
                       </div>
-                      <StartWorkoutButton
-                        workoutId={workoutTemplate.id}
-                        isTemplate
-                        className="h-8 w-8 p-0"
-                      />
+                      
+                      {workoutTemplate ? (
+                        <div className="flex items-center gap-2 mr-4">
+                          <div className="flex items-center gap-1">
+                            <Dumbbell className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm font-medium">{workoutTemplate.name}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground mr-4">Rest Day</div>
+                      )}
                     </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDayClick(index)}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Assign
-                    </Button>
-                  )}
-                </div>
+                  </AccordionTrigger>
+                </CardHeader>
                 
-                {workoutTemplate && (
-                  <div className="mt-2 flex justify-end">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-xs h-7"
-                      onClick={() => handleDayClick(index)}
-                    >
-                      Change
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                <AccordionContent>
+                  <CardContent className="pt-0 pb-3 px-4">
+                    {workoutTemplate ? (
+                      <div className="space-y-3">
+                        <div className="text-sm space-y-1">
+                          <div className="font-medium">Exercises ({workoutTemplate.exercises.length})</div>
+                          <ul className="text-muted-foreground pl-4 list-disc">
+                            {workoutTemplate.exercises.slice(0, 5).map((exercise, idx) => (
+                              <li key={idx}>{exercise.name}</li>
+                            ))}
+                            {workoutTemplate.exercises.length > 5 && (
+                              <li className="text-primary">
+                                +{workoutTemplate.exercises.length - 5} more...
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                        
+                        <div className="flex justify-between gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleDayClick(index)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Change
+                          </Button>
+                          
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewWorkout(workoutTemplate.id)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            
+                            <StartWorkoutButton
+                              workoutId={workoutTemplate.id}
+                              isTemplate
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <Button
+                          onClick={() => handleDayClick(index)}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Assign Workout
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
           );
         })}
-      </div>
+      </Accordion>
       
       {workoutTemplates.length === 0 && (
         <div className="text-center p-4 mt-8 border border-dashed rounded-lg">
@@ -265,7 +369,6 @@ const WeeklyPlanView: React.FC = () => {
           </DialogHeader>
           
           <div className="py-4 space-y-4">
-            {/* Step 1: Select Workout Plan */}
             <div>
               <label className="text-sm font-medium mb-1 block">
                 Step 1: Select Workout Plan
@@ -285,7 +388,6 @@ const WeeklyPlanView: React.FC = () => {
               </Select>
             </div>
             
-            {/* Step 2: Select Workout */}
             <div>
               <label className="text-sm font-medium mb-1 block">
                 Step 2: Select Workout
@@ -301,14 +403,12 @@ const WeeklyPlanView: React.FC = () => {
                   <SelectItem value="none">No Workout (Rest Day)</SelectItem>
                   
                   {selectedPlanId === "none" ? (
-                    // Show individual workouts
                     getIndividualWorkouts().map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         {template.name} ({template.exercises.length} exercises)
                       </SelectItem>
                     ))
                   ) : (
-                    // Show workouts from selected plan
                     getWorkoutsFromPlan().map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         {template.name} ({template.exercises.length} exercises)
