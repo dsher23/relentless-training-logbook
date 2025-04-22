@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -36,16 +35,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, onClick }) => (
       className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/80" 
       onClick={onClick}
     >
-      <CardContent className="p-6">
-        <div className="flex items-center space-x-4">
+      <CardContent className="p-6 flex flex-col space-y-3">
+        <div className="flex items-center justify-between">
           <div className="p-3 rounded-lg bg-secondary">
             {icon}
           </div>
-          <div>
-            <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-          </div>
+          <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
         </div>
+        <p className="text-2xl font-bold self-end">{value}</p>
       </CardContent>
     </Card>
   </motion.div>
