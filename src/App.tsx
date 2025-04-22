@@ -1,3 +1,4 @@
+
 // This is a read-only file, so we'll update it carefully within our limits
 
 import React from "react";
@@ -17,6 +18,8 @@ import WeeklyOverview from "@/pages/WeeklyOverview";
 import LiveWorkout from "./pages/LiveWorkout";
 import WorkoutSummary from "./pages/WorkoutSummary";
 import ProgressPhotos from "./pages/ProgressPhotos";
+import CreateWorkout from "./pages/CreateWorkout";
+import WorkoutDetail from "./pages/WorkoutDetail";
 
 function App() {
   return (
@@ -42,6 +45,14 @@ function App() {
                   <TabNavigation />
                 </>
               }
+            />
+            <Route
+              path="/workouts/new"
+              element={<CreateWorkout />}
+            />
+            <Route
+              path="/workouts/:id"
+              element={<WorkoutDetail />}
             />
             <Route
               path="/weekly"
