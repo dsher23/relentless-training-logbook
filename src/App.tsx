@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
@@ -11,6 +12,7 @@ import Plans from './pages/Plans';
 import Routines from './pages/Routines';
 import WorkoutSelection from './pages/WorkoutSelection';
 import WorkoutBuilder from './pages/WorkoutBuilder';
+import PlanDetail from './pages/PlanDetail';
 
 function App() {
   return (
@@ -30,7 +32,7 @@ function App() {
 
           {/* Plan routes */}
           <Route path="/plans" element={<Plans />} />
-          <Route path="/plans/:id" element={<Plans />} />
+          <Route path="/plans/:id" element={<PlanDetail />} />
 
           {/* Routine routes */}
           <Route path="/routines" element={<Routines />} />
