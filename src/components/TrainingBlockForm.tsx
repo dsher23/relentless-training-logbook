@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
@@ -157,13 +158,13 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       updateTrainingBlock(blockData);
       toast({
         title: "Training Block Updated",
-        description: `"${values.name}" has been updated."
+        description: `${values.name} has been updated.`
       });
     } else {
       addTrainingBlock(blockData);
       toast({
         title: "Training Block Created",
-        description: `"${values.name}" has been created."
+        description: `${values.name} has been created.`
       });
     }
     
