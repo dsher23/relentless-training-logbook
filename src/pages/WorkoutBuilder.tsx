@@ -63,6 +63,9 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
+  // Calculate total sets - fixed TypeScript error here
+  const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+
   return (
     <div className="app-container animate-fade-in">
       <Header title={workout.name} />
@@ -74,7 +77,7 @@ const WorkoutBuilder: React.FC = () => {
               <div>
                 <h2 className="text-lg font-semibold">{workout.name}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {workout.exercises.length} exercises • {workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)} total sets
+                  {workout.exercises.length} exercises • {totalSets} total sets
                 </p>
               </div>
               <Button 
