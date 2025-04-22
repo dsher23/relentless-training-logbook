@@ -1,10 +1,10 @@
 
-// This is a read-only file, we should create a HeaderExtended component instead
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ChevronLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NotificationCenter from "@/components/NotificationCenter";
+import Logo from "@/components/Logo";
 
 interface HeaderProps {
   title: string;
@@ -12,7 +12,7 @@ interface HeaderProps {
   rightContent?: React.ReactNode;
 }
 
-const HeaderExtended: React.FC<HeaderProps> = ({
+const Header: React.FC<HeaderProps> = ({
   title,
   hasBackButton = true,
   rightContent,
@@ -35,12 +35,22 @@ const HeaderExtended: React.FC<HeaderProps> = ({
         )}
         <h1 className="text-xl font-bold">{title}</h1>
       </div>
-      <div className="flex items-center">
-        <NotificationCenter />
+      <div className="flex items-center gap-2">
         {rightContent}
+        <NotificationCenter />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/dashboard")}
+          title="Go to Dashboard"
+          className="text-primary hover:bg-primary/10"
+        >
+          <Home className="h-5 w-5" />
+          <span className="sr-only">Dashboard</span>
+        </Button>
       </div>
     </div>
   );
 };
 
-export default HeaderExtended;
+export default Header;

@@ -15,14 +15,24 @@ import Header from "@/components/Header";
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext } from "@/context/AppContext";
 import DataExport from "@/components/DataExport";
-import { CalendarDays, Plus, MoreVertical } from "lucide-react";
+import { CalendarDays, Plus, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { WeeklyRoutineEntry } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 const Routines: React.FC = () => {
   const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine } = useAppContext();
   const [open, setOpen] = React.useState(false);
   const [editRoutineId, setEditRoutineId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
+  const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
   
   const handleRoutineSave = () => {
     setEditRoutineId(null);
@@ -30,6 +40,19 @@ const Routines: React.FC = () => {
 
   const handleArchiveRoutine = (id: string, archived: boolean) => {
     archiveWeeklyRoutine(id, archived);
+  };
+  
+  const promptDeleteRoutine = (id: string) => {
+    setRoutineToDelete(id);
+    setConfirmDeleteDialog(true);
+  };
+  
+  const confirmDeleteRoutine = () => {
+    if (!routineToDelete) return;
+    
+    deleteWeeklyRoutine(routineToDelete);
+    setConfirmDeleteDialog(false);
+    setRoutineToDelete(null);
   };
 
   return (
@@ -109,33 +132,42 @@ const Routines: React.FC = () => {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="font-medium text-lg">{routine.name}</h3>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => setEditRoutineId(routine.id)}>
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => duplicateWeeklyRoutine(routine.id)}>
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleArchiveRoutine(routine.id, !routine.archived)}>
-                                {routine.archived ? "Unarchive" : "Archive"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:bg-destructive/20"
-                                onClick={() => deleteWeeklyRoutine(routine.id)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setEditRoutineId(routine.id)}
+                              className="h-8 w-8"
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => duplicateWeeklyRoutine(routine.id)}>
+                                  Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleArchiveRoutine(routine.id, !routine.archived)}>
+                                  {routine.archived ? "Unarchive" : "Archive"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:bg-destructive/20"
+                                  onClick={() => promptDeleteRoutine(routine.id)}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {routine.workoutDays.length} workout{routine.workoutDays.length !== 1 ? 's' : ''} per week
@@ -172,7 +204,7 @@ const Routines: React.FC = () => {
         {/* Create New Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${open ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto w-full">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg max-w-2xl mx-auto w-full">
               <h2 className="text-lg font-medium mb-4">Create Weekly Routine</h2>
               <WeeklyRoutineBuilder 
                 onSave={() => { setOpen(false); handleRoutineSave(); }} 
@@ -185,7 +217,7 @@ const Routines: React.FC = () => {
         {/* Edit Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${editRoutineId ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto w-full">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg max-w-2xl mx-auto w-full">
               {editRoutineId && (
                 <>
                   <h2 className="text-lg font-medium mb-4">Edit Weekly Routine</h2>
@@ -199,6 +231,26 @@ const Routines: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Confirm Delete Dialog */}
+        <Dialog open={confirmDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Weekly Routine</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this weekly routine? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDeleteDialog(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteRoutine}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

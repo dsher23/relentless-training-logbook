@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
-// Fix imports for react-dnd - separate them properly
-import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
+import { Plus, Edit, Trash2, GripVertical, Home } from "lucide-react";
+import { DndContext } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { v4 as uuidv4 } from "uuid";
@@ -15,6 +14,14 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
 import { Workout, Exercise, WorkoutTemplate } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 interface ExerciseItemProps {
   exercise: Exercise;
@@ -62,16 +69,24 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => onEdit(exercise.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(exercise.id);
+            }}
           >
             <Edit className="h-4 w-4" />
+            <span className="sr-only">Edit</span>
           </Button>
           <Button
             variant="destructive"
             size="icon"
-            onClick={() => onDelete(exercise.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(exercise.id);
+            }}
           >
             <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Delete</span>
           </Button>
         </div>
       </CardContent>
@@ -90,6 +105,9 @@ const WorkoutBuilder: React.FC = () => {
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
   const [showAddExercise, setShowAddExercise] = useState(false);
+  const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
+  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -126,7 +144,7 @@ const WorkoutBuilder: React.FC = () => {
       id: uuidv4(),
       name: exerciseName,
       sets: [],
-      lastProgressDate: new Date(), // Adding the required property
+      lastProgressDate: new Date(),
     };
 
     setExercises([...exercises, newExercise]);
@@ -165,8 +183,22 @@ const WorkoutBuilder: React.FC = () => {
     setShowAddExercise(false);
   };
 
-  const handleDeleteExercise = (id: string) => {
-    setExercises(exercises.filter((exercise) => exercise.id !== id));
+  const promptDeleteExercise = (id: string) => {
+    setExerciseToDelete(id);
+    setConfirmDeleteExercise(true);
+  };
+
+  const handleDeleteExercise = () => {
+    if (!exerciseToDelete) return;
+    
+    setExercises(exercises.filter((exercise) => exercise.id !== exerciseToDelete));
+    setConfirmDeleteExercise(false);
+    setExerciseToDelete(null);
+    
+    toast({
+      title: "Exercise deleted",
+      description: "The exercise has been removed from this workout."
+    });
   };
 
   const moveExercise = (dragIndex: number, hoverIndex: number) => {
@@ -186,8 +218,25 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
+  const handleCancelClick = () => {
+    if (exercises.length > 0 || workoutName.trim() !== "") {
+      setConfirmCancel(true);
+    } else {
+      navigate("/workouts");
+    }
+  };
+
   const handleComplete = () => {
-    if (!workoutName || exercises.length === 0) {
+    if (!workoutName) {
+      toast({
+        title: "Error",
+        description: "Please enter a workout name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (exercises.length === 0) {
       toast({
         title: "Cannot create workout",
         description: "Please add at least one exercise to your workout.",
@@ -311,14 +360,14 @@ const WorkoutBuilder: React.FC = () => {
                   index={index}
                   moveExercise={moveExercise}
                   onEdit={handleEditExercise}
-                  onDelete={handleDeleteExercise}
+                  onDelete={promptDeleteExercise}
                 />
               ))}
             </SortableContext>
           )}
 
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => navigate("/workouts")}>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={handleCancelClick}>
               Cancel
             </Button>
             <Button onClick={handleComplete}>
@@ -327,6 +376,46 @@ const WorkoutBuilder: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Confirm Delete Exercise Dialog */}
+      <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Exercise</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this exercise? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteExercise(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteExercise}>
+              Delete Exercise
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Confirm Cancel Dialog */}
+      <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Workout Creation</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Are you sure you want to cancel?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmCancel(false)}>
+              Continue Editing
+            </Button>
+            <Button variant="destructive" onClick={() => navigate("/workouts")}>
+              Discard Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   );
 };

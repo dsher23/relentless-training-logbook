@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext, Workout } from "@/context/AppContext";
@@ -8,6 +9,14 @@ import { WorkoutHeader } from "@/components/workout/WorkoutHeader";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { ExerciseLog } from "@/components/workout/ExerciseLog";
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 
 const LiveWorkout = () => {
   const { id } = useParams();
@@ -21,6 +30,8 @@ const LiveWorkout = () => {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [isResting, setIsResting] = useState(false);
+  const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
+  const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
       sets: { reps: number; weight: number }[];
@@ -131,6 +142,15 @@ const LiveWorkout = () => {
   };
 
   const handleRemoveSet = (exerciseId: string, setIndex: number) => {
+    setDeleteSetInfo({ exerciseId, setIndex });
+    setConfirmDeleteSetDialog(true);
+  };
+  
+  const confirmDeleteSet = () => {
+    if (!deleteSetInfo) return;
+    
+    const { exerciseId, setIndex } = deleteSetInfo;
+    
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
       if (!exercise) return prev;
@@ -145,6 +165,14 @@ const LiveWorkout = () => {
           sets: updatedSets
         }
       };
+    });
+    
+    setConfirmDeleteSetDialog(false);
+    setDeleteSetInfo(null);
+    
+    toast({
+      title: "Set removed",
+      description: "The set has been removed from this exercise."
     });
   };
 
@@ -306,6 +334,26 @@ const LiveWorkout = () => {
           </div>
         </>
       )}
+      
+      {/* Confirm Delete Set Dialog */}
+      <Dialog open={confirmDeleteSetDialog} onOpenChange={setConfirmDeleteSetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Set</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this set? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteSetDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteSet}>
+              Delete Set
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

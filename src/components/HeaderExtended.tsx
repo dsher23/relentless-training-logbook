@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -55,14 +55,16 @@ const HeaderExtended: React.FC<HeaderExtendedProps> = ({
         <div className="flex items-center gap-2">
           {rightContent}
           <NotificationCenter />
-          {!isOnDashboard && (
-            <Link 
-              to="/dashboard" 
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent transition-colors"
-            >
-              <Logo size="sm" />
-            </Link>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+            title="Go to Dashboard"
+            className="text-primary hover:bg-primary/10"
+          >
+            <Home className="h-5 w-5" />
+            <span className="sr-only">Dashboard</span>
+          </Button>
         </div>
       </div>
     </header>
