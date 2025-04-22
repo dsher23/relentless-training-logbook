@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { startOfWeek, endOfWeek, format, isSameWeek, addWeeks, subWeeks } from "date-fns";
@@ -68,8 +68,10 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
   const lastWeekTotal = calculateDailyData(subWeeks(currentDate, 1))
     .reduce((total, day) => total + day.volume, 0);
   const workoutCount = data.filter(d => d.volume > 0).length;
-  const percentageChange = lastWeekTotal ? 
-    ((weeklyTotal - lastWeekTotal) / lastWeekTotal * 100).toFixed(1) : 0;
+  
+  // Make sure weeklyTotal and lastWeekTotal are numbers for comparison
+  const percentageChange = lastWeekTotal > 0 ? 
+    ((weeklyTotal - lastWeekTotal) / lastWeekTotal * 100).toFixed(1) : "0";
   
   // Get workout streak
   const streak = workouts
@@ -103,6 +105,15 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
       </div>
     );
   };
+
+  // Define color mapping for bars
+  const getBarColor = (entry: DayData) => {
+    switch (entry.change) {
+      case "increase": return "#22c55e"; // green
+      case "decrease": return "#ef4444"; // red
+      default: return "#eab308"; // yellow
+    }
+  };
   
   return (
     <Card>
@@ -123,16 +134,11 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip content={<CustomTooltip />} />
-              <Bar
-                dataKey="volume"
-                fill={(entry: DayData) => {
-                  switch (entry.change) {
-                    case "increase": return "#22c55e";
-                    case "decrease": return "#ef4444";
-                    default: return "#eab308";
-                  }
-                }}
-              />
+              <Bar dataKey="volume" fill="#8884d8">
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -140,11 +146,11 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
         <div className="mt-4 space-y-2">
           <p className="text-sm">
             You lifted {weeklyTotal.toLocaleString()}kg across {workoutCount} workouts this week.
-            {lastWeekTotal > 0 && (
+            {Number(lastWeekTotal) > 0 && (
               <span>
                 {" "}That's{" "}
-                <span className={percentageChange > 0 ? "text-green-500" : "text-red-500"}>
-                  {percentageChange > 0 ? "+" : ""}{percentageChange}%
+                <span className={Number(percentageChange) > 0 ? "text-green-500" : "text-red-500"}>
+                  {Number(percentageChange) > 0 ? "+" : ""}{percentageChange}%
                 </span>{" "}
                 vs last week!
               </span>
