@@ -6,7 +6,8 @@ import {
   Calendar, 
   LineChart, 
   Clock, 
-  Trophy
+  Trophy,
+  Play
 } from "lucide-react";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,10 +101,10 @@ const Training: React.FC = () => {
                   <p className="text-white/80">Start a new workout session now</p>
                 </div>
                 <Button 
-                  onClick={() => navigate("/workouts/new")}
+                  onClick={() => navigate("/workout-selection")}
                   className="bg-white text-gym-purple hover:bg-white/90"
                 >
-                  <Dumbbell className="mr-2 h-4 w-4" /> 
+                  <Play className="mr-2 h-4 w-4" /> 
                   Start Workout
                 </Button>
               </div>

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Save } from "lucide-react";
+import { Calendar as CalendarIcon, Save, Play } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,13 +36,16 @@ const CreateWorkout: React.FC = () => {
     }
   });
 
-  const handleSubmit = async (values: CreateWorkoutFormValues) => {
+  const handleSave = async (values: CreateWorkoutFormValues, startWorkout = false) => {
     setSubmitting(true);
     
     try {
-      // Navigate to builder with workout name
+      // Navigate to builder with workout name and indicate whether to start after creation
       navigate("/workouts/builder", {
-        state: { workoutName: values.name }
+        state: { 
+          workoutName: values.name,
+          startAfterCreation: startWorkout 
+        }
       });
     } catch (error) {
       console.error("Error creating workout:", error);
@@ -62,7 +66,11 @@ const CreateWorkout: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const values = form.getValues();
+                handleSave(values, false); // Default to just saving without starting
+              }} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="name"
@@ -131,14 +139,27 @@ const CreateWorkout: React.FC = () => {
                   )}
                 />
                 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <Button 
                     type="submit" 
-                    className="bg-gym-purple hover:bg-gym-darkPurple"
+                    className="bg-gym-blue hover:bg-gym-blue/90"
                     disabled={submitting}
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {submitting ? "Saving..." : "Create Workout"}
+                    Save Workout
+                  </Button>
+                  
+                  <Button 
+                    type="button"
+                    className="bg-gym-purple hover:bg-gym-purple/90"
+                    disabled={submitting}
+                    onClick={() => {
+                      const values = form.getValues();
+                      handleSave(values, true); // Save and start workout
+                    }}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Start Workout
                   </Button>
                 </div>
               </form>

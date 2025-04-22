@@ -11,12 +11,14 @@ interface StartWorkoutButtonProps {
   workoutId: string;
   isTemplate?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
   workoutId,
   isTemplate = false,
   className,
+  compact = false,
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,11 +45,11 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
 
   return (
     <Button
-      size="sm"
+      size={compact ? "sm" : "default"}
       onClick={handleStartWorkout}
       className={cn("bg-gym-blue hover:bg-gym-blue/90 text-white", className)}
     >
-      <Play className="h-4 w-4 mr-1" /> Start
+      <Play className="h-4 w-4 mr-1" /> {compact ? "" : "Start"}
     </Button>
   );
 };
