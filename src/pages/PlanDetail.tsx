@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Calendar, Copy, Star } from "lucide-react";
@@ -55,14 +54,13 @@ const PlanDetail: React.FC = () => {
   );
   
   const handleAddExistingTemplate = (templateId: string) => {
-    const template = workoutTemplates.find((t) => t.id === templateId);
-    if (template) {
-      addTemplateToPlan(plan.id, template);
+    if (addTemplateToPlan) {
+      addTemplateToPlan(plan.id, templateId);
       setIsAddDialogOpen(false);
       
       toast({
         title: "Success",
-        description: `Added "${template.name}" to plan`,
+        description: `Added workout to plan`,
       });
     }
   };
@@ -84,7 +82,10 @@ const PlanDetail: React.FC = () => {
     };
     
     addWorkoutTemplate(newTemplate);
-    addTemplateToPlan(plan.id, newTemplate);
+    
+    if (addTemplateToPlan) {
+      addTemplateToPlan(plan.id, newTemplate.id);
+    }
     
     setNewTemplateName("");
     setIsCreateDialogOpen(false);
@@ -99,12 +100,14 @@ const PlanDetail: React.FC = () => {
   };
   
   const handleRemoveTemplate = (templateId: string) => {
-    removeTemplateFromPlan(plan.id, templateId);
-    
-    toast({
-      title: "Success",
-      description: "Removed workout from plan",
-    });
+    if (removeTemplateFromPlan) {
+      removeTemplateFromPlan(plan.id, templateId);
+      
+      toast({
+        title: "Success",
+        description: "Removed workout from plan",
+      });
+    }
   };
   
   const handleEditTemplate = (templateId: string) => {
@@ -112,16 +115,20 @@ const PlanDetail: React.FC = () => {
   };
   
   const handleDuplicateTemplate = (templateId: string) => {
-    duplicateWorkoutTemplate(templateId);
+    if (duplicateWorkoutTemplate) {
+      duplicateWorkoutTemplate(templateId);
+    }
   };
   
   const handleSetActiveRoutine = () => {
-    setActivePlan(plan.id);
-    
-    toast({
-      title: "Success",
-      description: "Set as active workout plan",
-    });
+    if (setActivePlan) {
+      setActivePlan(plan.id);
+      
+      toast({
+        title: "Success",
+        description: "Set as active workout plan",
+      });
+    }
   };
   
   return (

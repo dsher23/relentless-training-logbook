@@ -45,9 +45,11 @@ export const useWorkoutPlans = () => {
     }
   };
 
-  const addTemplateToPlan = (planId: string, template: WorkoutTemplate) => {
+  const addTemplateToPlan = (planId: string, templateId: string) => {
+    const template = workoutPlans.flatMap(p => p.workoutTemplates).find(t => t.id === templateId);
+    
     setWorkoutPlans(workoutPlans.map(plan => {
-      if (plan.id === planId) {
+      if (plan.id === planId && template) {
         return {
           ...plan,
           workoutTemplates: [...plan.workoutTemplates, template]
