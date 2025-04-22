@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import AddExerciseForm from "@/components/AddExerciseForm";
 import ExercisesList from "@/components/ExercisesList";
@@ -61,9 +60,9 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Fixed totalSets calculation with proper type annotations and initial value
-  const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
-    return acc + exercise.sets.length;
+  // Fixed totalSets calculation
+  const totalSets = workout.exercises.reduce((total, exercise) => {
+    return total + exercise.sets.length;
   }, 0);
 
   return (

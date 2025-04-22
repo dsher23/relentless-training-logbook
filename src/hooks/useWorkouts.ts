@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Workout, Exercise } from '@/types';
 
-// Convert this to a proper React hook function
 export const useWorkouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
@@ -42,7 +41,6 @@ export const useWorkouts = () => {
     ));
   }, []);
 
-  // Add the missing getWorkoutById function
   const getWorkoutById = useCallback((id: string): Workout => {
     return workouts.find(w => w.id === id) || {} as Workout;
   }, [workouts]);
