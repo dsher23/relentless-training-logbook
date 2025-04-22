@@ -98,7 +98,7 @@ const Measurements: React.FC = () => {
                       <div key={field.key} className="flex justify-between items-center px-2 py-1">
                         <span className="text-sm text-muted-foreground">{field.label}:</span>
                         <span className="text-right font-medium">
-                          {value} {field.unit}
+                          {value.toString()} {field.unit}
                         </span>
                       </div>
                     ) : null;
@@ -134,7 +134,7 @@ const Measurements: React.FC = () => {
                         <div key={field.key} className="flex justify-between">
                           <span className="text-muted-foreground">{field.label}:</span>
                           <span>
-                            {value} {field.unit}
+                            {value.toString()} {field.unit}
                           </span>
                         </div>
                       ) : null;
