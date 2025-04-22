@@ -22,9 +22,9 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
   const handleStartWorkout = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isTemplate) {
-      navigate(`/workouts/new?templateId=${workoutId}&start=true`);
+      navigate(`/live-workout/${workoutId}`);
     } else {
-      navigate(`/workouts/${workoutId}/live`);
+      navigate(`/live-workout/${workoutId}`);
     }
   };
 

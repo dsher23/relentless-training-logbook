@@ -51,6 +51,13 @@ const Workouts: React.FC = () => {
           >
             <ClipboardList className="h-4 w-4" />
           </Button>
+          <Button
+            variant="outline"
+            className="flex-shrink-0"
+            onClick={() => navigate("/weekly-overview")}
+          >
+            <Calendar className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       

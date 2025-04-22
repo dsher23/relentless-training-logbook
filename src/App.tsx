@@ -18,6 +18,7 @@ import Index from './pages/Index';
 import Training from './pages/Training';
 import WorkoutDays from './pages/WorkoutDays';
 import DayExercises from './pages/DayExercises';
+import WeeklyOverview from './pages/WeeklyOverview';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           <Route path="/workouts/builder/:id" element={<WorkoutBuilder />} />
           <Route path="/live-workout/:id" element={<LiveWorkout />} />
           <Route path="/workout-history" element={<WorkoutHistory />} />
+          <Route path="/weekly-overview" element={<WeeklyOverview />} />
 
           <Route path="/routines" element={<Routines />} />
           <Route path="/routines/:id" element={<Routines />} />
