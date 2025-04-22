@@ -61,8 +61,8 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Fix the type error by providing an initial value of 0 and explicitly typing the accumulator as number
-  const totalSets = workout.exercises.reduce((acc: number, exercise: Exercise) => {
+  // Explicitly use reduce with proper generic type parameters to calculate total sets
+  const totalSets = workout.exercises.reduce<number>((acc, exercise) => {
     return acc + exercise.sets.length;
   }, 0);
 
