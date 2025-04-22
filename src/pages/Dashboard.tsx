@@ -1,19 +1,49 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, ArrowRight, Ruler, PillIcon, Calendar } from "lucide-react";
+import { Dumbbell, ArrowRight, Ruler, PillIcon, Calendar, AlertTriangle, Tag, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Header from "@/components/Header";
 import StatCard from "@/components/StatCard";
 import ProgressChart from "@/components/ProgressChart";
 import WorkoutCard from "@/components/WorkoutCard";
+import WeakPointTracker from "@/components/WeakPointTracker";
+import TrainingBlockForm from "@/components/TrainingBlockForm";
 import { useAppContext } from "@/context/AppContext";
+import { addWeeks, isBefore } from "date-fns";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts, bodyMeasurements, supplements, supplementLogs, moodLogs } = useAppContext();
+  const { 
+    workouts, 
+    bodyMeasurements, 
+    supplements, 
+    supplementLogs, 
+    moodLogs,
+    checkTrainingBlockStatus,
+    getStagnantExercises,
+    trainingBlocks
+  } = useAppContext();
+  
+  const [showTrainingBlockDialog, setShowTrainingBlockDialog] = useState(false);
+  
+  // Get active training block
+  const today = new Date();
+  const activeBlock = trainingBlocks
+    .filter(block => {
+      const endDate = addWeeks(new Date(block.startDate), block.durationWeeks);
+      return isBefore(today, endDate);
+    })
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
+  
+  // Get training block status
+  const { needsUpdate, trainingBlock } = checkTrainingBlockStatus();
+  
+  // Get stagnant exercises
+  const stagnantExercises = getStagnantExercises();
   
   // Get most recent body measurements
   const sortedMeasurements = [...bodyMeasurements].sort((a, b) => 
@@ -23,7 +53,6 @@ const Dashboard: React.FC = () => {
   const previousMeasurement = sortedMeasurements[1];
   
   // Get upcoming or recent workouts
-  const today = new Date();
   const upcomingWorkouts = workouts
     .filter(w => new Date(w.date) >= today && !w.completed)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -57,9 +86,35 @@ const Dashboard: React.FC = () => {
   return (
     <div className="app-container animate-fade-in">
       <Header 
-        title="Relentless" 
+        title="Iron Log" 
         subtitle={`${format(today, "EEEE, MMMM d")}`} 
       />
+      
+      {needsUpdate && trainingBlock && (
+        <div className="px-4 mb-6">
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <div>
+                  <h3 className="font-medium">Training Block Completed</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your "{trainingBlock.name}" training block has ended. Time to create a new one!
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setShowTrainingBlockDialog(true)}
+                  >
+                    Create New Training Block
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       <div className="grid grid-cols-2 gap-4 px-4 mb-6">
         {latestMeasurement && (
@@ -81,6 +136,25 @@ const Dashboard: React.FC = () => {
           icon={<PillIcon className="w-4 h-4" />}
           onClick={() => navigate("/supplements")}
         />
+        
+        {activeBlock && (
+          <StatCard
+            title="Training Block"
+            value={activeBlock.name}
+            icon={<Shield className="w-4 h-4" />}
+            onClick={() => navigate("/routines")}
+          />
+        )}
+        
+        {stagnantExercises.length > 0 && (
+          <StatCard
+            title="Stagnant Exercises"
+            value={`${stagnantExercises.length}`}
+            icon={<AlertTriangle className="w-4 h-4" />}
+            onClick={() => navigate("/routines")}
+            alert={true}
+          />
+        )}
       </div>
       
       {workouts.length > 0 && (
@@ -90,7 +164,7 @@ const Dashboard: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-gym-purple"
+              className="text-iron-blue"
               onClick={() => navigate("/workouts")}
             >
               See all
@@ -134,15 +208,29 @@ const Dashboard: React.FC = () => {
             </Card>
           )}
           
-          <Button
-            className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple mt-4"
-            onClick={() => navigate("/workouts/new")}
-          >
-            <Dumbbell className="mr-2 h-4 w-4" />
-            Start New Workout
-          </Button>
+          <div className="flex gap-2 mt-4">
+            <Button
+              className="flex-1 bg-iron-blue text-white hover:bg-blue-700"
+              onClick={() => navigate("/workouts/new")}
+            >
+              <Dumbbell className="mr-2 h-4 w-4" />
+              Start Workout
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate("/routines")}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              View Routines
+            </Button>
+          </div>
         </section>
       )}
+      
+      <section className="mb-8 px-4">
+        <WeakPointTracker />
+      </section>
       
       {latestMeasurement && weightChartData.length > 1 && (
         <section className="mb-8 px-4">
@@ -160,7 +248,7 @@ const Dashboard: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="text-gym-purple"
+            className="text-iron-blue"
             onClick={() => navigate("/recovery")}
           >
             See all
@@ -171,7 +259,7 @@ const Dashboard: React.FC = () => {
         <Card className="overflow-hidden">
           <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between bg-secondary">
             <div className="flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-gym-purple" />
+              <Calendar className="w-5 h-5 text-iron-blue" />
               <CardTitle className="text-base font-medium">Today's Check-in</CardTitle>
             </div>
           </CardHeader>
@@ -202,6 +290,16 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </section>
+      
+      {/* Training Block Dialog */}
+      <Dialog open={showTrainingBlockDialog} onOpenChange={setShowTrainingBlockDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Training Block</DialogTitle>
+          </DialogHeader>
+          <TrainingBlockForm onSave={() => setShowTrainingBlockDialog(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

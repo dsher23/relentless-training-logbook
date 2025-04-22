@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -57,6 +58,12 @@ export default {
           blue: "#0066FF",
           gray: "#F5F5F7",
           muted: "#6E6E73",
+        },
+        gym: {
+          purple: "#9b87f5",
+          darkPurple: "#7E69AB",
+          light: "#F5F5F7",
+          dark: "#1A1F2C",
         }
       },
       borderRadius: {

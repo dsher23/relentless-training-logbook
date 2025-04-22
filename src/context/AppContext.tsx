@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export interface Set {
@@ -6,6 +5,8 @@ export interface Set {
   reps: number;
   weight: number;
   isPersonalBest?: boolean;
+  type?: "normal" | "warmup" | "dropset" | "superset";
+  restTime?: number;
 }
 
 export interface Exercise {
@@ -13,6 +14,8 @@ export interface Exercise {
   name: string;
   sets: Set[];
   notes?: string;
+  lastProgressDate?: Date;
+  isWeakPoint?: boolean;
 }
 
 export interface Workout {
@@ -22,6 +25,40 @@ export interface Workout {
   exercises: Exercise[];
   notes?: string;
   completed: boolean;
+  dayName?: string;
+  isDeload?: boolean;
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  exercises: Omit<Exercise, "sets">[];
+  dayName?: string;
+}
+
+export interface WeeklyRoutine {
+  id: string;
+  name: string;
+  workoutDays: {
+    dayOfWeek: number;
+    workoutTemplateId: string | null;
+  }[];
+}
+
+export interface TrainingBlock {
+  id: string;
+  name: string;
+  startDate: Date;
+  durationWeeks: number;
+  weeklyRoutineId: string;
+  notes: string;
+}
+
+export interface WeakPoint {
+  id: string;
+  muscleGroup: string;
+  priority: number;
+  sessionsPerWeekGoal: number;
 }
 
 export interface BodyMeasurement {
@@ -66,6 +103,12 @@ export interface MoodLog {
   notes?: string;
 }
 
+export interface WeekNotes {
+  id: string;
+  weekStartDate: Date;
+  notes: string;
+}
+
 interface AppContextType {
   workouts: Workout[];
   addWorkout: (workout: Workout) => void;
@@ -91,6 +134,35 @@ interface AppContextType {
   addMoodLog: (log: MoodLog) => void;
   updateMoodLog: (log: MoodLog) => void;
   deleteMoodLog: (id: string) => void;
+
+  workoutTemplates: WorkoutTemplate[];
+  addWorkoutTemplate: (template: WorkoutTemplate) => void;
+  updateWorkoutTemplate: (template: WorkoutTemplate) => void;
+  deleteWorkoutTemplate: (id: string) => void;
+  
+  weeklyRoutines: WeeklyRoutine[];
+  addWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  updateWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  deleteWeeklyRoutine: (id: string) => void;
+  
+  trainingBlocks: TrainingBlock[];
+  addTrainingBlock: (block: TrainingBlock) => void;
+  updateTrainingBlock: (block: TrainingBlock) => void;
+  deleteTrainingBlock: (id: string) => void;
+  
+  weakPoints: WeakPoint[];
+  addWeakPoint: (weakPoint: WeakPoint) => void;
+  updateWeakPoint: (weakPoint: WeakPoint) => void;
+  deleteWeakPoint: (id: string) => void;
+  
+  weekNotes: WeekNotes[];
+  addWeekNotes: (notes: WeekNotes) => void;
+  updateWeekNotes: (notes: WeekNotes) => void;
+  deleteWeekNotes: (id: string) => void;
+  
+  toggleDeloadMode: (workoutId: string, isDeload: boolean) => void;
+  getStagnantExercises: () => { workout: Workout, exercise: Exercise }[];
+  checkTrainingBlockStatus: () => { needsUpdate: boolean, trainingBlock: TrainingBlock | null };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -103,147 +175,96 @@ export const useAppContext = () => {
   return context;
 };
 
-// Sample data for demonstration
-const sampleWorkouts: Workout[] = [
+const sampleWorkoutTemplates: WorkoutTemplate[] = [
   {
     id: "1",
-    name: "Push Day",
-    date: new Date(2025, 3, 20),
+    name: "Push Day Template",
+    dayName: "Push",
     exercises: [
       {
         id: "e1",
         name: "Bench Press",
-        sets: [
-          { id: "s1", reps: 8, weight: 225, isPersonalBest: true },
-          { id: "s2", reps: 8, weight: 225 },
-          { id: "s3", reps: 6, weight: 225 }
-        ],
-        notes: "Felt strong today"
+        lastProgressDate: new Date(2025, 3, 20),
+        isWeakPoint: false
       },
       {
         id: "e2",
-        name: "Overhead Press",
-        sets: [
-          { id: "s4", reps: 8, weight: 135 },
-          { id: "s5", reps: 8, weight: 135 },
-          { id: "s6", reps: 7, weight: 135 }
-        ]
-      }
-    ],
-    notes: "Great pump in shoulders",
-    completed: true
-  },
-  {
-    id: "2",
-    name: "Pull Day",
-    date: new Date(2025, 3, 21),
-    exercises: [
-      {
-        id: "e3",
-        name: "Deadlift",
-        sets: [
-          { id: "s7", reps: 5, weight: 315 },
-          { id: "s8", reps: 5, weight: 315 },
-          { id: "s9", reps: 4, weight: 315 }
-        ]
+        name: "Shoulder Press",
+        lastProgressDate: new Date(2025, 3, 20),
+        isWeakPoint: false
       },
       {
-        id: "e4",
-        name: "Barbell Row",
-        sets: [
-          { id: "s10", reps: 10, weight: 185, isPersonalBest: true },
-          { id: "s11", reps: 10, weight: 185 },
-          { id: "s12", reps: 8, weight: 185 }
-        ],
-        notes: "Focus on form"
+        id: "e3",
+        name: "Tricep Pushdown",
+        lastProgressDate: new Date(2025, 3, 15),
+        isWeakPoint: true
       }
-    ],
-    completed: true
-  }
-];
-
-const sampleBodyMeasurements: BodyMeasurement[] = [
-  {
-    id: "1",
-    date: new Date(2025, 3, 1),
-    weight: 185,
-    arms: 16,
-    chest: 42,
-    waist: 34,
-    legs: 24,
-    bodyFatPercentage: 15
+    ]
   },
   {
     id: "2",
-    date: new Date(2025, 3, 15),
-    weight: 183,
-    arms: 16.25,
-    chest: 42.5,
-    waist: 33.5,
-    legs: 24.25,
-    bodyFatPercentage: 14.5
+    name: "Pull Day Template",
+    dayName: "Pull",
+    exercises: [
+      {
+        id: "e4",
+        name: "Deadlift",
+        lastProgressDate: new Date(2025, 3, 21),
+        isWeakPoint: false
+      },
+      {
+        id: "e5",
+        name: "Barbell Row",
+        lastProgressDate: new Date(2025, 3, 14),
+        isWeakPoint: false
+      }
+    ]
   }
 ];
 
-const sampleSupplements: Supplement[] = [
+const sampleWeeklyRoutines: WeeklyRoutine[] = [
   {
     id: "1",
-    name: "Creatine",
-    dosage: "5g",
-    schedule: {
-      morning: true,
-      afternoon: false,
-      evening: false,
-      workoutDays: true
-    }
-  },
-  {
-    id: "2",
-    name: "Protein Powder",
-    dosage: "25g",
-    schedule: {
-      morning: false,
-      afternoon: false,
-      evening: false,
-      workoutDays: true
-    },
-    reminder: new Date()
+    name: "PPL Split",
+    workoutDays: [
+      { dayOfWeek: 1, workoutTemplateId: "1" },
+      { dayOfWeek: 3, workoutTemplateId: "2" },
+      { dayOfWeek: 5, workoutTemplateId: null }
+    ]
   }
 ];
 
-const sampleSupplementLogs: SupplementLog[] = [
+const sampleTrainingBlocks: TrainingBlock[] = [
   {
     id: "1",
-    supplementId: "1",
-    date: new Date(2025, 3, 21),
-    taken: true,
-    time: new Date(2025, 3, 21, 8, 0)
-  },
-  {
-    id: "2",
-    supplementId: "2",
-    date: new Date(2025, 3, 21),
-    taken: true,
-    time: new Date(2025, 3, 21, 17, 30)
+    name: "Strength Phase",
+    startDate: new Date(2025, 3, 1),
+    durationWeeks: 6,
+    weeklyRoutineId: "1",
+    notes: "Focus on progressive overload with lower rep ranges (3-6)"
   }
 ];
 
-const sampleMoodLogs: MoodLog[] = [
+const sampleWeakPoints: WeakPoint[] = [
   {
     id: "1",
-    date: new Date(2025, 3, 21),
-    sleep: 7,
-    energy: 8,
-    mood: "good",
-    notes: "Felt well-rested"
+    muscleGroup: "Triceps",
+    priority: 2,
+    sessionsPerWeekGoal: 2
   },
   {
-    id: "2",
-    date: new Date(2025, 3, 20),
-    sleep: 6,
-    energy: 6,
-    mood: "neutral",
-    notes: "Slight fatigue in the afternoon"
+    id: "2", 
+    muscleGroup: "Calves",
+    priority: 3,
+    sessionsPerWeekGoal: 3
+  }
+];
+
+const sampleWeekNotes: WeekNotes[] = [
+  {
+    id: "1",
+    weekStartDate: new Date(2025, 3, 20),
+    notes: "Right knee feeling better. Focusing on mind-muscle connection with quads."
   }
 ];
 
@@ -253,8 +274,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [supplements, setSupplements] = useState<Supplement[]>(sampleSupplements);
   const [supplementLogs, setSupplementLogs] = useState<SupplementLog[]>(sampleSupplementLogs);
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>(sampleMoodLogs);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(sampleWorkoutTemplates);
+  const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>(sampleWeeklyRoutines);
+  const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>(sampleTrainingBlocks);
+  const [weakPoints, setWeakPoints] = useState<WeakPoint[]>(sampleWeakPoints);
+  const [weekNotes, setWeekNotes] = useState<WeekNotes[]>(sampleWeekNotes);
 
-  // Load data from localStorage on mount
   useEffect(() => {
     const loadedWorkouts = localStorage.getItem("workouts");
     if (loadedWorkouts) {
@@ -280,9 +305,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (loadedMoodLogs) {
       setMoodLogs(JSON.parse(loadedMoodLogs));
     }
+
+    const loadedWorkoutTemplates = localStorage.getItem("workoutTemplates");
+    if (loadedWorkoutTemplates) {
+      setWorkoutTemplates(JSON.parse(loadedWorkoutTemplates));
+    }
+
+    const loadedWeeklyRoutines = localStorage.getItem("weeklyRoutines");
+    if (loadedWeeklyRoutines) {
+      setWeeklyRoutines(JSON.parse(loadedWeeklyRoutines));
+    }
+
+    const loadedTrainingBlocks = localStorage.getItem("trainingBlocks");
+    if (loadedTrainingBlocks) {
+      setTrainingBlocks(JSON.parse(loadedTrainingBlocks));
+    }
+
+    const loadedWeakPoints = localStorage.getItem("weakPoints");
+    if (loadedWeakPoints) {
+      setWeakPoints(JSON.parse(loadedWeakPoints));
+    }
+
+    const loadedWeekNotes = localStorage.getItem("weekNotes");
+    if (loadedWeekNotes) {
+      setWeekNotes(JSON.parse(loadedWeekNotes));
+    }
   }, []);
 
-  // Save data to localStorage on changes
   useEffect(() => {
     localStorage.setItem("workouts", JSON.stringify(workouts));
   }, [workouts]);
@@ -303,7 +352,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("moodLogs", JSON.stringify(moodLogs));
   }, [moodLogs]);
 
-  // Workout functions
+  useEffect(() => {
+    localStorage.setItem("workoutTemplates", JSON.stringify(workoutTemplates));
+  }, [workoutTemplates]);
+
+  useEffect(() => {
+    localStorage.setItem("weeklyRoutines", JSON.stringify(weeklyRoutines));
+  }, [weeklyRoutines]);
+
+  useEffect(() => {
+    localStorage.setItem("trainingBlocks", JSON.stringify(trainingBlocks));
+  }, [trainingBlocks]);
+
+  useEffect(() => {
+    localStorage.setItem("weakPoints", JSON.stringify(weakPoints));
+  }, [weakPoints]);
+
+  useEffect(() => {
+    localStorage.setItem("weekNotes", JSON.stringify(weekNotes));
+  }, [weekNotes]);
+
   const addWorkout = (workout: Workout) => {
     setWorkouts([...workouts, workout]);
   };
@@ -316,7 +384,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkouts(workouts.filter(w => w.id !== id));
   };
 
-  // Body measurement functions
   const addBodyMeasurement = (measurement: BodyMeasurement) => {
     setBodyMeasurements([...bodyMeasurements, measurement]);
   };
@@ -329,7 +396,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBodyMeasurements(bodyMeasurements.filter(m => m.id !== id));
   };
 
-  // Supplement functions
   const addSupplement = (supplement: Supplement) => {
     setSupplements([...supplements, supplement]);
   };
@@ -342,7 +408,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSupplements(supplements.filter(s => s.id !== id));
   };
 
-  // Supplement log functions
   const addSupplementLog = (log: SupplementLog) => {
     setSupplementLogs([...supplementLogs, log]);
   };
@@ -355,7 +420,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSupplementLogs(supplementLogs.filter(l => l.id !== id));
   };
 
-  // Mood log functions
   const addMoodLog = (log: MoodLog) => {
     setMoodLogs([...moodLogs, log]);
   };
@@ -366,6 +430,114 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteMoodLog = (id: string) => {
     setMoodLogs(moodLogs.filter(l => l.id !== id));
+  };
+
+  const addWorkoutTemplate = (template: WorkoutTemplate) => {
+    setWorkoutTemplates([...workoutTemplates, template]);
+  };
+
+  const updateWorkoutTemplate = (updatedTemplate: WorkoutTemplate) => {
+    setWorkoutTemplates(workoutTemplates.map(t => 
+      t.id === updatedTemplate.id ? updatedTemplate : t
+    ));
+  };
+
+  const deleteWorkoutTemplate = (id: string) => {
+    setWorkoutTemplates(workoutTemplates.filter(t => t.id !== id));
+  };
+
+  const addWeeklyRoutine = (routine: WeeklyRoutine) => {
+    setWeeklyRoutines([...weeklyRoutines, routine]);
+  };
+
+  const updateWeeklyRoutine = (updatedRoutine: WeeklyRoutine) => {
+    setWeeklyRoutines(weeklyRoutines.map(r => 
+      r.id === updatedRoutine.id ? updatedRoutine : r
+    ));
+  };
+
+  const deleteWeeklyRoutine = (id: string) => {
+    setWeeklyRoutines(weeklyRoutines.filter(r => r.id !== id));
+  };
+
+  const addTrainingBlock = (block: TrainingBlock) => {
+    setTrainingBlocks([...trainingBlocks, block]);
+  };
+
+  const updateTrainingBlock = (updatedBlock: TrainingBlock) => {
+    setTrainingBlocks(trainingBlocks.map(b => 
+      b.id === updatedBlock.id ? updatedBlock : b
+    ));
+  };
+
+  const deleteTrainingBlock = (id: string) => {
+    setTrainingBlocks(trainingBlocks.filter(b => b.id !== id));
+  };
+
+  const addWeakPoint = (weakPoint: WeakPoint) => {
+    setWeakPoints([...weakPoints, weakPoint]);
+  };
+
+  const updateWeakPoint = (updatedWeakPoint: WeakPoint) => {
+    setWeakPoints(weakPoints.map(wp => 
+      wp.id === updatedWeakPoint.id ? updatedWeakPoint : wp
+    ));
+  };
+
+  const deleteWeakPoint = (id: string) => {
+    setWeakPoints(weakPoints.filter(wp => wp.id !== id));
+  };
+
+  const addWeekNotes = (notes: WeekNotes) => {
+    setWeekNotes([...weekNotes, notes]);
+  };
+
+  const updateWeekNotes = (updatedNotes: WeekNotes) => {
+    setWeekNotes(weekNotes.map(n => 
+      n.id === updatedNotes.id ? updatedNotes : n
+    ));
+  };
+
+  const deleteWeekNotes = (id: string) => {
+    setWeekNotes(weekNotes.filter(n => n.id !== id));
+  };
+
+  const toggleDeloadMode = (workoutId: string, isDeload: boolean) => {
+    setWorkouts(workouts.map(workout => 
+      workout.id === workoutId ? { ...workout, isDeload } : workout
+    ));
+  };
+
+  const getStagnantExercises = () => {
+    const threeWeeksAgo = new Date();
+    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
+    
+    const results: { workout: Workout, exercise: Exercise }[] = [];
+    
+    workouts.forEach(workout => {
+      workout.exercises.forEach(exercise => {
+        if (exercise.lastProgressDate && exercise.lastProgressDate < threeWeeksAgo) {
+          results.push({ workout, exercise });
+        }
+      });
+    });
+    
+    return results;
+  };
+
+  const checkTrainingBlockStatus = () => {
+    const today = new Date();
+    
+    for (const block of trainingBlocks) {
+      const endDate = new Date(block.startDate);
+      endDate.setDate(endDate.getDate() + (block.durationWeeks * 7));
+      
+      if (today >= endDate) {
+        return { needsUpdate: true, trainingBlock: block };
+      }
+    }
+    
+    return { needsUpdate: false, trainingBlock: null };
   };
 
   return (
@@ -390,7 +562,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         moodLogs,
         addMoodLog,
         updateMoodLog,
-        deleteMoodLog
+        deleteMoodLog,
+        workoutTemplates,
+        addWorkoutTemplate,
+        updateWorkoutTemplate,
+        deleteWorkoutTemplate,
+        weeklyRoutines,
+        addWeeklyRoutine,
+        updateWeeklyRoutine,
+        deleteWeeklyRoutine,
+        trainingBlocks,
+        addTrainingBlock,
+        updateTrainingBlock,
+        deleteTrainingBlock,
+        weakPoints,
+        addWeakPoint,
+        updateWeakPoint,
+        deleteWeakPoint,
+        weekNotes,
+        addWeekNotes,
+        updateWeekNotes,
+        deleteWeekNotes,
+        toggleDeloadMode,
+        getStagnantExercises,
+        checkTrainingBlockStatus
       }}
     >
       {children}

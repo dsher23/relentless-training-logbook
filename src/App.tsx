@@ -12,6 +12,7 @@ import Workouts from "./pages/Workouts";
 import Measurements from "./pages/Measurements";
 import Supplements from "./pages/Supplements";
 import Recovery from "./pages/Recovery";
+import Routines from "./pages/Routines";
 import TabNavigation from "./components/TabNavigation";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/measurements" element={<Measurements />} />
             <Route path="/supplements" element={<Supplements />} />
             <Route path="/recovery" element={<Recovery />} />
+            <Route path="/routines" element={<Routines />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <TabNavigation />
