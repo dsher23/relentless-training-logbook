@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { PillIcon, Plus, Lock } from "lucide-react";
+import { PillIcon, Plus, Lock, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,12 +9,17 @@ import Header from "@/components/Header";
 import SupplementItem from "@/components/SupplementItem";
 import AddSupplementForm from "@/components/AddSupplementForm";
 import AddCycleForm from "@/components/AddCycleForm";
+import AddCompoundForm from "@/components/AddCompoundForm";
 import { useAppContext } from "@/context/AppContext";
+import { SteroidCompound } from "@/types";
 
 const Supplements: React.FC = () => {
-  const { supplements, supplementLogs, steroidCycles } = useAppContext();
+  const { supplements, supplementLogs, steroidCycles, compounds, addCompound, updateCompound, deleteCompound } = useAppContext();
   const [isSupplementFormOpen, setIsSupplementFormOpen] = useState(false);
   const [isCycleFormOpen, setIsCycleFormOpen] = useState(false);
+  const [isCompoundFormOpen, setIsCompoundFormOpen] = useState(false);
+  const [currentCycleId, setCurrentCycleId] = useState<string | null>(null);
+  const [editingCompound, setEditingCompound] = useState<SteroidCompound | null>(null);
   
   const today = new Date();
   const todayString = format(today, 'yyyy-MM-dd');
@@ -25,6 +31,39 @@ const Supplements: React.FC = () => {
   const complianceRate = supplements.length > 0 
     ? Math.round((takenCount / supplements.length) * 100)
     : 0;
+  
+  const handleAddCompound = (cycleId: string) => {
+    setCurrentCycleId(cycleId);
+    setEditingCompound(null);
+    setIsCompoundFormOpen(true);
+  };
+  
+  const handleEditCompound = (compound: SteroidCompound) => {
+    setEditingCompound(compound);
+    setCurrentCycleId(compound.cycleId);
+    setIsCompoundFormOpen(true);
+  };
+  
+  const handleSaveCompound = (compound: SteroidCompound) => {
+    if (editingCompound) {
+      updateCompound(compound);
+    } else {
+      addCompound({
+        ...compound,
+        cycleId: currentCycleId!
+      });
+    }
+  };
+  
+  const handleDeleteCompound = (compoundId: string) => {
+    if (confirm("Are you sure you want to delete this compound?")) {
+      deleteCompound(compoundId);
+    }
+  };
+  
+  const cycleCompounds = (cycleId: string) => {
+    return compounds.filter(c => c.cycleId === cycleId);
+  };
   
   return (
     <div className="app-container animate-fade-in pb-16">
@@ -128,7 +167,7 @@ const Supplements: React.FC = () => {
               steroidCycles.map(cycle => (
                 <Card key={cycle.id}>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium">{cycle.name}</h3>
                         {cycle.isPrivate && <Lock className="w-4 h-4 text-muted-foreground" />}
@@ -137,9 +176,76 @@ const Supplements: React.FC = () => {
                         Week {cycle.currentWeek} of {cycle.totalWeeks}
                       </span>
                     </div>
+                    
                     {cycle.notes && (
-                      <p className="text-sm text-muted-foreground mt-2">{cycle.notes}</p>
+                      <p className="text-sm text-muted-foreground mb-4">{cycle.notes}</p>
                     )}
+                    
+                    <div className="space-y-2 mt-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm font-medium">Compounds</h4>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleAddCompound(cycle.id)}
+                        >
+                          <Plus className="mr-1 h-4 w-4" /> Add Compound
+                        </Button>
+                      </div>
+                      
+                      {cycleCompounds(cycle.id).length === 0 ? (
+                        <div className="text-center py-3 text-sm border rounded-md border-dashed">
+                          No compounds added to this cycle
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {cycleCompounds(cycle.id).map(compound => (
+                            <div 
+                              key={compound.id} 
+                              className="flex justify-between items-start p-3 bg-secondary/50 rounded-md"
+                            >
+                              <div>
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium">🧪 {compound.name}</span>
+                                  {!compound.active && (
+                                    <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">
+                                      Ended
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {compound.weeklyDosage}{compound.dosageUnit}/week – {compound.frequency}
+                                  {compound.duration && ` – ${compound.duration} weeks`}
+                                </div>
+                                {compound.notes && (
+                                  <div className="text-xs italic text-muted-foreground mt-1">
+                                    {compound.notes}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  onClick={() => handleEditCompound(compound)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-red-500"
+                                  onClick={() => handleDeleteCompound(compound.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))
@@ -150,6 +256,13 @@ const Supplements: React.FC = () => {
       
       <AddSupplementForm open={isSupplementFormOpen} onOpenChange={setIsSupplementFormOpen} />
       <AddCycleForm open={isCycleFormOpen} onOpenChange={setIsCycleFormOpen} />
+      <AddCompoundForm 
+        open={isCompoundFormOpen} 
+        onOpenChange={setIsCompoundFormOpen}
+        onSave={handleSaveCompound}
+        initialCompound={editingCompound || undefined}
+        cycleId={currentCycleId || undefined}
+      />
     </div>
   );
 };
