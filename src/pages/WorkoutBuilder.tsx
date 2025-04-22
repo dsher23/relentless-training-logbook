@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -60,10 +59,11 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Fixed totalSets calculation
-  const totalSets = workout.exercises.reduce((total, exercise) => {
-    return total + exercise.sets.length;
-  }, 0);
+  // Correctly calculate total sets using reduce with proper typing
+  const totalSets = workout.exercises.reduce(
+    (acc: number, curr: Exercise) => acc + curr.sets.length, 
+    0
+  );
 
   return (
     <div className="app-container animate-fade-in">
