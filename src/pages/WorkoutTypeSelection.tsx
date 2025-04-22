@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { BookOpen, Plus, ArrowLeft, Calendar, ClipboardList, Filter } from "lucide-react";
+import { BookOpen, Plus, ArrowLeft, Calendar, ClipboardList, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
@@ -16,7 +16,7 @@ import {
 const WorkoutTypeSelection: React.FC = () => {
   const navigate = useNavigate();
   const { workoutTemplates, weeklyRoutines, workoutPlans } = useAppContext();
-  const [activeTab, setActiveTab] = useState("suggested");
+  const [activeTab, setActiveTab] = useState("routines");
   
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
@@ -43,7 +43,7 @@ const WorkoutTypeSelection: React.FC = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Start Workout</h1>
+          <h1 className="text-xl font-bold">Start Workout Session</h1>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ const WorkoutTypeSelection: React.FC = () => {
             >
               <Plus className="h-5 w-5 mr-3" />
               <div className="text-left">
-                <div className="font-semibold">Custom Workout</div>
+                <div className="font-semibold">New Workout Session</div>
                 <div className="text-xs opacity-80">Create a new workout from scratch</div>
               </div>
             </Button>
@@ -99,7 +99,7 @@ const WorkoutTypeSelection: React.FC = () => {
             >
               <Calendar className="h-5 w-5 mr-3" />
               <div className="text-left">
-                <div className="font-semibold">Weekly Plan</div>
+                <div className="font-semibold">Weekly Schedule</div>
                 <div className="text-xs opacity-80">View your planned workouts</div>
               </div>
             </Button>
@@ -108,79 +108,17 @@ const WorkoutTypeSelection: React.FC = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="suggested">Suggested</TabsTrigger>
+            <TabsTrigger value="routines">Routines</TabsTrigger>
             <TabsTrigger value="plans">Plans</TabsTrigger>
-            <TabsTrigger value="all">All Routines</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="suggested">
-            {todaysWorkout ? (
-              <div className="text-center p-4 text-muted-foreground">
-                Today's workout is already shown above
-              </div>
-            ) : (
-              <div className="text-center p-4 text-muted-foreground">
-                No specific workout scheduled for today
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="plans">
-            {workoutPlans.length > 0 ? (
-              <div className="space-y-3 mt-4">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Select from Workout Plans
-                </h3>
-                {workoutPlans.map(plan => (
-                  <Card 
-                    key={plan.id}
-                    className={`${plan.isActive ? "border-primary" : ""} hover:border-primary cursor-pointer`}
-                    onClick={() => navigate(`/plans/${plan.id}`)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">
-                            {plan.name}
-                            {plan.isActive && (
-                              <span className="ml-2 text-xs text-primary">(Active)</span>
-                            )}
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            {plan.workoutTemplates.length} workout{plan.workoutTemplates.length !== 1 ? "s" : ""}
-                          </p>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                        >
-                          Select
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center p-6 border rounded-lg border-dashed mt-4">
-                <ClipboardList className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium mb-2">No Plans Created</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Create a workout plan to organize multiple workouts together.
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/training?tab=plans")}
-                >
-                  Create Your First Plan
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="all">
+          <TabsContent value="routines">
             {workoutTemplates.length > 0 ? (
               <div className="space-y-3 mt-4">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Select from Saved Routines
+                </h3>
                 {workoutTemplates.map(template => (
                   <Card 
                     key={template.id} 
@@ -190,7 +128,12 @@ const WorkoutTypeSelection: React.FC = () => {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium">{template.name}</h3>
+                          <div className="flex items-center">
+                            <h3 className="font-medium">{template.name}</h3>
+                            {template.isFavorite && (
+                              <Star className="h-4 w-4 text-yellow-500 ml-1" />
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {template.exercises.length} exercises
                           </p>
@@ -225,6 +168,74 @@ const WorkoutTypeSelection: React.FC = () => {
                 </Button>
               </div>
             )}
+          </TabsContent>
+          
+          <TabsContent value="plans">
+            {workoutPlans.length > 0 ? (
+              <div className="space-y-3 mt-4">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Select from Workout Plans
+                </h3>
+                {workoutPlans.map(plan => (
+                  <Card 
+                    key={plan.id}
+                    className={`${plan.isActive ? "border-primary" : ""} hover:border-primary cursor-pointer`}
+                    onClick={() => navigate(`/plans/${plan.id}`)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">
+                            {plan.name}
+                            {plan.isActive && (
+                              <span className="ml-2 text-xs text-primary">(Active)</span>
+                            )}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {plan.workoutTemplates.length} workout{plan.workoutTemplates.length !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-6 border rounded-lg border-dashed mt-4">
+                <ClipboardList className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <h3 className="text-lg font-medium mb-2">No Training Plans</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Create a workout plan to organize multiple workouts together.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/training?tab=plans")}
+                >
+                  Create Your First Plan
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="history">
+            <div className="text-center p-6 mt-4">
+              <p className="text-muted-foreground">
+                View your workout history in the Training section
+              </p>
+              <Button 
+                variant="outline" 
+                className="mt-2"
+                onClick={() => navigate("/training?tab=history")}
+              >
+                View Workout History
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

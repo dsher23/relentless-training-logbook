@@ -13,37 +13,63 @@ const TabNavigationExtended: React.FC = () => {
   const dueReminders = getDueReminders ? getDueReminders() : [];
   const hasNotifications = dueReminders.length > 0;
   
+  // Helper function to check if path is active
+  const isActive = (paths: string[]) => {
+    return paths.some(path => 
+      location.pathname === path || 
+      location.pathname.startsWith(`${path}/`)
+    );
+  };
+  
+  // Define all training-related paths
+  const trainingPaths = [
+    "/training", 
+    "/workouts", 
+    "/plans", 
+    "/routines",
+    "/workout-selection",
+    "/workout-history",
+    "/live-workout",
+    "/weekly"
+  ];
+  
   const tabs = [
     {
       path: "/dashboard",
       label: "Dashboard",
       icon: <BarChart className="w-5 h-5" />,
+      isActive: isActive(["/dashboard"]),
     },
     {
       path: "/training",
       label: "Training",
       icon: <Dumbbell className="w-5 h-5" />,
+      isActive: isActive(trainingPaths),
     },
     {
       path: "/weekly",
       label: "Weekly",
       icon: <CalendarDays className="w-5 h-5" />,
+      isActive: isActive(["/weekly"]),
     },
     {
       path: "/supplements",
       label: "Supplements",
       icon: <PillIcon className="w-5 h-5" />,
+      isActive: isActive(["/supplements"]),
       hasNotification: hasNotifications,
     },
     {
       path: "/recovery",
       label: "Recovery",
       icon: <Heart className="w-5 h-5" />,
+      isActive: isActive(["/recovery"]),
     },
     {
       path: "/settings",
       label: "Settings",
       icon: <SettingsIcon className="w-5 h-5" />,
+      isActive: isActive(["/settings"]),
     },
   ];
   
@@ -55,15 +81,7 @@ const TabNavigationExtended: React.FC = () => {
           to={tab.path}
           className={cn(
             "flex flex-col items-center py-2 px-3 relative",
-            location.pathname === tab.path || 
-            (location.pathname.startsWith(tab.path + "/") && tab.path !== "/dashboard") ||
-            // Consider workout-related paths as part of Training
-            (tab.path === "/training" && 
-              (location.pathname.startsWith("/workouts") || 
-               location.pathname.startsWith("/plans") ||
-               location.pathname.startsWith("/routines")))
-              ? "text-gym-purple"
-              : "text-muted-foreground"
+            tab.isActive ? "text-gym-purple" : "text-muted-foreground"
           )}
         >
           {tab.icon}

@@ -1,16 +1,16 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   Calendar, 
   ListChecks, 
-  BarChart, 
+  Dumbbell, 
   Plus, 
   ClipboardList,
-  Dumbbell,
   Star,
   CalendarDays,
-  Archive
+  Archive,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,8 +24,12 @@ import WorkoutPlanList from "@/components/WorkoutPlanList";
 
 const Training: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { workouts, workoutTemplates, workoutPlans } = useAppContext();
-  const [activeTab, setActiveTab] = useState("routines");
+  
+  // Get tab from URL param or default to "routines"
+  const defaultTab = searchParams.get("tab") || "routines";
+  const [activeTab, setActiveTab] = useState(defaultTab);
   
   // Get today's date
   const today = new Date();
@@ -48,17 +52,83 @@ const Training: React.FC = () => {
   const activePlan = workoutPlans.find(p => p.isActive);
   
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container animate-fade-in pb-20">
       <Header title="Training" />
       
-      <div className="px-4 mb-6">
-        <div className="flex gap-2">
+      <div className="p-4">
+        {/* Training Dashboard Overview */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold">Training Hub</h2>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => navigate("/workout-selection")} 
+              >
+                <Dumbbell className="h-4 w-4 mr-1" />
+                Start Workout
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 rounded-md bg-secondary/50">
+                <p className="text-xs text-muted-foreground">Active Plan</p>
+                <p className="font-medium truncate">{activePlan?.name || "None"}</p>
+              </div>
+              <div className="p-2 rounded-md bg-secondary/50">
+                <p className="text-xs text-muted-foreground">Days This Week</p>
+                <p className="font-medium">{workouts.filter(w => {
+                  const workoutDate = new Date(w.date);
+                  const diffTime = today.getTime() - workoutDate.getTime();
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  return diffDays <= 7 && w.completed;
+                }).length}</p>
+              </div>
+              <div className="p-2 rounded-md bg-secondary/50">
+                <p className="text-xs text-muted-foreground">Saved Routines</p>
+                <p className="font-medium">{workoutTemplates.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Quick Actions</h2>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <Button
-            className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple"
             onClick={() => navigate("/workout-selection")}
+            className="h-auto py-3 bg-gym-purple hover:bg-gym-darkPurple justify-start"
           >
-            <Dumbbell className="mr-2 h-4 w-4" />
+            <Dumbbell className="h-4 w-4 mr-2" />
             Start Workout
+          </Button>
+          
+          <Button
+            onClick={() => navigate("/workouts/new")}
+            className="h-auto py-3 bg-gym-blue hover:bg-blue-700 justify-start"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Routine
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => setActiveTab("plans")}
+            className="h-auto py-3 justify-start"
+          >
+            <ListChecks className="h-4 w-4 mr-2" />
+            Plans
+          </Button>
+          
+          <Button
+            variant="outline" 
+            onClick={() => setActiveTab("weekly")}
+            className="h-auto py-3 justify-start"
+          >
+            <CalendarDays className="h-4 w-4 mr-2" />
+            Schedule
           </Button>
         </div>
       </div>
@@ -92,7 +162,13 @@ const Training: React.FC = () => {
       <Tabs 
         defaultValue="routines" 
         value={activeTab} 
-        onValueChange={setActiveTab}
+        onValueChange={(value) => {
+          setActiveTab(value);
+          // Update URL param without navigation
+          const newSearchParams = new URLSearchParams(searchParams);
+          newSearchParams.set("tab", value);
+          navigate(`?${newSearchParams.toString()}`, { replace: true });
+        }}
         className="w-full"
       >
         <TabsList className="grid grid-cols-4 mx-4">
@@ -103,7 +179,7 @@ const Training: React.FC = () => {
             <ListChecks className="h-4 w-4 mr-2" /> Plans
           </TabsTrigger>
           <TabsTrigger value="weekly">
-            <CalendarDays className="h-4 w-4 mr-2" /> Weekly
+            <CalendarDays className="h-4 w-4 mr-2" /> Schedule
           </TabsTrigger>
           <TabsTrigger value="history">
             <Archive className="h-4 w-4 mr-2" /> History
@@ -129,7 +205,7 @@ const Training: React.FC = () => {
           ) : (
             <div className="px-4 space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">My Saved Routines</h2>
+                <h2 className="text-lg font-semibold">Saved Routines</h2>
                 <Button size="sm" onClick={() => navigate("/workouts/new")}>
                   <Plus className="h-4 w-4 mr-1" /> New
                 </Button>

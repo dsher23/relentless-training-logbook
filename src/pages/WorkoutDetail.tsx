@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -29,15 +28,16 @@ const WorkoutDetail: React.FC = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       
+      // Only navigate away if workout is still not found after loading
       if (!workout?.id && id) {
         toast({
-          title: "Error",
-          description: "The workout you're looking for doesn't exist.",
+          title: "Workout Not Found",
+          description: "The workout couldn't be loaded or doesn't exist.",
           variant: "destructive"
         });
         navigate("/workouts");
       }
-    }, 300);
+    }, 500); // Slightly longer delay to ensure context is updated
     
     return () => clearTimeout(timer);
   }, [workout, id, navigate, toast]);
@@ -45,7 +45,7 @@ const WorkoutDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Loading..." />
+        <Header title="Loading Workout..." />
         <div className="p-4">
           <Skeleton className="h-12 w-full mb-4" />
           <Skeleton className="h-24 w-full mb-4" />
@@ -100,6 +100,8 @@ const WorkoutDetail: React.FC = () => {
         description: `${exercise.name} has been added to your workout.`
       });
     }
+    
+    setShowExerciseForm(false);
   };
   
   const handleEditExercise = (exerciseId: string) => {
