@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+// Fix imports for react-dnd - separate them properly
+import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,71 +31,27 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: "EXERCISE",
-    item: { id: exercise.id, index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    end: (item, monitor) => {
-      const dropResult = monitor.getDropResult();
-      if (item && dropResult) {
-        //console.log(`Dropped ${item.id} into ${dropResult.id}`);
-      }
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: exercise.id,
+    data: {
+      index
     },
   });
 
-  const [{ isOver }, drop] = useDrop({
-    accept: "EXERCISE",
-    hover: (item: any, monitor) => {
-      if (!drag) {
-        return;
-      }
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-      const hoverBoundingRect = (
-        (monitor.getSourceClientOffset() as any)?.target as HTMLElement
-      )?.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = (clientOffset as any).y - hoverBoundingRect.top;
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
-      moveExercise(dragIndex, hoverIndex);
-      item.index = hoverIndex;
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  const opacity = isDragging ? 0 : 1;
-
-  const dragDropRef = React.useRef(null);
-  const dragRef = (el: any) => {
-    drag(el);
-    dragDropRef.current = el;
+  const style = {
+    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: 1
   };
-  const dropRef = (el: any) => drop(el);
-
-  React.useEffect(() => {
-    dropRef(dragDropRef.current);
-  }, [dropRef]);
 
   return (
     <Card
-      ref={dragRef}
+      ref={setNodeRef}
       id={`exercise-${exercise.id}`}
       className="mb-2 cursor-move"
-      style={{ opacity }}
+      style={style}
+      {...attributes}
+      {...listeners}
     >
       <CardContent className="flex items-center justify-between p-3">
         <div className="flex items-center">
@@ -211,11 +170,20 @@ const WorkoutBuilder: React.FC = () => {
   };
 
   const moveExercise = (dragIndex: number, hoverIndex: number) => {
-    const draggedExercise = exercises[dragIndex];
-    const newExercises = [...exercises];
-    newExercises.splice(dragIndex, 1);
-    newExercises.splice(hoverIndex, 0, draggedExercise);
-    setExercises(newExercises);
+    setExercises((items) => arrayMove(items, dragIndex, hoverIndex));
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      setExercises((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const handleComplete = () => {
@@ -265,7 +233,7 @@ const WorkoutBuilder: React.FC = () => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
       <div className="app-container animate-fade-in">
         <Header title={id ? "Edit Workout" : "Create Workout"} />
 
@@ -332,16 +300,21 @@ const WorkoutBuilder: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            exercises.map((exercise, index) => (
-              <ExerciseItem
-                key={exercise.id}
-                exercise={exercise}
-                index={index}
-                moveExercise={moveExercise}
-                onEdit={handleEditExercise}
-                onDelete={handleDeleteExercise}
-              />
-            ))
+            <SortableContext 
+              items={exercises.map(exercise => exercise.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {exercises.map((exercise, index) => (
+                <ExerciseItem
+                  key={exercise.id}
+                  exercise={exercise}
+                  index={index}
+                  moveExercise={moveExercise}
+                  onEdit={handleEditExercise}
+                  onDelete={handleDeleteExercise}
+                />
+              ))}
+            </SortableContext>
           )}
 
           <div className="flex justify-end space-x-2">
@@ -354,7 +327,7 @@ const WorkoutBuilder: React.FC = () => {
           </div>
         </div>
       </div>
-    </DndProvider>
+    </DndContext>
   );
 };
 
