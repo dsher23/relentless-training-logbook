@@ -1,10 +1,11 @@
-
 export interface Exercise {
   id: string;
   name: string;
   sets: { reps: number; weight: number }[];
   lastProgressDate: Date;
   isWeakPoint: boolean;
+  restTime?: number;
+  notes?: string;
 }
 
 export interface Workout {
