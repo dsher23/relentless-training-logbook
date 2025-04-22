@@ -20,6 +20,7 @@ import WorkoutSummary from "./pages/WorkoutSummary";
 import ProgressPhotos from "./pages/ProgressPhotos";
 import CreateWorkout from "./pages/CreateWorkout";
 import WorkoutDetail from "./pages/WorkoutDetail";
+import WorkoutTypeSelection from "./pages/WorkoutTypeSelection";
 
 function App() {
   return (
@@ -110,6 +111,10 @@ function App() {
             <Route
               path="/progress-photos"
               element={<ProgressPhotos />}
+            />
+            <Route
+              path="/workout-selection"
+              element={<WorkoutTypeSelection />}
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

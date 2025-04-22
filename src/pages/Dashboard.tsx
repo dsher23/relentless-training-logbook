@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, ListChecks, BarChart, AlertTriangle, Camera } from "lucide-react";
+import { Calendar, ListChecks, BarChart, AlertTriangle, Camera, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -34,6 +34,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className="app-container animate-fade-in">
       <Header title="Dashboard" />
+      
+      <div className="px-4 mb-6 mt-2">
+        <Button 
+          className="w-full bg-gym-blue hover:bg-gym-blue/90 text-white font-semibold py-3 flex items-center justify-center shadow-md"
+          onClick={() => navigate("/workout-selection")}
+        >
+          <Dumbbell className="mr-2 h-5 w-5" />
+          Start Workout
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 mb-6">
         <StatCard
           title="Workouts Logged"
