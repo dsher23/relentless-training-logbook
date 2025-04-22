@@ -216,14 +216,14 @@ const WeeklyPlanView: React.FC = () => {
           
           <div className="py-4">
             <Select
-              value={selectedRoutineId || ""}
-              onValueChange={(value) => setSelectedRoutineId(value === "" ? null : value)}
+              value={selectedRoutineId || "none"}
+              onValueChange={(value) => setSelectedRoutineId(value === "none" ? null : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a routine" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Workout (Rest Day)</SelectItem>
+                <SelectItem value="none">No Workout (Rest Day)</SelectItem>
                 {workoutTemplates.map(template => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name} ({template.exercises.length} exercises)
