@@ -2,8 +2,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Dumbbell, TapeMeasure, Pill } from "lucide-react";
+import { Dumbbell, Ruler, Pill } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAppContext } from "@/context/AppContext";
 
 interface StatCardProps {
   title: string;
@@ -56,7 +57,7 @@ export const ActivityStats = () => {
       <StatCard
         title="Measurements Tracker"
         value={`${bodyMeasurements.length}`}
-        icon={<TapeMeasure className="h-6 w-6 text-gym-orange" />}
+        icon={<Ruler className="h-6 w-6 text-gym-orange" />}
         onClick={() => navigate("/measurements")}
       />
       <StatCard
