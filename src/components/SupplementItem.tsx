@@ -19,15 +19,16 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
         id: crypto.randomUUID(),
         supplementId: supplement.id,
         date: new Date(date),
+        dosageTaken: supplement.dosage,
         taken: true,
         time: new Date()
-      });
+      } as SupplementLog);
     } else {
       updateSupplementLog({
         ...log,
         taken: !log.taken,
         time: log.taken ? undefined : new Date()
-      });
+      } as SupplementLog);
     }
   };
 

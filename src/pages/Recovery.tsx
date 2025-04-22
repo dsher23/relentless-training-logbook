@@ -62,11 +62,11 @@ const Recovery: React.FC = () => {
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
                   <div className="text-xs text-muted-foreground mb-1">Sleep</div>
-                  <div className="text-lg font-medium">{todayLog.sleep}/10</div>
+                  <div className="text-lg font-medium">{todayLog.sleepQuality || todayLog.sleep || 0}/10</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-muted-foreground mb-1">Energy</div>
-                  <div className="text-lg font-medium">{todayLog.energy}/10</div>
+                  <div className="text-lg font-medium">{todayLog.energyLevel || todayLog.energy || 0}/10</div>
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-muted-foreground mb-1">Mood</div>
@@ -100,11 +100,11 @@ const Recovery: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Sleep:</span>
-                      <span>{log.sleep}/10</span>
+                      <span>{log.sleepQuality || log.sleep || 0}/10</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Energy:</span>
-                      <span>{log.energy}/10</span>
+                      <span>{log.energyLevel || log.energy || 0}/10</span>
                     </div>
                   </div>
                   {log.notes && (

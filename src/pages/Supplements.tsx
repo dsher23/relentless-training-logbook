@@ -103,7 +103,7 @@ const Supplements: React.FC = () => {
                         <h3 className="text-base font-medium">{supplement.name}</h3>
                         <p className="text-xs text-muted-foreground">
                           {supplement.dosage}
-                          {supplement.schedule.workoutDays ? " · Workout days" : ""}
+                          {supplement.schedule?.workoutDays ? " · Workout days" : ""}
                         </p>
                       </div>
                     </div>

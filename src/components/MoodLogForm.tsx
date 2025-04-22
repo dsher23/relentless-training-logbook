@@ -22,8 +22,8 @@ interface MoodLogFormProps {
 
 const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
   const { addMoodLog, updateMoodLog } = useAppContext();
-  const [sleep, setSleep] = useState(existingLog?.sleep || 7);
-  const [energy, setEnergy] = useState(existingLog?.energy || 7);
+  const [sleep, setSleep] = useState(existingLog?.sleepQuality || existingLog?.sleep || 7);
+  const [energy, setEnergy] = useState(existingLog?.energyLevel || existingLog?.energy || 7);
   const [mood, setMood] = useState<MoodLog["mood"]>(existingLog?.mood || "neutral");
   const [notes, setNotes] = useState(existingLog?.notes || "");
 
@@ -31,16 +31,19 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
     const newLog = {
       id: existingLog?.id || crypto.randomUUID(),
       date: existingLog?.date || new Date(),
-      sleep,
-      energy,
+      sleepQuality: sleep,
+      energyLevel: energy,
       mood,
-      notes
+      notes,
+      // Add compatibility fields
+      sleep,
+      energy
     };
     
     if (existingLog) {
-      updateMoodLog(newLog);
+      updateMoodLog(newLog as MoodLog);
     } else {
-      addMoodLog(newLog);
+      addMoodLog(newLog as MoodLog);
     }
     
     if (onSave) onSave();

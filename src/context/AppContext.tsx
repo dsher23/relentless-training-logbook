@@ -15,6 +15,8 @@ export interface Workout {
   name: string;
   exercises: Exercise[];
   notes?: string;
+  completed?: boolean;
+  isDeload?: boolean;
 }
 
 export interface WorkoutTemplate {
@@ -31,6 +33,12 @@ export interface BodyMeasurement {
   bodyFat?: number;
   muscleMass?: number;
   notes?: string;
+  photoUrl?: string;
+  arms?: number;
+  chest?: number;
+  waist?: number;
+  legs?: number;
+  bodyFatPercentage?: number;
 }
 
 export interface Supplement {
@@ -38,6 +46,10 @@ export interface Supplement {
   name: string;
   dosage: string;
   notes?: string;
+  reminder?: Date;
+  schedule?: {
+    workoutDays?: boolean;
+  };
 }
 
 export interface SupplementLog {
@@ -46,26 +58,30 @@ export interface SupplementLog {
   supplementId: string;
   dosageTaken: string;
   notes?: string;
+  taken?: boolean;
+  time?: Date;
 }
 
 export interface MoodLog {
   id: string;
   date: Date;
-  mood: number; // e.g., 1-10 scale
-  energyLevel: number; // e.g., 1-10 scale
-  sleepQuality: number; // e.g., 1-10 scale
+  mood: "terrible" | "bad" | "neutral" | "good" | "great";
+  energyLevel: number;
+  sleepQuality: number;
   notes?: string;
+  sleep?: number;
+  energy?: number;
 }
 
 export interface WeakPoint {
   id: string;
   muscleGroup: string;
-  priority: number; // e.g., 1-3 (low, medium, high)
+  priority: number;
   sessionsPerWeekGoal: number;
 }
 
 export interface WorkoutDay {
-  dayOfWeek: number; // 0 (Sunday) to 6 (Saturday)
+  dayOfWeek: number;
   workoutTemplateId: string | null;
 }
 
@@ -123,11 +139,11 @@ interface AppContextType {
   deleteTrainingBlock: (id: string) => void;
   checkTrainingBlockStatus: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | undefined };
   getStagnantExercises: () => { workout: Workout; exercise: Exercise }[];
+  toggleDeloadMode: (workoutId: string, isDeload: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Custom hook to use the AppContext
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -136,7 +152,6 @@ export const useAppContext = () => {
   return context;
 };
 
-// AppProvider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
@@ -153,7 +168,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   useEffect(() => {
-    // Save to localStorage whenever the data changes
     localStorage.setItem('ironlog_workouts', JSON.stringify(workouts));
     localStorage.setItem('ironlog_bodyMeasurements', JSON.stringify(bodyMeasurements));
     localStorage.setItem('ironlog_supplements', JSON.stringify(supplements));
@@ -167,7 +181,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loadInitialData = () => {
     try {
-      // Try to load from localStorage first
       const savedWorkouts = localStorage.getItem('ironlog_workouts');
       const savedBodyMeasurements = localStorage.getItem('ironlog_bodyMeasurements');
       const savedSupplements = localStorage.getItem('ironlog_supplements');
@@ -178,7 +191,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedWeeklyRoutines = localStorage.getItem('ironlog_weeklyRoutines');
       const savedTrainingBlocks = localStorage.getItem('ironlog_trainingBlocks');
       
-      // Set state with saved data or defaults
       setWorkouts(savedWorkouts ? JSON.parse(savedWorkouts) : []);
       setBodyMeasurements(savedBodyMeasurements ? JSON.parse(savedBodyMeasurements) : []);
       setSupplements(savedSupplements ? JSON.parse(savedSupplements) : []);
@@ -188,10 +200,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkoutTemplates(savedWorkoutTemplates ? JSON.parse(savedWorkoutTemplates) : []);
       setWeeklyRoutines(savedWeeklyRoutines ? JSON.parse(savedWeeklyRoutines) : []);
       setTrainingBlocks(savedTrainingBlocks ? JSON.parse(savedTrainingBlocks) : []);
-      
     } catch (error) {
       console.error('Error loading initial data:', error);
-      // If error loading data, use empty arrays as defaults
       setWorkouts([]);
       setBodyMeasurements([]);
       setSupplements([]);
@@ -204,7 +214,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Workout actions
   const addWorkout = (workout: Workout) => {
     setWorkouts([...workouts, workout]);
   };
@@ -217,7 +226,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkouts(workouts.filter(w => w.id !== id));
   };
 
-  // Body Measurement actions
   const addBodyMeasurement = (measurement: BodyMeasurement) => {
     setBodyMeasurements([...bodyMeasurements, measurement]);
   };
@@ -230,7 +238,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBodyMeasurements(bodyMeasurements.filter(m => m.id !== id));
   };
 
-  // Supplement actions
   const addSupplement = (supplement: Supplement) => {
     setSupplements([...supplements, supplement]);
   };
@@ -243,7 +250,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSupplements(supplements.filter(s => s.id !== id));
   };
 
-  // Supplement Log actions
   const addSupplementLog = (log: SupplementLog) => {
     setSupplementLogs([...supplementLogs, log]);
   };
@@ -256,7 +262,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSupplementLogs(supplementLogs.filter(s => s.id !== id));
   };
 
-  // Mood Log actions
   const addMoodLog = (log: MoodLog) => {
     setMoodLogs([...moodLogs, log]);
   };
@@ -269,7 +274,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMoodLogs(moodLogs.filter(m => m.id !== id));
   };
 
-  // Weak Point actions
   const addWeakPoint = (weakPoint: WeakPoint) => {
     setWeakPoints([...weakPoints, weakPoint]);
   };
@@ -282,7 +286,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWeakPoints(weakPoints.filter(wp => wp.id !== id));
   };
 
-  // Workout Template actions
   const addWorkoutTemplate = (template: WorkoutTemplate) => {
     setWorkoutTemplates([...workoutTemplates, template]);
   };
@@ -295,7 +298,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkoutTemplates(workoutTemplates.filter(wt => wt.id !== id));
   };
 
-  // Weekly Routine actions
   const addWeeklyRoutine = (routine: WeeklyRoutine) => {
     setWeeklyRoutines([...weeklyRoutines, routine]);
   };
@@ -308,7 +310,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWeeklyRoutines(weeklyRoutines.filter(wr => wr.id !== id));
   };
 
-  // Training Block actions
   const addTrainingBlock = (block: TrainingBlock) => {
     setTrainingBlocks([...trainingBlocks, block]);
   };
@@ -320,11 +321,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTrainingBlock = (id: string) => {
     setTrainingBlocks(trainingBlocks.filter(tb => tb.id !== id));
   };
-  
+
   const checkTrainingBlockStatus = () => {
     const today = new Date();
     
-    // Find the most recent training block
     const currentTrainingBlock = trainingBlocks
       .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
     
@@ -367,6 +367,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return stagnant;
   };
 
+  const toggleDeloadMode = (workoutId: string, isDeload: boolean) => {
+    setWorkouts(workouts.map(w => 
+      w.id === workoutId ? { ...w, isDeload } : w
+    ));
+  };
+
   const value: AppContextType = {
     workouts,
     addWorkout,
@@ -405,7 +411,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateTrainingBlock,
     deleteTrainingBlock,
     checkTrainingBlockStatus,
-    getStagnantExercises
+    getStagnantExercises,
+    toggleDeloadMode
   };
 
   return (
