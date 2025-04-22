@@ -20,7 +20,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Exercise } from "@/types";
 
 interface AddExerciseFormProps {
@@ -64,7 +63,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
       restTime: restTime !== "custom" ? parseInt(restTime) : undefined,
       notes: notes.trim() || undefined,
       lastProgressDate: new Date(),
-      isWeakPoint: false // Added the missing required property
+      isWeakPoint: false
     };
 
     onSave(newExercise);
@@ -94,69 +93,61 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <FormItem>
-            <FormLabel htmlFor="exercise-name">Exercise Name*</FormLabel>
-            <FormControl>
-              <Input 
-                id="exercise-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Bench Press"
-                autoFocus
-              />
-            </FormControl>
-          </FormItem>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <FormItem>
-              <FormLabel htmlFor="sets">Sets</FormLabel>
-              <FormControl>
-                <Input 
-                  id="sets"
-                  type="number"
-                  min="1"
-                  value={sets}
-                  onChange={(e) => setSets(parseInt(e.target.value) || 1)}
-                />
-              </FormControl>
-            </FormItem>
-            
-            <FormItem>
-              <FormLabel htmlFor="reps">Reps Per Set</FormLabel>
-              <FormControl>
-                <Input 
-                  id="reps"
-                  type="number"
-                  min="1"
-                  value={reps}
-                  onChange={(e) => setReps(parseInt(e.target.value) || 1)}
-                />
-              </FormControl>
-            </FormItem>
+          <div className="space-y-2">
+            <Label htmlFor="exercise-name">Exercise Name*</Label>
+            <Input 
+              id="exercise-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Bench Press"
+              autoFocus
+            />
           </div>
           
-          <FormItem>
-            <FormLabel htmlFor="weight">Target Weight (kg/lb)</FormLabel>
-            <FormControl>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sets">Sets</Label>
               <Input 
-                id="weight"
+                id="sets"
                 type="number"
-                min="0"
-                step="0.5"
-                value={weight === undefined ? "" : weight}
-                onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
-                placeholder="Optional"
+                min="1"
+                value={sets}
+                onChange={(e) => setSets(parseInt(e.target.value) || 1)}
               />
-            </FormControl>
-          </FormItem>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="reps">Reps Per Set</Label>
+              <Input 
+                id="reps"
+                type="number"
+                min="1"
+                value={reps}
+                onChange={(e) => setReps(parseInt(e.target.value) || 1)}
+              />
+            </div>
+          </div>
           
-          <FormItem>
-            <FormLabel htmlFor="rest-time">Rest Time (seconds)</FormLabel>
+          <div className="space-y-2">
+            <Label htmlFor="weight">Target Weight (kg/lb)</Label>
+            <Input 
+              id="weight"
+              type="number"
+              min="0"
+              step="0.5"
+              value={weight === undefined ? "" : weight}
+              onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
+              placeholder="Optional"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="rest-time">Rest Time (seconds)</Label>
             <Select 
               value={restTime} 
               onValueChange={setRestTime}
             >
-              <SelectTrigger>
+              <SelectTrigger id="rest-time">
                 <SelectValue placeholder="Select rest time" />
               </SelectTrigger>
               <SelectContent>
@@ -168,23 +159,21 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
               </SelectContent>
             </Select>
             {restTime === "custom" && (
-              <FormDescription>
+              <p className="text-sm text-muted-foreground">
                 You can set a custom rest time during your workout.
-              </FormDescription>
+              </p>
             )}
-          </FormItem>
+          </div>
           
-          <FormItem>
-            <FormLabel htmlFor="notes">Notes (Optional)</FormLabel>
-            <FormControl>
-              <Textarea 
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g., slow tempo, pause at bottom"
-              />
-            </FormControl>
-          </FormItem>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Textarea 
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g., slow tempo, pause at bottom"
+            />
+          </div>
           
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose}>
