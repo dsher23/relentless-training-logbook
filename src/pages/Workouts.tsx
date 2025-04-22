@@ -6,6 +6,7 @@ import { Dumbbell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import WorkoutCard from "@/components/WorkoutCard";
+import StartWorkoutButton from "@/components/StartWorkoutButton";
 import { useAppContext } from "@/context/AppContext";
 
 const Workouts: React.FC = () => {
@@ -49,11 +50,15 @@ const Workouts: React.FC = () => {
             <section className="mb-8 px-4">
               <h2 className="text-lg font-semibold mb-4">Upcoming Workouts</h2>
               {upcomingWorkouts.map(workout => (
-                <WorkoutCard 
-                  key={workout.id} 
-                  workout={workout}
-                  onClick={() => navigate(`/workouts/${workout.id}`)}
-                />
+                <div key={workout.id} className="mb-4">
+                  <WorkoutCard 
+                    workout={workout}
+                    onClick={() => navigate(`/workouts/${workout.id}`)}
+                    actionButton={
+                      <StartWorkoutButton workoutId={workout.id} />
+                    }
+                  />
+                </div>
               ))}
             </section>
           )}
@@ -62,11 +67,12 @@ const Workouts: React.FC = () => {
             <section className="px-4">
               <h2 className="text-lg font-semibold mb-4">Completed Workouts</h2>
               {completedWorkouts.map(workout => (
-                <WorkoutCard 
-                  key={workout.id} 
-                  workout={workout}
-                  onClick={() => navigate(`/workouts/${workout.id}`)}
-                />
+                <div key={workout.id} className="mb-4">
+                  <WorkoutCard 
+                    workout={workout}
+                    onClick={() => navigate(`/workouts/${workout.id}`)}
+                  />
+                </div>
               ))}
             </section>
           )}

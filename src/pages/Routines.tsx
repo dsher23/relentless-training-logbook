@@ -10,12 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import HeaderExtended from "@/components/Header";  // Corrected import
+import Header from "@/components/Header";
 import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext, WeeklyRoutine, TrainingBlock } from "@/context/AppContext";
 import TrainingBlockForm from "@/components/TrainingBlockForm";
 import { format, addWeeks, isBefore } from "date-fns";
 import DataExport from "@/components/DataExport";
+import { Plus } from "lucide-react";
 
 const Routines: React.FC = () => {
   const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine, trainingBlocks, addTrainingBlock, updateTrainingBlock, deleteTrainingBlock, checkTrainingBlockStatus } = useAppContext();
@@ -71,7 +72,7 @@ const Routines: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <HeaderExtended title="Routines" />
+      <Header title="Routines" />
       
       <div className="px-4 mt-4">
         <Card>
@@ -223,7 +224,6 @@ const Routines: React.FC = () => {
           </TabsContent>
         </Tabs>
         
-        {/* Routine Builder Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${open ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen">
             <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
@@ -236,7 +236,6 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
-        {/* Routine Edit Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${editRoutineId ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen">
             <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
@@ -253,14 +252,13 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
-        {/* Training Block Form Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${isCreatingBlock || editingBlock ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen">
             <div className="bg-white p-8 rounded-lg max-w-2xl mx-auto">
               <TrainingBlockForm 
-                block={editingBlock}
-                onClose={handleBlockClose}
+                blockId={editingBlock?.id}
                 nextSuggestedDate={getNextBlockStartDate()}
+                onClose={handleBlockClose}
               />
             </div>
           </div>

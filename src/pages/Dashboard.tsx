@@ -1,6 +1,7 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, ListChecks, BarChart, AlertTriangle } from "lucide-react";
+import { Calendar, ListChecks, BarChart, AlertTriangle, Camera } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -54,8 +55,25 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      <div className="px-4">
+      <div className="px-4 space-y-6">
         <WeakPointTracker />
+        
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg">Progress Photos</h3>
+              <p className="text-sm text-muted-foreground">Track your visual progress week by week</p>
+            </div>
+            <Button 
+              variant="secondary"
+              className="bg-white"
+              onClick={() => navigate("/progress-photos")}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              View Photos
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
