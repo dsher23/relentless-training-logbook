@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Copy, Edit, Trash, Star, MoreVertical } from "lucide-react";
@@ -135,14 +134,14 @@ const WorkoutPlanList: React.FC = () => {
               <div className="rounded-full bg-secondary p-3 mb-4">
                 <Plus className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-medium mb-2">No Workout Plans</h3>
-              <p className="text-muted-foreground mb-4">
-                Create a workout plan to organize multiple workout days together.
+              <h3 className="text-lg font-medium mb-2">Create Your First Plan</h3>
+              <p className="text-muted-foreground mb-4 max-w-sm">
+                Organize your workouts into a structured training plan. Perfect for tracking progress over time.
               </p>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
               >
-                Create Your First Plan
+                Create Training Plan
               </Button>
             </div>
           </CardContent>
@@ -152,19 +151,21 @@ const WorkoutPlanList: React.FC = () => {
           {workoutPlans.map((plan) => (
             <Card 
               key={plan.id}
-              className={`${plan.isActive ? "border-primary" : ""} cursor-pointer`}
+              className={`${plan.isActive ? "border-primary" : ""} cursor-pointer hover:border-primary/50 transition-colors`}
               onClick={() => navigate(`/plans/${plan.id}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">
-                    {plan.name}
+                  <div>
+                    <CardTitle className="text-lg">
+                      {plan.name}
+                    </CardTitle>
                     {plan.isActive && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
-                        Active
+                      <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary-foreground mt-1">
+                        Active Plan
                       </span>
                     )}
-                  </CardTitle>
+                  </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -215,10 +216,23 @@ const WorkoutPlanList: React.FC = () => {
                     {plan.description}
                   </p>
                 )}
-                <p className="text-sm">
-                  <span className="font-medium">{plan.workoutTemplates.length}</span>{" "}
-                  {plan.workoutTemplates.length === 1 ? "workout" : "workouts"}
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm">
+                    <span className="font-medium">{plan.workoutTemplates.length}</span>{" "}
+                    {plan.workoutTemplates.length === 1 ? "workout" : "workouts"}
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/plans/${plan.id}`);
+                    }}
+                  >
+                    View Plan
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -228,7 +242,7 @@ const WorkoutPlanList: React.FC = () => {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create New Workout Plan</DialogTitle>
+            <DialogTitle>Create New Training Plan</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
@@ -237,7 +251,8 @@ const WorkoutPlanList: React.FC = () => {
                 id="plan-name"
                 value={newPlanName}
                 onChange={(e) => setNewPlanName(e.target.value)}
-                placeholder="e.g. Push Pull Legs, Upper/Lower Split"
+                placeholder="e.g. Summer Bulk, Lean Cut Phase, Strength Cycle 6-Week"
+                className="mt-1.5"
               />
             </div>
             <div>
@@ -246,8 +261,9 @@ const WorkoutPlanList: React.FC = () => {
                 id="plan-description"
                 value={newPlanDescription}
                 onChange={(e) => setNewPlanDescription(e.target.value)}
-                placeholder="e.g. My 6-day hypertrophy plan"
+                placeholder="e.g. 12-week hypertrophy focused program with progressive overload"
                 rows={3}
+                className="mt-1.5"
               />
             </div>
           </div>
@@ -263,7 +279,7 @@ const WorkoutPlanList: React.FC = () => {
       <Dialog open={editingPlan !== null} onOpenChange={(open) => !open && setEditingPlan(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Workout Plan</DialogTitle>
+            <DialogTitle>Edit Training Plan</DialogTitle>
           </DialogHeader>
           {editingPlan && (
             <div className="grid gap-4 py-4">
@@ -275,6 +291,7 @@ const WorkoutPlanList: React.FC = () => {
                   onChange={(e) =>
                     setEditingPlan({ ...editingPlan, name: e.target.value })
                   }
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -286,6 +303,7 @@ const WorkoutPlanList: React.FC = () => {
                     setEditingPlan({ ...editingPlan, description: e.target.value })
                   }
                   rows={3}
+                  className="mt-1.5"
                 />
               </div>
             </div>
