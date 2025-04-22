@@ -20,7 +20,7 @@ export const useReminders = () => {
   const getDueReminders = () => {
     const now = new Date();
     return reminders.filter(r => 
-      new Date(r.dateTime) <= now && !r.dismissed
+      new Date(r.dateTime || r.dueDate) <= now && !r.dismissed
     );
   };
 

@@ -9,7 +9,8 @@ const TabNavigationExtended: React.FC = () => {
   const location = useLocation();
   const { getDueReminders } = useAppContext();
   
-  const dueReminders = getDueReminders();
+  // Safely call getDueReminders function
+  const dueReminders = getDueReminders ? getDueReminders() : [];
   const hasNotifications = dueReminders.length > 0;
   
   const tabs = [
