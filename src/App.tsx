@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import Layout from './components/Layout';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Workouts from './pages/Workouts';
@@ -29,37 +30,39 @@ function App() {
     <AppProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/training" element={<Training />} />
-          
-          <Route path="/exercise-plans" element={<Plans />} />
-          <Route path="/exercise-plans/:planId" element={<PlanDetail />} />
-          <Route path="/exercise-plans/:planId/days" element={<WorkoutDays />} />
-          <Route path="/exercise-plans/:planId/days/:dayId" element={<DayExercises />} />
-          
-          <Route path="/plans" element={<Plans />} />
-          
-          <Route path="/workouts" element={<Workouts />} />
-          <Route path="/workouts/new" element={<CreateWorkout />} />
-          <Route path="/workouts/builder" element={<WorkoutBuilder />} />
-          <Route path="/workouts/:id" element={<WorkoutDetail />} />
-          <Route path="/workouts/builder/:id" element={<WorkoutBuilder />} />
-          <Route path="/live-workout/:id" element={<LiveWorkout />} />
-          <Route path="/workout-history" element={<WorkoutHistory />} />
-          <Route path="/weekly-overview" element={<WeeklyOverview />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/training" element={<Training />} />
+            
+            <Route path="/exercise-plans" element={<Plans />} />
+            <Route path="/exercise-plans/:planId" element={<PlanDetail />} />
+            <Route path="/exercise-plans/:planId/days" element={<WorkoutDays />} />
+            <Route path="/exercise-plans/:planId/days/:dayId" element={<DayExercises />} />
+            
+            <Route path="/plans" element={<Plans />} />
+            
+            <Route path="/workouts" element={<Workouts />} />
+            <Route path="/workouts/new" element={<CreateWorkout />} />
+            <Route path="/workouts/builder" element={<WorkoutBuilder />} />
+            <Route path="/workouts/:id" element={<WorkoutDetail />} />
+            <Route path="/workouts/builder/:id" element={<WorkoutBuilder />} />
+            <Route path="/live-workout/:id" element={<LiveWorkout />} />
+            <Route path="/workout-history" element={<WorkoutHistory />} />
+            <Route path="/weekly-overview" element={<WeeklyOverview />} />
 
-          <Route path="/routines" element={<Routines />} />
-          <Route path="/routines/:id" element={<Routines />} />
+            <Route path="/routines" element={<Routines />} />
+            <Route path="/routines/:id" element={<Routines />} />
 
-          <Route path="/workout-selection" element={<WorkoutSelection />} />
-          <Route path="/workout-type-selection" element={<WorkoutTypeSelection />} />
-          
-          <Route path="/measurements" element={<Measurements />} />
-          <Route path="/supplements" element={<Supplements />} />
-          <Route path="/recovery" element={<Recovery />} />
-          
-          <Route path="/home" element={<Index />} />
+            <Route path="/workout-selection" element={<WorkoutSelection />} />
+            <Route path="/workout-type-selection" element={<WorkoutTypeSelection />} />
+            
+            <Route path="/measurements" element={<Measurements />} />
+            <Route path="/supplements" element={<Supplements />} />
+            <Route path="/recovery" element={<Recovery />} />
+            
+            <Route path="/home" element={<Index />} />
+          </Route>
         </Routes>
       </Router>
     </AppProvider>
