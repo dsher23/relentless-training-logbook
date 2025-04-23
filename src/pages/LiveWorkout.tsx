@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -40,7 +39,7 @@ const LiveWorkout = () => {
     }
   }>({});
 
-  const { workoutTime, restTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
+  const { workoutTime, restTime, initialRestTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
 
   useEffect(() => {
     if (id) {
@@ -240,6 +239,11 @@ const LiveWorkout = () => {
     navigate("/workout-history");
   };
 
+  const finishRest = () => {
+    setIsResting(false);
+    setRestTime(0);
+  };
+
   if (!workout) {
     return <div className="p-4 text-center">Loading workout...</div>;
   }
@@ -301,7 +305,8 @@ const LiveWorkout = () => {
       {isResting ? (
         <RestTimer 
           restTime={restTime}
-          onSkipRest={() => setIsResting(false)}
+          initialRestTime={initialRestTime}
+          onSkipRest={finishRest}
         />
       ) : (
         <>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 export const useWorkoutTimer = (isRunning: boolean, isResting: boolean) => {
   const [workoutTime, setWorkoutTime] = useState(0);
   const [restTime, setRestTime] = useState(0);
+  const [initialRestTime, setInitialRestTime] = useState(0);
 
   // Workout timer
   useEffect(() => {
@@ -38,7 +39,8 @@ export const useWorkoutTimer = (isRunning: boolean, isResting: boolean) => {
 
   const startRest = (duration = 90) => {
     setRestTime(duration);
+    setInitialRestTime(duration);
   };
 
-  return { workoutTime, restTime, startRest, setRestTime };
+  return { workoutTime, restTime, initialRestTime, startRest, setRestTime };
 };
