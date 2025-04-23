@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import WeeklyLiftsGraph from "@/components/WeeklyLiftsGraph";
 import { useAppContext } from "@/context/AppContext";
@@ -7,6 +7,13 @@ import { useAppContext } from "@/context/AppContext";
 const WeeklyProgress = () => {
   const { workouts } = useAppContext();
   const completedWorkouts = workouts.filter(w => w.completed === true);
+  
+  // Add logging to help debug
+  useEffect(() => {
+    console.log("WeeklyProgress - Total workouts:", workouts.length);
+    console.log("WeeklyProgress - Completed workouts:", completedWorkouts.length);
+    console.log("WeeklyProgress - Completed workout IDs:", completedWorkouts.map(w => w.id));
+  }, [workouts, completedWorkouts]);
   
   return (
     <Card className="shadow-md">

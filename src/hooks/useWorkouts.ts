@@ -31,7 +31,7 @@ export const useWorkouts = () => {
         
         setWorkouts(validatedWorkouts);
         console.log("Loaded workouts from localStorage:", validatedWorkouts.length);
-        console.log("Completed workouts:", validatedWorkouts.filter((w: any) => w.completed === true).length);
+        console.log("Completed workouts found:", validatedWorkouts.filter((w: any) => w.completed === true).length);
       }
     } catch (error) {
       console.error('Error loading workouts from localStorage:', error);
@@ -155,12 +155,22 @@ export const useWorkouts = () => {
       
       console.log('Updating workout with completed status:', updatedWorkout.id, updatedWorkout.completed);
       
+      // Use a function to update state to ensure we have the latest state
       setWorkouts(prev => {
         const exists = prev.some(w => w.id === updatedWorkout.id);
+        console.log(`Workout ${updatedWorkout.id} exists in state: ${exists}`);
+        
         if (exists) {
-          return prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w);
+          const newWorkouts = prev.map(w => 
+            w.id === updatedWorkout.id ? updatedWorkout : w
+          );
+          console.log('Updated workouts array length:', newWorkouts.length);
+          console.log('Updated completed workouts:', newWorkouts.filter(w => w.completed === true).length);
+          return newWorkouts;
         } else {
-          return [...prev, updatedWorkout];
+          const newWorkouts = [...prev, updatedWorkout];
+          console.log('Added new workout, total:', newWorkouts.length);
+          return newWorkouts;
         }
       });
       

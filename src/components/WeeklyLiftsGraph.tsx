@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -16,6 +16,12 @@ interface DayData {
 const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
   const { workouts } = useAppContext();
   
+  useEffect(() => {
+    const completedWorkouts = workouts.filter(w => w.completed === true);
+    console.log("WeeklyLiftsGraph - Total workouts:", workouts.length);
+    console.log("WeeklyLiftsGraph - Completed workouts:", completedWorkouts.length);
+  }, [workouts]);
+  
   const calculateDailyData = (date: Date): DayData[] => {
     const weekStart = startOfWeek(date, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
@@ -23,7 +29,7 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     
     const completedWorkouts = workouts.filter(w => w.completed === true);
     
-    console.log(`Total workouts: ${workouts.length}, Completed workouts: ${completedWorkouts.length}`);
+    console.log(`WeeklyLiftsGraph - Total workouts: ${workouts.length}, Completed workouts: ${completedWorkouts.length}`);
     
     const dailyData: DayData[] = [];
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

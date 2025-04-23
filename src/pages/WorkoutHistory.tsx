@@ -28,9 +28,10 @@ const WorkoutHistory: React.FC = () => {
     
     setCompletedWorkouts(completed);
     
-    console.log('Total workouts:', workouts.length);
-    console.log('Completed workouts:', completed.length);
+    console.log('Total workouts in context:', workouts.length);
+    console.log('Completed workouts found:', completed.length);
     console.log('Completed workout IDs:', completed.map(w => w.id));
+    console.log('All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed})));
   }, [workouts]);
 
   const handleDeleteWorkout = () => {

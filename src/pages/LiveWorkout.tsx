@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight } from "lucide-react";
@@ -67,7 +66,6 @@ const LiveWorkout = () => {
       };
     });
     
-    // Save progress as we go (useful for mobile where sessions might be interrupted)
     if (workout) {
       try {
         const currentData = JSON.stringify({ 
@@ -195,11 +193,11 @@ const LiveWorkout = () => {
         notes: workout.notes || "", // Ensure notes exists
       };
       
-      // Save the completed workout
-      console.log('Saving completed workout:', updatedWorkout.id, updatedWorkout.completed);
+      console.log('About to save completed workout:', updatedWorkout);
+      console.log('Completed status:', updatedWorkout.completed);
+      
       updateWorkout(updatedWorkout);
       
-      // Clear in-progress data
       localStorage.removeItem('workout_in_progress');
       
       toast({
@@ -207,7 +205,6 @@ const LiveWorkout = () => {
         description: "Your workout has been saved successfully.",
       });
       
-      // Use setTimeout to ensure toast is visible before navigation
       setTimeout(() => {
         navigate("/workout-history");
       }, 500);
@@ -221,18 +218,15 @@ const LiveWorkout = () => {
     }
   }, [workout, exerciseData, updateWorkout, toast, navigate]);
 
-  // Load workout or restore in-progress workout
   useEffect(() => {
     const loadWorkout = async () => {
       if (!id) return;
       
       try {
-        // Check for in-progress workout first
         const savedProgress = localStorage.getItem('workout_in_progress');
         if (savedProgress) {
           const progressData = JSON.parse(savedProgress);
           if (progressData.workoutId === id) {
-            // Restore previous exercise data and position
             setExerciseData(progressData.exerciseData || {});
             setCurrentExerciseIndex(progressData.currentExerciseIndex || 0);
           }
@@ -246,7 +240,6 @@ const LiveWorkout = () => {
             const convertedWorkout = convertTemplateToWorkout(template);
             
             if (convertedWorkout) {
-              // Add workout to context and set as current
               addWorkout(convertedWorkout);
               foundWorkout = convertedWorkout;
               
@@ -260,7 +253,6 @@ const LiveWorkout = () => {
         }
         
         if (foundWorkout) {
-          // Ensure all required fields have default values
           const safeWorkout = {
             ...foundWorkout,
             notes: foundWorkout.notes || "",
@@ -270,7 +262,6 @@ const LiveWorkout = () => {
           
           setWorkout(safeWorkout);
           
-          // Only initialize exercise data if not restored from in-progress
           if (!savedProgress || JSON.parse(savedProgress).workoutId !== id) {
             const initialData: {
               [key: string]: {
@@ -310,26 +301,22 @@ const LiveWorkout = () => {
           variant: "destructive",
         });
         
-        // Use setTimeout to ensure toast is visible before navigation
         setTimeout(() => {
           navigate("/workouts");
         }, 500);
       } finally {
-        setIsTimerRunning(true); // Ensure timer is running for new workout
+        setIsTimerRunning(true);
       }
     };
     
     loadWorkout();
     
-    // Reset save attempt state when loading a new workout
     setHasAttemptedSave(false);
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
 
-  // Before unload handler to warn user of unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (workout && !hasAttemptedSave) {
-        // Save progress before closing
         try {
           const currentData = JSON.stringify({ 
             workoutId: workout.id, 
@@ -338,7 +325,6 @@ const LiveWorkout = () => {
           });
           localStorage.setItem('workout_in_progress', currentData);
           
-          // Standard message for beforeunload dialog
           e.preventDefault();
           e.returnValue = '';
           return '';
@@ -485,7 +471,6 @@ const LiveWorkout = () => {
         </>
       )}
       
-      {/* Confirm Delete Set Dialog */}
       <Dialog open={confirmDeleteSetDialog} onOpenChange={setConfirmDeleteSetDialog}>
         <DialogContent>
           <DialogHeader>
