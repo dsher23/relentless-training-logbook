@@ -1,40 +1,70 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export const useWorkoutTimer = (isRunning: boolean, isResting: boolean) => {
   const [workoutTime, setWorkoutTime] = useState(0);
   const [restTime, setRestTime] = useState(0);
   const [initialRestTime, setInitialRestTime] = useState(0);
+  
+  // Use refs to preserve the timer intervals
+  const workoutIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Workout timer
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
     if (isRunning && !isResting) {
-      interval = setInterval(() => {
+      // Clear any existing interval first
+      if (workoutIntervalRef.current) {
+        clearInterval(workoutIntervalRef.current);
+      }
+      
+      workoutIntervalRef.current = setInterval(() => {
         setWorkoutTime(prev => prev + 1);
       }, 1000);
+    } else if (workoutIntervalRef.current) {
+      clearInterval(workoutIntervalRef.current);
+      workoutIntervalRef.current = null;
     }
     
-    return () => clearInterval(interval);
+    return () => {
+      if (workoutIntervalRef.current) {
+        clearInterval(workoutIntervalRef.current);
+        workoutIntervalRef.current = null;
+      }
+    };
   }, [isRunning, isResting]);
 
   // Rest timer
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
     if (isResting && restTime > 0) {
-      interval = setInterval(() => {
+      // Clear any existing interval first
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+      }
+      
+      restIntervalRef.current = setInterval(() => {
         setRestTime(prev => {
           if (prev <= 1) {
+            if (restIntervalRef.current) {
+              clearInterval(restIntervalRef.current);
+              restIntervalRef.current = null;
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+    } else if (restIntervalRef.current) {
+      clearInterval(restIntervalRef.current);
+      restIntervalRef.current = null;
     }
     
-    return () => clearInterval(interval);
+    return () => {
+      if (restIntervalRef.current) {
+        clearInterval(restIntervalRef.current);
+        restIntervalRef.current = null;
+      }
+    };
   }, [isResting, restTime]);
 
   const startRest = (duration = 90) => {

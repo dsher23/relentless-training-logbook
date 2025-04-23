@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ const LiveWorkout = () => {
   const [isResting, setIsResting] = useState(false);
   const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
   const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
+  
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
       sets: { reps: number; weight: number }[];
@@ -40,6 +41,107 @@ const LiveWorkout = () => {
   }>({});
 
   const { workoutTime, restTime, initialRestTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
+
+  const handleSetUpdate = useCallback((exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets[setIndex] = { 
+        ...updatedSets[setIndex], 
+        [field]: value 
+      };
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+  }, []);
+
+  const handleAddSet = useCallback((exerciseId: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const lastSet = exercise.sets[exercise.sets.length - 1];
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: [...exercise.sets, { 
+            reps: lastSet?.reps || 0, 
+            weight: lastSet?.weight || 0 
+          }]
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveSet = useCallback((exerciseId: string, setIndex: number) => {
+    setDeleteSetInfo({ exerciseId, setIndex });
+    setConfirmDeleteSetDialog(true);
+  }, []);
+  
+  const confirmDeleteSet = useCallback(() => {
+    if (!deleteSetInfo) return;
+    
+    const { exerciseId, setIndex } = deleteSetInfo;
+    
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets.splice(setIndex, 1);
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+    
+    setConfirmDeleteSetDialog(false);
+    setDeleteSetInfo(null);
+    
+    toast({
+      title: "Set removed",
+      description: "The set has been removed from this exercise."
+    });
+  }, [deleteSetInfo, toast]);
+
+  const handleNoteChange = useCallback((exerciseId: string, note: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          notes: note
+        }
+      };
+    });
+  }, []);
+
+  const startRestPeriod = useCallback(() => {
+    setIsResting(true);
+    startRest();
+  }, [startRest]);
+
+  const finishRest = useCallback(() => {
+    setIsResting(false);
+    setRestTime(0);
+  }, [setRestTime]);
 
   useEffect(() => {
     if (id) {
@@ -99,97 +201,6 @@ const LiveWorkout = () => {
     }
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
 
-  const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets[setIndex] = { 
-        ...updatedSets[setIndex], 
-        [field]: value 
-      };
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
-  };
-
-  const handleAddSet = (exerciseId: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const lastSet = exercise.sets[exercise.sets.length - 1];
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: [...exercise.sets, { 
-            reps: lastSet?.reps || 0, 
-            weight: lastSet?.weight || 0 
-          }]
-        }
-      };
-    });
-  };
-
-  const handleRemoveSet = (exerciseId: string, setIndex: number) => {
-    setDeleteSetInfo({ exerciseId, setIndex });
-    setConfirmDeleteSetDialog(true);
-  };
-  
-  const confirmDeleteSet = () => {
-    if (!deleteSetInfo) return;
-    
-    const { exerciseId, setIndex } = deleteSetInfo;
-    
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets.splice(setIndex, 1);
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
-    
-    setConfirmDeleteSetDialog(false);
-    setDeleteSetInfo(null);
-    
-    toast({
-      title: "Set removed",
-      description: "The set has been removed from this exercise."
-    });
-  };
-
-  const handleNoteChange = (exerciseId: string, note: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          notes: note
-        }
-      };
-    });
-  };
-
   const toggleTimer = () => {
     setIsTimerRunning(!isTimerRunning);
   };
@@ -237,11 +248,6 @@ const LiveWorkout = () => {
     });
     
     navigate("/workout-history");
-  };
-
-  const finishRest = () => {
-    setIsResting(false);
-    setRestTime(0);
   };
 
   if (!workout) {
@@ -320,10 +326,7 @@ const LiveWorkout = () => {
             }
             onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
             onUpdateNotes={(notes) => handleNoteChange(currentExercise.id, notes)}
-            onStartRest={() => {
-              setIsResting(true);
-              startRest();
-            }}
+            onStartRest={startRestPeriod}
           />
           
           <div className="flex justify-between p-4">
