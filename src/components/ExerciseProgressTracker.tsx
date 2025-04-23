@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -12,7 +11,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import {
   Command,
   CommandEmpty,
@@ -25,13 +24,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Star, StarOff, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Exercise } from "@/types";
 import { getNumber, calculateOneRepMax } from "@/utils/numberUtils";
 
 interface ExerciseSetData {
@@ -197,8 +194,8 @@ const ExerciseProgressTracker: React.FC = () => {
     const volumeChange = getNumber(last.volume) - getNumber(first.volume);
     const volumePercentage = getNumber(first.volume) > 0 ? (volumeChange / getNumber(first.volume)) * 100 : 0;
     
-    const firstOneRM = calculateOneRepMax(getNumber(first.weight), getNumber(first.reps));
-    const lastOneRM = calculateOneRepMax(getNumber(last.weight), getNumber(last.reps));
+    const firstOneRM = calculateOneRepMax(first.weight, first.reps);
+    const lastOneRM = calculateOneRepMax(last.weight, last.reps);
     const oneRMChange = lastOneRM - firstOneRM;
     const oneRMPercentage = firstOneRM > 0 ? (oneRMChange / firstOneRM) * 100 : 0;
     
