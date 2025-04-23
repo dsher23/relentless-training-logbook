@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
@@ -7,6 +8,7 @@ import { useAppContext } from '@/context/AppContext';
 import WorkoutCard from '@/components/WorkoutCard';
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from "@/components/ui/card";
 
 const WorkoutHistory: React.FC = () => {
   const { workouts, deleteWorkout } = useAppContext();

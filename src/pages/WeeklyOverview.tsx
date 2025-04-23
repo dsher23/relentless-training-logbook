@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { format, addWeeks, subWeeks } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import WeeklyCalendarView from "@/components/WeeklyCalendarView";
-import WeeklyLiftsGraph from "@/components/WeeklyLiftsGraph";
+import LiftProgressGraph from "@/components/LiftProgressGraph";
 import { useAppContext } from "@/context/AppContext";
 import {
   Dialog,
@@ -55,7 +54,6 @@ const WeeklyOverview: React.FC = () => {
   const handleDayClick = (dayIndex: number) => {
     setSelectedDayIndex(dayIndex);
     
-    // Find if there's already a workout assigned to this day
     const activeRoutine = weeklyRoutines.find(r => !r.archived);
     if (activeRoutine) {
       const workoutDay = activeRoutine.workoutDays.find(day => day.dayOfWeek === dayIndex);
@@ -73,17 +71,14 @@ const WeeklyOverview: React.FC = () => {
     const activeRoutine = weeklyRoutines.find(r => !r.archived);
     
     if (activeRoutine) {
-      // If a routine exists, update it
       const workoutName = selectedWorkoutId 
         ? workoutTemplates.find(t => t.id === selectedWorkoutId)?.name || ""
         : "";
         
-      // Update the routine with the new workout assignment
       const updatedWorkoutDays = [...activeRoutine.workoutDays];
       const existingDayIndex = updatedWorkoutDays.findIndex(day => day.dayOfWeek === selectedDayIndex);
       
       if (existingDayIndex >= 0) {
-        // Update existing day
         if (selectedWorkoutId) {
           updatedWorkoutDays[existingDayIndex] = {
             ...updatedWorkoutDays[existingDayIndex],
@@ -91,11 +86,9 @@ const WeeklyOverview: React.FC = () => {
             workoutName
           };
         } else {
-          // Remove the day if no workout selected (rest day)
           updatedWorkoutDays.splice(existingDayIndex, 1);
         }
       } else if (selectedWorkoutId) {
-        // Add new day
         updatedWorkoutDays.push({
           id: uuidv4(),
           dayOfWeek: selectedDayIndex,
@@ -109,7 +102,6 @@ const WeeklyOverview: React.FC = () => {
         workoutDays: updatedWorkoutDays
       });
     } else if (selectedWorkoutId) {
-      // If no routine exists but a workout was selected, create a new routine
       const workoutName = workoutTemplates.find(t => t.id === selectedWorkoutId)?.name || "";
       const newRoutine: WeeklyRoutine = {
         id: uuidv4(),
@@ -160,7 +152,6 @@ const WeeklyOverview: React.FC = () => {
     navigate(`/live-workout/${workoutId}?isTemplate=true`);
   };
   
-  // Get day of week name
   const getDayName = (dayIndex: number) => {
     return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayIndex];
   };
@@ -193,7 +184,7 @@ const WeeklyOverview: React.FC = () => {
         </div>
         
         <div className="space-y-6">
-          <WeeklyLiftsGraph currentDate={currentDate} />
+          <LiftProgressGraph />
           
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Weekly Schedule</h3>
@@ -285,7 +276,6 @@ const WeeklyOverview: React.FC = () => {
         </div>
       </div>
       
-      {/* Workout Assignment Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -343,7 +333,6 @@ const WeeklyOverview: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Confirm Delete Dialog */}
       <Dialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
