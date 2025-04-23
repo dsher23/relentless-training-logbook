@@ -30,6 +30,13 @@ const Workouts: React.FC = () => {
   // Get active workout plan
   const activePlan = workoutPlans.find(p => p.isActive);
   
+  // Navigation handler for workout edit
+  const handleEditWorkoutDay = (templateId: string) => {
+    // Ensure we have a properly formed URL with no double slashes
+    const planId = activePlan?.id || '';
+    navigate(`/exercise-plans/${planId}/days/${templateId}`);
+  };
+  
   return (
     <div className="app-container animate-fade-in pb-16">
       <Header title="Workouts" />
@@ -136,7 +143,7 @@ const Workouts: React.FC = () => {
                   <Card 
                     key={template.id} 
                     className="hover:border-primary cursor-pointer shadow-sm"
-                    onClick={() => navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`)}
+                    onClick={() => handleEditWorkoutDay(template.id)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -157,7 +164,7 @@ const Workouts: React.FC = () => {
                             variant="outline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/exercise-plans/${activePlan?.id || ''}/days/${template.id}`);
+                              handleEditWorkoutDay(template.id);
                             }}
                           >
                             Edit

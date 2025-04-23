@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
@@ -25,19 +24,19 @@ const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { updateWorkout, deleteWorkout } = useAppContext();
+  const { updateWorkout, deleteWorkout, workoutPlans } = useAppContext();
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const { workout: rawWorkout, setWorkout, isLoading, isTemplate, error } = useWorkoutLoader(id);
   
-  // Convert template to workout if needed
+  const activePlan = workoutPlans.find(p => p.isActive);
+  
   const workout = isTemplate && rawWorkout 
     ? convertTemplateToWorkout(rawWorkout) 
     : rawWorkout as Workout;
   
-  // Show error and navigate away if workout is still not found after loading
   useEffect(() => {
     if (!isLoading && !rawWorkout?.id && id) {
       toast({
@@ -45,7 +44,6 @@ const WorkoutDetail: React.FC = () => {
         description: "The workout couldn't be loaded or doesn't exist.",
         variant: "destructive"
       });
-      // Do not navigate away immediately, show the error in the UI instead
     }
   }, [isLoading, rawWorkout, id, toast]);
 
@@ -145,7 +143,12 @@ const WorkoutDetail: React.FC = () => {
   };
 
   const handleEditWorkout = () => {
-    navigate(`/workouts/builder/${workout.id}`);
+    if (isTemplate) {
+      const planId = activePlan?.id || '';
+      navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+    } else {
+      navigate(`/workouts/builder/${workout.id}`);
+    }
   };
   
   const editingExercise = editingExerciseId 

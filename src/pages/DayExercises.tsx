@@ -20,13 +20,33 @@ const DayExercises: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   
-  const plan = workoutPlans.find(p => p.id === planId);
+  // Find active plan if planId is not provided
+  const activePlan = planId 
+    ? workoutPlans.find(p => p.id === planId)
+    : workoutPlans.find(p => p.isActive);
+    
+  const plan = activePlan;
+  
+  // Find day in plan or in all templates if not in plan
   const day = plan?.workoutTemplates.find(t => t.id === dayId) || 
               workoutTemplates.find(t => t.id === dayId);
   
   if (!day) {
-    navigate(`/exercise-plans/${planId}/days`);
-    return null;
+    // Handle the case where day is not found
+    return (
+      <div className="app-container animate-fade-in">
+        <Header title="Workout Not Found" />
+        <div className="p-4 text-center">
+          <p className="mb-4">The workout day could not be found.</p>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> Go Back
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const handleSaveExercise = (exercise: Exercise) => {
@@ -87,31 +107,40 @@ const DayExercises: React.FC = () => {
     });
   };
 
-  // Calculate total sets across all exercises
-  const totalSets: number = (day.exercises as Exercise[]).reduce(
-    (acc: number, curr: Exercise) => acc + curr.sets.length, 
+  // Calculate total sets across all exercises with safety checks
+  const totalSets: number = (day.exercises || []).reduce(
+    (acc: number, curr: Exercise) => acc + (curr.sets?.length || 0), 
     0
   );
+  
+  // Determine the back button navigation destination
+  const handleBackClick = () => {
+    if (plan) {
+      navigate(`/exercise-plans/${plan.id}/days`);
+    } else {
+      navigate("/workouts");
+    }
+  };
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title={day.name} />
+      <Header title={day.name || "Edit Workout"} />
       
       <div className="p-4 space-y-6">
         <Button 
           variant="outline" 
-          onClick={() => navigate(`/exercise-plans/${planId}/days`)}
+          onClick={handleBackClick}
         >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Workout Days
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
         
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-semibold">{day.name}</h2>
+                <h2 className="text-lg font-semibold">{day.name || "Workout Day"}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {day.exercises.length} exercises • {totalSets} total sets
+                  {(day.exercises || []).length} exercises • {totalSets} total sets
                 </p>
               </div>
               <Button 
@@ -127,7 +156,7 @@ const DayExercises: React.FC = () => {
         </Card>
 
         <ExercisesList 
-          exercises={day.exercises}
+          exercises={day.exercises || []}
           onAddExercise={() => setShowExerciseForm(true)}
           onEditExercise={(id) => {
             setEditingExerciseId(id);

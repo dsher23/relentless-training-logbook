@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
@@ -6,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Workout } from "@/types";
+import { useAppContext } from "@/context/AppContext";
 
 interface WorkoutDetailsCardProps {
   workout: Workout;
@@ -13,13 +13,18 @@ interface WorkoutDetailsCardProps {
 
 const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
   const navigate = useNavigate();
+  const { workoutPlans } = useAppContext();
+  
+  const activePlan = workoutPlans.find(p => p.isActive);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Navigate to the workout builder with the workout ID for editing
-    if (workout && workout.id) {
+    if (workout.isTemplate) {
+      const planId = activePlan?.id || '';
+      navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+    } else {
       navigate(`/workouts/builder/${workout.id}`);
     }
   };

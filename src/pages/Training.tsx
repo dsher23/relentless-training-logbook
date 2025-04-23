@@ -30,7 +30,7 @@ import { useState } from "react";
 
 const Training: React.FC = () => {
   const navigate = useNavigate();
-  const { weeklyRoutines, workoutTemplates } = useAppContext();
+  const { weeklyRoutines, workoutTemplates, workoutPlans } = useAppContext();
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: string} | null>(null);
   
@@ -42,13 +42,25 @@ const Training: React.FC = () => {
   const todaysWorkout = todaysWorkoutDay?.workoutTemplateId 
     ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
     : null;
+  
+  // Find active plan to use for routing
+  const activePlan = workoutPlans.find(p => p.isActive);
+  
+  // Get the appropriate plan ID for workout editing
+  const handleEdit = (workoutId: string) => {
+    if (activePlan) {
+      navigate(`/exercise-plans/${activePlan.id}/days/${workoutId}`);
+    } else {
+      // If no active plan, still try to navigate to the workout edit page
+      navigate(`/exercise-plans/days/${workoutId}`);
+    }
+  };
     
   const handleDeleteConfirm = () => {
     if (!itemToDelete) return;
     
     if (itemToDelete.type === 'workout') {
       // Handle workout deletion
-      // This would need to be implemented based on your app's state management
       console.log(`Deleting workout: ${itemToDelete.id}`);
     }
     
@@ -77,7 +89,7 @@ const Training: React.FC = () => {
                     size="sm"
                     variant="outline"
                     className="flex items-center"
-                    onClick={() => navigate(`/workouts/builder/${todaysWorkout.id}`)}
+                    onClick={() => handleEdit(todaysWorkout.id)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit

@@ -35,10 +35,14 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/training" element={<Training />} />
             
+            {/* Exercise Plans Routes */}
             <Route path="/exercise-plans" element={<Plans />} />
             <Route path="/exercise-plans/:planId" element={<PlanDetail />} />
             <Route path="/exercise-plans/:planId/days" element={<WorkoutDays />} />
             <Route path="/exercise-plans/:planId/days/:dayId" element={<DayExercises />} />
+            
+            {/* Alternative route for when planId might not be available */}
+            <Route path="/exercise-plans/days/:dayId" element={<DayExercises />} />
             
             <Route path="/plans" element={<Plans />} />
             
