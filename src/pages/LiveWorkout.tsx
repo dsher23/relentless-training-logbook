@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bug } from "lucide-react";
@@ -21,6 +22,8 @@ const LiveWorkout = () => {
     setHasAttemptedSave,
     debugMode,
     setDebugMode,
+    exerciseData,
+    setExerciseData,
     finishWorkout,
     loadWorkout,
   } = useLiveWorkout();
@@ -29,14 +32,6 @@ const LiveWorkout = () => {
   const [isResting, setIsResting] = useState(false);
   const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
   const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
-  
-  const [exerciseData, setExerciseData] = useState<{
-    [key: string]: {
-      sets: { reps: number; weight: number }[];
-      notes: string;
-      previousStats?: { reps: number; weight: number }[];
-    }
-  }>({});
 
   const { workoutTime, restTime, initialRestTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
 
@@ -85,6 +80,21 @@ const LiveWorkout = () => {
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex(prev => prev - 1);
     }
+  };
+
+  const handleUpdateNotes = (exerciseId: string, notes: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          notes
+        }
+      };
+    });
   };
 
   const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
@@ -184,18 +194,29 @@ const LiveWorkout = () => {
     );
   }
   
-  const currentExerciseData = exerciseData[currentExercise.id];
-
-  if (!currentExerciseData) {
+  // Ensure we have data for the current exercise
+  if (!exerciseData[currentExercise.id]) {
+    // Initialize the exercise data if it's not present
+    setExerciseData(prev => ({
+      ...prev,
+      [currentExercise.id]: {
+        sets: currentExercise.sets || [],
+        notes: currentExercise.notes || "",
+        previousStats: currentExercise.previousStats
+      }
+    }));
+    
     return (
       <div className="flex items-center justify-center h-60 p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading exercise data...</p>
+          <p>Preparing exercise data...</p>
         </div>
       </div>
     );
   }
+  
+  const currentExerciseData = exerciseData[currentExercise.id];
 
   return (
     <div className="app-container pb-8 animate-fade-in">
@@ -256,6 +277,7 @@ const LiveWorkout = () => {
               handleSetUpdate(currentExercise.id, setIndex, field, value)
             }
             onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
+            onUpdateNotes={(notes) => handleUpdateNotes(currentExercise.id, notes)}
             onStartRest={startRest}
           />
           

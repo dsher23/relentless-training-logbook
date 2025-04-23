@@ -17,6 +17,13 @@ export const useLiveWorkout = () => {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [debugMode, setDebugMode] = useState<boolean>(false);
+  const [exerciseData, setExerciseData] = useState<{
+    [key: string]: {
+      sets: { reps: number; weight: number }[];
+      notes: string;
+      previousStats?: { reps: number; weight: number }[];
+    }
+  }>({});
 
   const finishWorkout = useCallback(() => {
     if (!workout) {
@@ -127,6 +134,8 @@ export const useLiveWorkout = () => {
     setHasAttemptedSave,
     debugMode,
     setDebugMode,
+    exerciseData,
+    setExerciseData,
     finishWorkout,
     loadWorkout,
   };

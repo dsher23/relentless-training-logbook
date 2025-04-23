@@ -63,7 +63,10 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   }
 
   return (
-    <ChartContainer className="mb-4">
+    <ChartContainer 
+      className="mb-4"
+      config={{ progress: { label: "Progress" } }}
+    >
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={data}
