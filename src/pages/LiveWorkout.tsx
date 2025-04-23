@@ -174,7 +174,6 @@ const LiveWorkout = () => {
     try {
       setHasAttemptedSave(true);
       
-      // Collect updated exercise data
       const updatedExercises = workout.exercises.map(exercise => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
@@ -187,39 +186,17 @@ const LiveWorkout = () => {
         };
       });
 
-      // Create a completely new workout object to ensure no reference issues
       const completedWorkout = {
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true, // Explicitly set as true primitive boolean
+        completed: true,
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      // Debug log the workout before saving
-      console.log("SAVING COMPLETED WORKOUT:", JSON.stringify(completedWorkout));
-      console.log("CRITICAL - completed type:", typeof completedWorkout.completed);
-      console.log("CRITICAL - completed value:", completedWorkout.completed);
-      
-      // Save the completed workout directly to localStorage first as a backup
-      try {
-        const existingWorkouts = localStorage.getItem('workouts');
-        if (existingWorkouts) {
-          const parsed = JSON.parse(existingWorkouts);
-          // Find and replace the workout if it exists
-          const updated = parsed.map(w => w.id === completedWorkout.id ? completedWorkout : w);
-          localStorage.setItem('workouts', JSON.stringify(updated));
-          console.log("CRITICAL - Direct localStorage save:", updated.filter(w => w.completed === true).length);
-        }
-      } catch (err) {
-        console.error("Failed direct localStorage save:", err);
-      }
-      
-      // Update the workout in context - this calls updateWorkout in useWorkouts.ts
       updateWorkout(completedWorkout);
       
-      // Clean up any in-progress data
       localStorage.removeItem('workout_in_progress');
       
       toast({
@@ -227,12 +204,11 @@ const LiveWorkout = () => {
         description: "Your workout has been saved successfully to history.",
       });
       
-      // Navigate to workout history to see the saved workout
       setTimeout(() => {
         navigate("/workout-history");
       }, 1500);
     } catch (error) {
-      console.error("Critical Error - Failed to save workout:", error);
+      console.error("Error saving workout:", error);
       toast({
         title: "Save Error",
         description: "There was a problem saving your workout. Please try again.",
@@ -424,15 +400,6 @@ const LiveWorkout = () => {
     );
   }
 
-  const debugInfo = debugMode ? (
-    <div>
-      <p>Workout ID: {workout.id.substring(0, 8)}...</p>
-      <p>Completed: {String(workout.completed)} (type: {typeof workout.completed})</p>
-      <p>Exercise Count: {workout.exercises.length}</p>
-      <p>Current Exercise: {currentExercise.name}</p>
-    </div>
-  ) : null;
-
   return (
     <div className="app-container pb-8 animate-fade-in">
       <WorkoutHeader
@@ -441,7 +408,6 @@ const LiveWorkout = () => {
         isTimerRunning={isTimerRunning}
         onToggleTimer={toggleTimer}
         debugMode={debugMode}
-        debugInfo={debugInfo}
       />
       
       <div className="px-4 pb-2">
