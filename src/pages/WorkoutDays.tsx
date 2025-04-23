@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Calendar, Edit, Trash2 } from "lucide-react";
@@ -24,7 +23,7 @@ const WorkoutDays: React.FC = () => {
     addWorkoutTemplate,
     removeTemplateFromPlan,
     updateWorkoutTemplate,
-    deleteWorkoutPlan // <-- In case you want to delete the whole plan
+    deleteWorkoutPlan
   } = useAppContext();
 
   const [isCreateDayDialogOpen, setIsCreateDayDialogOpen] = useState(false);
@@ -94,7 +93,6 @@ const WorkoutDays: React.FC = () => {
   };
 
   const handleEditDay = (day: WorkoutTemplate) => {
-    // Ensure fallback values for edit safety!
     setEditingDay({
       ...day,
       name: day.name || "Untitled Workout",
@@ -123,7 +121,6 @@ const WorkoutDays: React.FC = () => {
     });
   };
 
-  // Delete button inside edit dialog
   const handleEditDialogDelete = () => {
     if (editingDay?.id) {
       setIsEditDialogOpen(false);
@@ -132,7 +129,6 @@ const WorkoutDays: React.FC = () => {
     }
   };
 
-  // Confirm delete from dialog (list or edit)
   const handleConfirmDelete = () => {
     if (pendingDeleteDayId) {
       handleDeleteDay(pendingDeleteDayId);
@@ -143,14 +139,12 @@ const WorkoutDays: React.FC = () => {
     }
   };
 
-  // Calculate total sets across all exercises (with safety)
   const totalSets: number = (plan.workoutTemplates as WorkoutTemplate[]).reduce(
     (acc: number, curr: WorkoutTemplate) =>
       acc + (curr.exercises?.reduce((a: number, e: Exercise) => a + (e.sets?.length ?? 0), 0) ?? 0),
     0
   );
 
-  // --- Render
   return (
     <div className="app-container animate-fade-in">
       <Header title={`${plan.name} - Workout Days`} />
@@ -197,7 +191,6 @@ const WorkoutDays: React.FC = () => {
               <Card
                 key={day.id}
                 className="hover:border-primary cursor-pointer"
-                // Edit now uses handleEditDay to open dialog with safe fallbacks!
                 onClick={() => handleEditDay(day)}
               >
                 <CardContent className="p-4">
@@ -240,7 +233,6 @@ const WorkoutDays: React.FC = () => {
         )}
       </div>
 
-      {/* CREATE WORKOUT DAY DIALOG */}
       <Dialog open={isCreateDayDialogOpen} onOpenChange={setIsCreateDayDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -264,7 +256,6 @@ const WorkoutDays: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* EDIT WORKOUT DAY DIALOG */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px] w-full max-w-full">
           <DialogHeader>
@@ -304,7 +295,7 @@ const WorkoutDays: React.FC = () => {
                       className="w-16"
                       onChange={e => {
                         const newExercises = [...editingDay.exercises];
-                        if (!newExercises[idx].sets) newExercises[idx].sets = [{}];
+                        if (!newExercises[idx].sets) newExercises[idx].sets = [];
                         if (!newExercises[idx].sets[0]) newExercises[idx].sets[0] = { reps: 0, weight: 0 };
                         newExercises[idx].sets[0] = {
                           ...newExercises[idx].sets[0],
@@ -321,7 +312,7 @@ const WorkoutDays: React.FC = () => {
                       className="w-20"
                       onChange={e => {
                         const newExercises = [...editingDay.exercises];
-                        if (!newExercises[idx].sets) newExercises[idx].sets = [{}];
+                        if (!newExercises[idx].sets) newExercises[idx].sets = [];
                         if (!newExercises[idx].sets[0]) newExercises[idx].sets[0] = { reps: 0, weight: 0 };
                         newExercises[idx].sets[0] = {
                           ...newExercises[idx].sets[0],
@@ -351,7 +342,6 @@ const WorkoutDays: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* DELETE CONFIRMATION DIALOG */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -379,4 +369,3 @@ const WorkoutDays: React.FC = () => {
 };
 
 export default WorkoutDays;
-
