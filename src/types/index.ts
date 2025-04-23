@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -8,6 +7,7 @@ export interface Workout {
   completed: boolean;
   isDeload?: boolean;
   scheduledTime?: string;
+  isTemplate?: boolean;
 }
 
 export interface Exercise {
