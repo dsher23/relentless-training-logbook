@@ -161,6 +161,7 @@ const ExerciseProgressTracker: React.FC = () => {
   }, [completedWorkouts, selectedExercise]);
 
   const calculateOneRepMax = (weight: number, reps: number): number => {
+    // Fix: Ensure both parameters are treated as numbers
     const numWeight = Number(weight);
     const numReps = Number(reps);
     
