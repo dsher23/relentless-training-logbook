@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -124,9 +123,8 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          // Explicitly convert weight and reps to numbers
-          const weight = Number(set.weight || 0);
-          const reps = Number(set.reps || 0);
+          const weight = Number((set as ExerciseSetData).weight || 0);
+          const reps = Number((set as ExerciseSetData).reps || 0);
           
           if (weight && reps) {
             const setVolume = weight * reps;
@@ -157,7 +155,7 @@ const ExerciseProgressTracker: React.FC = () => {
       }
     });
     
-    return data.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return data;
   }, [completedWorkouts, selectedExercise]);
 
   const calculateOneRepMax = (weight: number, reps: number): number => {
