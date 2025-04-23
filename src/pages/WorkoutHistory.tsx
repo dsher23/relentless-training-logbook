@@ -16,64 +16,28 @@ const WorkoutHistory: React.FC = () => {
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
-  const [debugMode, setDebugMode] = useState<boolean>(true); // Keep debug mode on for troubleshooting
+  const [debugMode, setDebugMode] = useState<boolean>(false); // Set debug off by default
   
   useEffect(() => {
-    // Enhanced debugging logs with more details
-    console.log('WorkoutHistory - All workouts:', workouts);
-    console.log('WorkoutHistory - Total workouts in context:', workouts.length);
+    // Find completed workouts with strict boolean check (completed === true)
+    const strictCompletedWorkouts = workouts.filter(workout => workout.completed === true);
     
-    // Log every workout with its completed status
-    workouts.forEach((workout, index) => {
-      console.log(`Workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed} (type: ${typeof workout.completed}), JSON=${JSON.stringify(workout)}`);
+    console.log("WorkoutHistory - All workouts:", workouts.length);
+    console.log("WorkoutHistory - Strict completed workouts:", strictCompletedWorkouts.length);
+    
+    // Log the first few completed workouts for verification
+    strictCompletedWorkouts.slice(0, 3).forEach((workout, index) => {
+      console.log(`Completed workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed}`);
     });
     
-    // Try multiple approaches to identify completed workouts - CRITICAL DEBUG
-    const strictTrueWorkouts = workouts.filter(w => w.completed === true);
-    const looseCompletedWorkouts = workouts.filter(w => w.completed);
-    const allWorkouts = [...workouts]; // Create a copy to avoid mutation
-    
-    console.log('CRITICAL DEBUG - Strict true workouts count:', strictTrueWorkouts.length);
-    console.log('CRITICAL DEBUG - Loose completed workouts count:', looseCompletedWorkouts.length);
-    console.log('CRITICAL DEBUG - First 3 strict completed workouts:', strictTrueWorkouts.slice(0, 3));
-    
-    // CRITICAL FIX: Instead of relying on filtering, let's manually inspect each workout
-    const manuallyIdentifiedCompleted = [];
-    
-    for (const workout of allWorkouts) {
-      // Convert whatever the completed value is to a strict boolean
-      const isActuallyCompleted = Boolean(workout.completed);
-      
-      // Log detailed inspection
-      console.log(`Manual check - Workout ${workout.id?.substring(0, 8)} - Raw completed value:`, workout.completed);
-      console.log(`Manual check - Workout ${workout.id?.substring(0, 8)} - Converted to boolean:`, isActuallyCompleted);
-      
-      // If it should be considered completed after our check, add it
-      if (isActuallyCompleted) {
-        // Create a clean copy with completed explicitly set to true
-        manuallyIdentifiedCompleted.push({
-          ...workout,
-          completed: true // Force it to be true for our display
-        });
-      }
-    }
-    
-    // Log the results of our manual identification
-    console.log('CRITICAL DEBUG - Manually identified completed workouts:', manuallyIdentifiedCompleted.length);
-    
-    // Sort all workouts (both manually identified and strict true) by date, newest first
-    const sortedCompleted = [...manuallyIdentifiedCompleted, ...strictTrueWorkouts]
-      // Remove duplicates based on ID
-      .filter((workout, index, self) => 
-        index === self.findIndex(w => w.id === workout.id)
-      )
-      // Sort by date, newest first  
+    // Sort completed workouts by date, newest first
+    const sortedWorkouts = [...strictCompletedWorkouts]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    console.log('WorkoutHistory - Final sorted completed workouts:', sortedCompleted.length);
+    console.log("WorkoutHistory - Final sorted completed workouts:", sortedWorkouts.length);
     
-    // Set the state with our manually verified completed workouts
-    setCompletedWorkouts(sortedCompleted);
+    // Set the state with properly filtered and sorted completed workouts
+    setCompletedWorkouts(sortedWorkouts);
   }, [workouts]);
 
   const handleDeleteWorkout = () => {
@@ -95,29 +59,6 @@ const WorkoutHistory: React.FC = () => {
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
-  };
-
-  // Added debugging function to help diagnose the issue
-  const forceCompletedWorkout = () => {
-    if (workouts.length > 0) {
-      const firstWorkout = workouts[0];
-      
-      // Force add a completed workout to our local state for testing
-      setCompletedWorkouts(prev => [
-        {
-          ...firstWorkout,
-          id: firstWorkout.id + "-test", // Ensure unique ID
-          name: `${firstWorkout.name} (TEST)`,
-          completed: true // EXPLICITLY set to true
-        },
-        ...prev
-      ]);
-      
-      toast({
-        title: "Test workout created",
-        description: "A test completed workout has been added to the view (not saved to storage)"
-      });
-    }
   };
 
   return (
@@ -146,36 +87,21 @@ const WorkoutHistory: React.FC = () => {
         {debugMode && (
           <Card className="mb-4 bg-yellow-50 dark:bg-yellow-900/20">
             <CardContent className="p-4 text-xs">
-              <h3 className="font-bold mb-1">Critical Debug Info:</h3>
+              <h3 className="font-bold mb-1">Debug Info:</h3>
               <p>Total workouts: {workouts.length}</p>
-              <p>Strict TRUE completed: {workouts.filter(w => w.completed === true).length}</p>
-              <p>Boolean completed: {workouts.filter(w => Boolean(w.completed)).length}</p>
+              <p>TRUE completed workouts: {workouts.filter(w => w.completed === true).length}</p>
               <p>Displayed completed: {completedWorkouts.length}</p>
               
-              <div className="mt-3 p-2 border border-yellow-400 rounded">
-                <p className="font-bold text-amber-700">WORKOUT DISPLAY DEBUG:</p>
-                <div className="flex gap-2 mt-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="text-xs"
-                    onClick={forceCompletedWorkout}
-                  >
-                    Test: Add Completed Workout
-                  </Button>
-                </div>
-                
-                <div className="mt-3">
-                  <p className="font-bold">Displayed Workout IDs:</p>
-                  <ul className="list-disc pl-5 mt-1">
-                    {completedWorkouts.slice(0, 5).map(w => (
-                      <li key={w.id} className="text-green-600">
-                        {w.id.substring(0, 8)}... - {w.name} - completed:{" "}
-                        <span className="font-bold">{String(w.completed)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <div className="mt-3">
+                <p className="font-bold">First 5 displayed workouts:</p>
+                <ul className="list-disc pl-5 mt-1">
+                  {completedWorkouts.slice(0, 5).map(w => (
+                    <li key={w.id} className="text-green-600">
+                      {w.id.substring(0, 8)}... - {w.name} - completed:{" "}
+                      <span className="font-bold">{String(w.completed)}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
               
               <p className="font-bold mt-3">All Workouts (raw):</p>

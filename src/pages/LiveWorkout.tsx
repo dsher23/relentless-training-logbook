@@ -187,29 +187,26 @@ const LiveWorkout = () => {
         };
       });
 
-      // CRITICAL FIX: Create a clean new workout object with completed EXPLICITLY set to true
-      // No conditionals, no type checking, just set it directly to true
+      // Create a completed workout object ensuring all fields are fully populated and complete
       const completedWorkout = {
         id: workout.id,
         name: workout.name,
         exercises: updatedExercises,
-        completed: true, // EXPLICIT true value - this is the key fix
+        completed: true, // CRITICAL: Set explicitly to Boolean true
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      // Enhanced debugging before save
-      console.log("CRITICAL - FINISH WORKOUT - Object being saved:", completedWorkout);
-      console.log("CRITICAL - FINISH WORKOUT - completed field:", {
-        value: completedWorkout.completed,
-        type: typeof completedWorkout.completed
-      });
+      // Debug logging BEFORE saving
+      console.log("SAVING WORKOUT:", JSON.stringify(completedWorkout));
+      console.log("COMPLETED FLAG TYPE:", typeof completedWorkout.completed);
+      console.log("COMPLETED FLAG VALUE:", completedWorkout.completed);
       
-      // Save the workout with completed: true
+      // Save the workout
       updateWorkout(completedWorkout);
       
-      // Additional logging after save to verify
-      console.log("CRITICAL - FINISH WORKOUT - Object after updateWorkout call:", JSON.stringify(completedWorkout));
+      // Additional verification after save
+      console.log("VERIFICATION - Workout after update:", completedWorkout);
       
       localStorage.removeItem('workout_in_progress');
       
