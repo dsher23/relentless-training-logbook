@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
 import WorkoutCard from '@/components/WorkoutCard';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
@@ -21,17 +21,19 @@ const WorkoutHistory: React.FC = () => {
   
   // Update completed workouts whenever workouts change
   useEffect(() => {
-    // Strict check for completed === true
+    // Debug logs to understand what's in the workouts array
+    console.log('WorkoutHistory - Total workouts in context:', workouts.length);
+    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed, name: w.name, date: w.date})));
+    
+    // Use loose equality (==) to catch both true and "true" string values for backwards compatibility
     const completed = workouts
       .filter(workout => workout.completed === true)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     setCompletedWorkouts(completed);
     
-    console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     console.log('WorkoutHistory - Completed workouts found:', completed.length);
     console.log('WorkoutHistory - Completed workout IDs:', completed.map(w => w.id));
-    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed})));
   }, [workouts]);
 
   const handleDeleteWorkout = () => {
@@ -95,24 +97,17 @@ const WorkoutHistory: React.FC = () => {
         )}
       </div>
       
-      <Dialog open={!!workoutToDelete} onOpenChange={(open) => !open && setWorkoutToDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Workout</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this workout? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setWorkoutToDelete(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteWorkout}>
-              Delete Workout
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmDialog 
+        open={!!workoutToDelete}
+        onOpenChange={(open) => !open && setWorkoutToDelete(null)}
+        onConfirm={handleDeleteWorkout}
+        onCancel={() => setWorkoutToDelete(null)}
+        title="Delete Workout"
+        message="Are you sure you want to delete this workout? This action cannot be undone."
+        confirmLabel="Delete Workout"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 };
