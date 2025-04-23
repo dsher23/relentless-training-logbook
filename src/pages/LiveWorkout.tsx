@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -188,7 +187,7 @@ const LiveWorkout = () => {
         };
       });
 
-      // CRITICAL FIX: Create an entirely new object with completed explicitly true
+      // Create a completely new workout object to ensure no reference issues
       const completedWorkout = {
         id: workout.id,
         name: workout.name, 
@@ -198,12 +197,26 @@ const LiveWorkout = () => {
         notes: workout.notes || ""
       };
       
-      // Verify the workout data in console
-      console.log("CRITICAL - SAVING COMPLETED WORKOUT:", JSON.stringify(completedWorkout));
+      // Debug log the workout before saving
+      console.log("SAVING COMPLETED WORKOUT:", JSON.stringify(completedWorkout));
       console.log("CRITICAL - completed type:", typeof completedWorkout.completed);
       console.log("CRITICAL - completed value:", completedWorkout.completed);
       
-      // Directly update workout in context, ensuring true value is preserved
+      // Save the completed workout directly to localStorage first as a backup
+      try {
+        const existingWorkouts = localStorage.getItem('workouts');
+        if (existingWorkouts) {
+          const parsed = JSON.parse(existingWorkouts);
+          // Find and replace the workout if it exists
+          const updated = parsed.map(w => w.id === completedWorkout.id ? completedWorkout : w);
+          localStorage.setItem('workouts', JSON.stringify(updated));
+          console.log("CRITICAL - Direct localStorage save:", updated.filter(w => w.completed === true).length);
+        }
+      } catch (err) {
+        console.error("Failed direct localStorage save:", err);
+      }
+      
+      // Update the workout in context - this calls updateWorkout in useWorkouts.ts
       updateWorkout(completedWorkout);
       
       // Clean up any in-progress data

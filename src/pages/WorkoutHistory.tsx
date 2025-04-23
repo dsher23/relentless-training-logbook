@@ -16,16 +16,23 @@ const WorkoutHistory: React.FC = () => {
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
-  const [debugMode, setDebugMode] = useState<boolean>(true); // Set debug on initially to diagnose
+  const [debugMode, setDebugMode] = useState<boolean>(true); // Keep debug mode on to diagnose
   
   useEffect(() => {
-    // CRITICAL FIX: Use strict === true comparison for completed workouts
-    const strictCompletedWorkouts = workouts.filter(workout => workout.completed === true);
+    // Safety check for workouts array
+    if (!workouts || !Array.isArray(workouts)) {
+      console.error("CRITICAL - WorkoutHistory - workouts is not an array:", workouts);
+      setCompletedWorkouts([]);
+      return;
+    }
     
     console.log("CRITICAL - WorkoutHistory - All workouts:", workouts.length);
+    
+    // Use strict === true comparison for completed workouts
+    const strictCompletedWorkouts = workouts.filter(workout => workout.completed === true);
     console.log("CRITICAL - WorkoutHistory - Strict completed workouts:", strictCompletedWorkouts.length);
     
-    // Log info about ALL workouts to diagnose the issue
+    // Log info about ALL workouts to diagnose
     console.log("CRITICAL - All workouts completion status:");
     workouts.slice(0, 10).forEach((workout, index) => {
       console.log(`Workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed} (${typeof workout.completed})`);
@@ -36,6 +43,7 @@ const WorkoutHistory: React.FC = () => {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     console.log("CRITICAL - WorkoutHistory - Final sorted completed workouts:", sortedWorkouts.length);
+    console.log("CRITICAL - First few completed workouts:", sortedWorkouts.slice(0, 3));
     
     // Set the state with properly filtered and sorted completed workouts
     setCompletedWorkouts(sortedWorkouts);
@@ -89,33 +97,33 @@ const WorkoutHistory: React.FC = () => {
           <Card className="mb-4 bg-yellow-50 dark:bg-yellow-900/20">
             <CardContent className="p-4 text-xs">
               <h3 className="font-bold mb-1">Debug Info:</h3>
-              <p>Total workouts: {workouts.length}</p>
-              <p>TRUE completed workouts: {workouts.filter(w => w.completed === true).length}</p>
-              <p>Boolean completed: {workouts.filter(w => Boolean(w.completed)).length}</p>
-              <p>Displayed completed: {completedWorkouts.length}</p>
+              <p>Total workouts: {workouts?.length || 0}</p>
+              <p>TRUE completed workouts: {workouts?.filter(w => w.completed === true)?.length || 0}</p>
+              <p>Boolean completed: {workouts?.filter(w => Boolean(w.completed))?.length || 0}</p>
+              <p>Displayed completed: {completedWorkouts?.length || 0}</p>
               
               <div className="mt-3">
                 <p className="font-bold">First 5 displayed workouts:</p>
                 <ul className="list-disc pl-5 mt-1">
-                  {completedWorkouts.slice(0, 5).map(w => (
+                  {completedWorkouts?.slice(0, 5)?.map(w => (
                     <li key={w.id} className="text-green-600">
-                      {w.id.substring(0, 8)}... - {w.name} - completed:{" "}
+                      {w.id?.substring(0, 8)}... - {w.name} - completed:{" "}
                       <span className="font-bold">{String(w.completed)}</span>
                     </li>
-                  ))}
+                  )) || <li>No completed workouts</li>}
                 </ul>
               </div>
               
               <p className="font-bold mt-3">All Workouts (raw):</p>
               <ul className="list-disc pl-5">
-                {workouts.slice(0, 10).map(w => (
+                {workouts?.slice(0, 10)?.map(w => (
                   <li key={w.id}>
-                    {w.id.substring(0, 8)}... - {w.name} - 
+                    {w.id?.substring(0, 8)}... - {w.name} - 
                     completed: <span className={w.completed === true ? "text-green-600 font-bold" : "text-red-600"}>
                       {String(w.completed)} ({typeof w.completed})
                     </span>
                   </li>
-                ))}
+                )) || <li>No workouts</li>}
               </ul>
             </CardContent>
           </Card>
