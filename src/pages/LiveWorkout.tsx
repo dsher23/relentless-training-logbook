@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -145,9 +144,44 @@ const LiveWorkout = () => {
     setRestTime(0);
   }, [setRestTime]);
 
+  const finishWorkout = useCallback((): Workout | undefined => {
+    if (!workout) return undefined;
+    
+    const updatedExercises = workout.exercises.map(exercise => {
+      const data = exerciseData[exercise.id];
+      if (!data) return exercise;
+      
+      return {
+        ...exercise,
+        sets: data.sets.map(set => ({ ...set })), // Create deep copy
+        notes: data.notes || "",  // Ensure notes is always a string
+        lastProgressDate: new Date()
+      };
+    });
+    
+    const updatedWorkout: Workout = {
+      ...workout,
+      exercises: updatedExercises,
+      completed: true,
+      date: new Date(), // Ensure date is updated to completion time
+    };
+    
+    // Save the completed workout and return it
+    const savedWorkout = updateWorkout(updatedWorkout);
+    
+    toast({
+      title: "Workout Completed",
+      description: "Your workout has been logged successfully!",
+    });
+    
+    navigate("/workout-history");
+    
+    return savedWorkout;
+  }, [workout, exerciseData, updateWorkout, toast, navigate]);
+
   useEffect(() => {
     if (id) {
-      let foundWorkout: Workout | null = null;
+      let foundWorkout: Workout | undefined = undefined;
       
       if (isTemplate) {
         const template = workoutTemplates.find(t => t.id === id);
@@ -170,7 +204,7 @@ const LiveWorkout = () => {
           }
         }
       } else {
-        foundWorkout = workouts.find(w => w.id === id) || null;
+        foundWorkout = workouts.find(w => w.id === id);
       }
       
       if (foundWorkout) {
@@ -229,43 +263,6 @@ const LiveWorkout = () => {
       setCurrentExerciseIndex(prev => prev - 1);
     }
   };
-
-  const finishWorkout = () => {
-    if (!workout) return;
-    
-    const updatedExercises = workout.exercises.map(exercise => {
-      const data = exerciseData[exercise.id];
-      if (!data) return exercise;
-      
-      return {
-        ...exercise,
-        sets: data.sets.map(set => ({ ...set })), // Create deep copy
-        notes: data.notes || "",  // Ensure notes is always a string
-        lastProgressDate: new Date()
-      };
-    });
-    
-    const updatedWorkout: Workout = {
-      ...workout,
-      exercises: updatedExercises,
-      completed: true,
-      date: new Date(), // Ensure date is updated to completion time
-    };
-    
-    // Save the completed workout
-    updateWorkout(updatedWorkout);
-    
-    toast({
-      title: "Workout Completed",
-      description: "Your workout has been logged successfully!",
-    });
-    
-    navigate("/workout-history");
-  };
-
-  if (!workout) {
-    return <div className="p-4 text-center">Loading workout...</div>;
-  }
 
   const safeCurrentExerciseIndex = Math.min(
     currentExerciseIndex,
