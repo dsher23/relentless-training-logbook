@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
-import { useAppContext, Workout, WorkoutTemplate } from '@/context/AppContext';
+import { useAppContext } from '@/context/AppContext';
+import { Workout, WorkoutTemplate } from '@/types';
 
 // Helper function to convert a template to a workout
 export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => {
@@ -25,64 +26,57 @@ export const useWorkoutLoader = (id: string | undefined) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const maxRetries = 5;
-    const retryDelay = 300;
-
-    if (!id) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (!workout?.id && id && retryCount < maxRetries) {
-      const timer = setTimeout(() => {
-        console.log("Trying to load workout with ID:", id);
-        
-        // Try to find as regular workout first
-        const foundWorkout = getWorkoutById(id);
-        
-        if (foundWorkout?.id) {
-          console.log("Workout found:", foundWorkout);
-          setWorkout(foundWorkout);
-          setIsLoading(false);
-        } else {
-          // If not found, try to find as template
-          const foundTemplate = workoutTemplates.find(t => t.id === id);
-          
-          if (foundTemplate?.id) {
-            console.log("Workout template found:", foundTemplate);
-            setWorkout(foundTemplate);
-            setIsTemplate(true);
-            setIsLoading(false);
-          } else {
-            // If still not found, try direct lookup from workouts array
-            const directWorkout = workouts.find(w => w.id === id);
-            
-            if (directWorkout) {
-              console.log("Workout found directly:", directWorkout);
-              setWorkout(directWorkout);
-              setIsLoading(false);
-            } else {
-              console.log("Retrying workout load, attempt:", retryCount + 1);
-              setRetryCount(prev => prev + 1);
-              if (retryCount === maxRetries - 1) {
-                console.error(`Could not find workout with ID: ${id}`);
-                setError(`Could not find workout with ID: ${id}`);
-                setIsLoading(false);
-              }
-            }
-          }
-        }
-      }, retryDelay);
+    const loadWorkout = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
       
-      return () => clearTimeout(timer);
-    }
-  }, [id, workout, getWorkoutById, workoutTemplates, workouts, retryCount]);
+      console.log("Attempting to load workout with ID:", id);
+      
+      // Try to find as regular workout first
+      let foundWorkout = getWorkoutById(id);
+      
+      if (foundWorkout?.id) {
+        console.log("Workout found using getWorkoutById:", foundWorkout);
+        setWorkout(foundWorkout);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If not found with getWorkoutById, try direct lookup from workouts array
+      foundWorkout = workouts.find(w => w.id === id);
+      if (foundWorkout) {
+        console.log("Workout found with direct array lookup:", foundWorkout);
+        setWorkout(foundWorkout);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If still not found, try to find as template
+      const foundTemplate = workoutTemplates.find(t => t.id === id);
+      if (foundTemplate) {
+        console.log("Workout template found:", foundTemplate);
+        setWorkout(foundTemplate);
+        setIsTemplate(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If we get here, the workout wasn't found
+      console.error(`Could not find workout with ID: ${id}`);
+      setError(`Could not find workout with ID: ${id}`);
+      setIsLoading(false);
+    };
+    
+    setIsLoading(true);
+    loadWorkout();
+  }, [id, getWorkoutById, workoutTemplates, workouts]);
 
   return {
     workout,
     setWorkout,
     isLoading,
-    retryCount,
     isTemplate,
     error,
     convertTemplateToWorkout

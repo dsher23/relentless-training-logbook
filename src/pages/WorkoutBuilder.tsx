@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, ArrowLeft } from "lucide-react";
 import { DndContext } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -113,7 +113,7 @@ const WorkoutBuilder: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout } = useAppContext();
+  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout, getWorkoutById } = useAppContext();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
   const [showExerciseForm, setShowExerciseForm] = useState(false);
@@ -125,57 +125,35 @@ const WorkoutBuilder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegularWorkout, setIsRegularWorkout] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const dataLoaded = useRef(false);
-
+  
   const { workout: loadedWorkout, isTemplate } = useWorkoutLoader(id);
-
+  
   useEffect(() => {
     if (!id) {
       setIsLoading(false);
       return;
     }
-
-    if (dataLoaded.current) {
-      return;
-    }
-
+    
     if (loadedWorkout && loadedWorkout.id) {
+      console.log("WorkoutBuilder: Workout loaded successfully", loadedWorkout);
       setWorkoutName(loadedWorkout.name);
       setExercises(loadedWorkout.exercises);
       setIsRegularWorkout(!isTemplate);
       setIsLoading(false);
-      dataLoaded.current = true;
       return;
     }
-
-    if (!loadedWorkout && !isLoading) {
-      const regularWorkout = workouts.find(w => w.id === id);
-      if (regularWorkout) {
-        setWorkoutName(regularWorkout.name);
-        setExercises(regularWorkout.exercises);
-        setIsRegularWorkout(true);
-        setIsLoading(false);
-        dataLoaded.current = true;
-        return;
-      }
-
-      const workoutTemplate = workoutTemplates.find(template => template.id === id);
-      if (workoutTemplate) {
-        setWorkoutName(workoutTemplate.name);
-        setExercises(workoutTemplate.exercises);
-        setIsLoading(false);
-        dataLoaded.current = true;
-      } else {
-        setLoadError("The workout you're trying to edit could not be found.");
-        toast({
-          title: "Workout not found",
-          description: "The workout you're trying to edit does not exist.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-      }
+    
+    if (!isLoading && !loadedWorkout) {
+      console.error("WorkoutBuilder: Failed to load workout", id);
+      setLoadError("The workout you're trying to edit could not be found.");
+      toast({
+        title: "Workout not found",
+        description: "The workout you're trying to edit does not exist.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
     }
-  }, [id, workoutTemplates, workouts, loadedWorkout, isTemplate, isLoading, toast]);
+  }, [id, loadedWorkout, isTemplate, isLoading, toast]);
 
   const { startAfterCreation } = location.state || {};
 
@@ -323,11 +301,16 @@ const WorkoutBuilder: React.FC = () => {
       const workoutId = id || uuidv4();
 
       if (isRegularWorkout) {
+        const originalWorkout = id ? getWorkoutById(id) : null;
+        
         const updatedWorkout: Workout = {
-          ...workouts.find(w => w.id === id)!,
+          ...(originalWorkout || {}),
           id: workoutId,
           name: workoutName,
-          exercises: exercises
+          exercises: exercises,
+          date: originalWorkout?.date || new Date(),
+          completed: originalWorkout?.completed || false,
+          notes: originalWorkout?.notes || "",
         };
         
         updateWorkout(updatedWorkout);
@@ -339,11 +322,14 @@ const WorkoutBuilder: React.FC = () => {
         
         navigate(`/workouts/${workoutId}`);
       } else {
+        const originalTemplate = id ? workoutTemplates.find(t => t.id === id) : null;
+        
         const newWorkoutTemplate: WorkoutTemplate = {
+          ...(originalTemplate || {}),
           id: workoutId,
           name: workoutName,
           exercises: exercises,
-          isFavorite: false,
+          isFavorite: originalTemplate?.isFavorite || false,
         };
 
         if (id) {
@@ -376,7 +362,15 @@ const WorkoutBuilder: React.FC = () => {
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Loading Workout..." />
+        <Header title="Loading Workout...">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Header>
         <div className="p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-32 w-full" />
@@ -390,7 +384,15 @@ const WorkoutBuilder: React.FC = () => {
   if (loadError) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Error" />
+        <Header title="Error">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Header>
         <div className="p-4 text-center">
           <p className="mb-4 text-destructive">{loadError}</p>
           <Button onClick={() => navigate("/workouts")}>
@@ -404,7 +406,15 @@ const WorkoutBuilder: React.FC = () => {
   return (
     <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
       <div className="app-container animate-fade-in">
-        <Header title={id ? "Edit Workout" : "Create Workout"} />
+        <Header title={id ? "Edit Workout" : "Create Workout"}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Header>
 
         <div className="p-4">
           <Input

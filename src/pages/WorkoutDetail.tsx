@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +12,14 @@ import { Exercise, Workout } from "@/types";
 import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 import WorkoutDetailsCard from "@/components/WorkoutDetailsCard";
 import ExerciseDetailCard from "@/components/ExerciseDetailCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +28,7 @@ const WorkoutDetail: React.FC = () => {
   const { updateWorkout, deleteWorkout } = useAppContext();
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const { workout: rawWorkout, setWorkout, isLoading, isTemplate, error } = useWorkoutLoader(id);
   
@@ -116,14 +126,16 @@ const WorkoutDetail: React.FC = () => {
   };
 
   const handleDeleteWorkout = () => {
-    if (confirm("Are you sure you want to delete this workout?")) {
-      deleteWorkout(id);
-      toast({
-        title: "Workout deleted",
-        description: `${workout.name} has been deleted.`
-      });
-      navigate("/workouts");
-    }
+    deleteWorkout(id || "");
+    toast({
+      title: "Workout deleted",
+      description: `${workout.name} has been deleted.`
+    });
+    navigate("/workouts");
+  };
+
+  const handleEditWorkout = () => {
+    navigate(`/workouts/builder/${workout.id}`);
   };
   
   const editingExercise = editingExerciseId 
@@ -143,22 +155,41 @@ const WorkoutDetail: React.FC = () => {
       </Header>
       
       <div className="p-4 space-y-6">
+        <div className="flex justify-end space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleEditWorkout}
+          >
+            <Edit className="h-4 w-4 mr-1" /> Edit Workout
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-1" /> Delete
+          </Button>
+        </div>
+        
         <WorkoutDetailsCard workout={workout} />
         
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Exercises</h2>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => {
-                setEditingExerciseId(null);
-                setShowExerciseForm(true);
-              }}
-              aria-label="Add exercise"
-            >
-              <Plus className="h-4 w-4 mr-1" /> Add Exercise
-            </Button>
+            {workout.completed === false && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  setEditingExerciseId(null);
+                  setShowExerciseForm(true);
+                }}
+                aria-label="Add exercise"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Add Exercise
+              </Button>
+            )}
           </div>
           
           {workout.exercises.length === 0 ? (
@@ -176,19 +207,6 @@ const WorkoutDetail: React.FC = () => {
             </div>
           )}
         </div>
-        
-        {workout.completed === false && (
-          <div className="pt-4">
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleDeleteWorkout}
-              className="w-full"
-            >
-              Delete Workout
-            </Button>
-          </div>
-        )}
         
         {workout.completed === false && (
           <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t">
@@ -211,6 +229,25 @@ const WorkoutDetail: React.FC = () => {
         onSave={handleSaveExercise}
         exercise={editingExercise || undefined}
       />
+      
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Workout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this workout? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteWorkout}>
+              Delete Workout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

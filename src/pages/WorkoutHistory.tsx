@@ -2,21 +2,43 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
 import WorkoutCard from '@/components/WorkoutCard';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const WorkoutHistory: React.FC = () => {
-  const { workouts } = useAppContext();
+  const { workouts, deleteWorkout } = useAppContext();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   
   // Get completed workouts and sort by date (newest first)
   const completedWorkouts = workouts
     .filter(workout => workout.completed === true) // Explicit equality check
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const handleDeleteWorkout = () => {
+    if (!workoutToDelete) return;
+    
+    deleteWorkout(workoutToDelete);
+    toast({
+      title: "Workout deleted",
+      description: "The workout has been removed from your history."
+    });
+    setWorkoutToDelete(null);
+  };
+
+  const confirmDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setWorkoutToDelete(id);
+  };
 
   return (
     <div className="app-container animate-fade-in">
@@ -25,7 +47,6 @@ const WorkoutHistory: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => navigate(-1)}
-          className="mr-2"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -43,15 +64,45 @@ const WorkoutHistory: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {completedWorkouts.map(workout => (
-              <WorkoutCard 
-                key={workout.id}
-                workout={workout}
-                onClick={() => navigate(`/workouts/${workout.id}`)}
-              />
+              <div key={workout.id} className="relative">
+                <WorkoutCard 
+                  workout={workout}
+                  onClick={() => navigate(`/workouts/${workout.id}`)}
+                />
+                <div className="absolute top-3 right-3">
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => confirmDelete(workout.id, e)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
+      
+      <Dialog open={!!workoutToDelete} onOpenChange={(open) => !open && setWorkoutToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Workout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this workout? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWorkoutToDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteWorkout}>
+              Delete Workout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
