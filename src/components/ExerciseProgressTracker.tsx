@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -161,22 +162,22 @@ const ExerciseProgressTracker: React.FC = () => {
     return exerciseData.map(data => ({
       date: data.dateFormatted,
       [displayMode === "topSet" ? "Top Set" : displayMode === "volume" ? "Volume" : "Reps"]: 
-        displayMode === "topSet" ? getNumber(data.weight) :
-        displayMode === "volume" ? getNumber(data.volume) : 
-        getNumber(data.reps),
+        displayMode === "topSet" ? Number(data.weight) :
+        displayMode === "volume" ? Number(data.volume) : 
+        Number(data.reps),
       fullData: data,
-      estimatedOneRM: Math.round(calculateOneRepMax(getNumber(data.weight), getNumber(data.reps)) * 10) / 10
+      estimatedOneRM: Math.round(calculateOneRepMax(Number(data.weight), Number(data.reps)) * 10) / 10
     }));
   }, [exerciseData, displayMode]);
 
   const personalRecords = useMemo(() => {
     if (!exerciseData.length) return null;
     
-    const maxWeight = Math.max(...exerciseData.map(data => getNumber(data.weight)));
-    const maxVolume = Math.max(...exerciseData.map(data => getNumber(data.volume)));
-    const maxReps = Math.max(...exerciseData.map(data => getNumber(data.reps)));
+    const maxWeight = Math.max(...exerciseData.map(data => Number(data.weight)));
+    const maxVolume = Math.max(...exerciseData.map(data => Number(data.volume)));
+    const maxReps = Math.max(...exerciseData.map(data => Number(data.reps)));
     const maxOneRM = Math.max(...exerciseData.map(data => 
-      calculateOneRepMax(getNumber(data.weight), getNumber(data.reps))
+      calculateOneRepMax(Number(data.weight), Number(data.reps))
     ));
     
     return { maxWeight, maxVolume, maxReps, maxOneRM };
@@ -188,14 +189,14 @@ const ExerciseProgressTracker: React.FC = () => {
     const first = exerciseData[0];
     const last = exerciseData[exerciseData.length - 1];
     
-    const weightChange = getNumber(last.weight) - getNumber(first.weight);
-    const weightPercentage = getNumber(first.weight) > 0 ? (weightChange / getNumber(first.weight)) * 100 : 0;
+    const weightChange = Number(last.weight) - Number(first.weight);
+    const weightPercentage = Number(first.weight) > 0 ? (weightChange / Number(first.weight)) * 100 : 0;
     
-    const volumeChange = getNumber(last.volume) - getNumber(first.volume);
-    const volumePercentage = getNumber(first.volume) > 0 ? (volumeChange / getNumber(first.volume)) * 100 : 0;
+    const volumeChange = Number(last.volume) - Number(first.volume);
+    const volumePercentage = Number(first.volume) > 0 ? (volumeChange / Number(first.volume)) * 100 : 0;
     
-    const firstOneRM = calculateOneRepMax(getNumber(first.weight), getNumber(first.reps));
-    const lastOneRM = calculateOneRepMax(getNumber(last.weight), getNumber(last.reps));
+    const firstOneRM = calculateOneRepMax(Number(first.weight), Number(first.reps));
+    const lastOneRM = calculateOneRepMax(Number(last.weight), Number(last.reps));
     const oneRMChange = lastOneRM - firstOneRM;
     const oneRMPercentage = firstOneRM > 0 ? (oneRMChange / firstOneRM) * 100 : 0;
     
