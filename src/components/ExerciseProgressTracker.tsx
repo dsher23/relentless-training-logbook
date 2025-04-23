@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -32,6 +31,7 @@ import { Search, Star, StarOff, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Exercise } from "@/types";
+import { getNumber, calculateOneRepMax } from "@/utils/numberUtils";
 
 interface ExerciseSetData {
   date: Date;
@@ -124,9 +124,8 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          // Fix: Explicitly convert weight and reps to numbers with fallback to 0
-          const weight = Number(set?.weight || 0);
-          const reps = Number(set?.reps || 0);
+          const weight = getNumber(set?.weight);
+          const reps = getNumber(set?.reps);
           
           if (weight && reps) {
             const setVolume = weight * reps;
@@ -160,39 +159,26 @@ const ExerciseProgressTracker: React.FC = () => {
     return data.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [completedWorkouts, selectedExercise]);
 
-  const calculateOneRepMax = (weight: number, reps: number): number => {
-    // Fix: Ensure both parameters are treated as numbers
-    const numWeight = Number(weight);
-    const numReps = Number(reps);
-    
-    if (numReps === 1) return numWeight;
-    return numWeight * (1 + numReps / 30);
-  };
-
   const chartData = useMemo(() => {
-    return exerciseData.map(data => {
-      const oneRM = calculateOneRepMax(data.weight, data.reps);
-      
-      return {
-        date: data.dateFormatted,
-        [displayMode === "topSet" ? "Top Set" : displayMode === "volume" ? "Volume" : "Reps"]: 
-          displayMode === "topSet" ? data.weight :
-          displayMode === "volume" ? data.volume : 
-          data.reps,
-        fullData: data,
-        estimatedOneRM: Math.round(oneRM * 10) / 10
-      };
-    });
+    return exerciseData.map(data => ({
+      date: data.dateFormatted,
+      [displayMode === "topSet" ? "Top Set" : displayMode === "volume" ? "Volume" : "Reps"]: 
+        displayMode === "topSet" ? getNumber(data.weight) :
+        displayMode === "volume" ? getNumber(data.volume) : 
+        getNumber(data.reps),
+      fullData: data,
+      estimatedOneRM: Math.round(calculateOneRepMax(getNumber(data.weight), getNumber(data.reps)) * 10) / 10
+    }));
   }, [exerciseData, displayMode]);
 
   const personalRecords = useMemo(() => {
     if (!exerciseData.length) return null;
     
-    const maxWeight = Math.max(...exerciseData.map(data => data.weight));
-    const maxVolume = Math.max(...exerciseData.map(data => data.volume));
-    const maxReps = Math.max(...exerciseData.map(data => data.reps));
+    const maxWeight = Math.max(...exerciseData.map(data => getNumber(data.weight)));
+    const maxVolume = Math.max(...exerciseData.map(data => getNumber(data.volume)));
+    const maxReps = Math.max(...exerciseData.map(data => getNumber(data.reps)));
     const maxOneRM = Math.max(...exerciseData.map(data => 
-      calculateOneRepMax(data.weight, data.reps)
+      calculateOneRepMax(getNumber(data.weight), getNumber(data.reps))
     ));
     
     return { maxWeight, maxVolume, maxReps, maxOneRM };
