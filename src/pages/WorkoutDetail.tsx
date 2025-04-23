@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
@@ -28,6 +29,7 @@ const WorkoutDetail: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isErrorShown, setIsErrorShown] = useState(false);
   
   const { workout: rawWorkout, setWorkout, isLoading, isTemplate, error } = useWorkoutLoader(id);
   
@@ -38,14 +40,15 @@ const WorkoutDetail: React.FC = () => {
     : rawWorkout as Workout;
   
   useEffect(() => {
-    if (!isLoading && !rawWorkout?.id && id) {
+    if (!isLoading && !rawWorkout?.id && id && !isErrorShown) {
+      setIsErrorShown(true);
       toast({
         title: "Workout Not Found",
-        description: "The workout couldn't be loaded or doesn't exist.",
+        description: "Could not load this workout. Please try again.",
         variant: "destructive"
       });
     }
-  }, [isLoading, rawWorkout, id, toast]);
+  }, [isLoading, rawWorkout, id, toast, isErrorShown]);
 
   const handleEditExercise = (exerciseId: string) => {
     const exercise = workout?.exercises.find(ex => ex.id === exerciseId);
@@ -89,7 +92,7 @@ const WorkoutDetail: React.FC = () => {
           </Button>
         </Header>
         <div className="p-4 text-center">
-          <p className="mb-4">Unable to load workout details. {error}</p>
+          <p className="mb-4">Could not load this workout. Please try again.</p>
           <Button onClick={() => navigate("/workouts")}>
             Return to Workouts
           </Button>
@@ -144,9 +147,15 @@ const WorkoutDetail: React.FC = () => {
 
   const handleEditWorkout = () => {
     if (isTemplate) {
-      const planId = activePlan?.id || '';
-      navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+      // For template workouts, use the plan ID if available, otherwise use a direct path
+      const planId = activePlan?.id;
+      if (planId) {
+        navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+      } else {
+        navigate(`/exercise-plans/days/${workout.id}`);
+      }
     } else {
+      // For regular workouts, use the workout builder path
       navigate(`/workouts/builder/${workout.id}`);
     }
   };

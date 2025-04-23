@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Exercise } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DayExercises: React.FC = () => {
   const { planId, dayId } = useParams<{ planId: string, dayId: string }>();
@@ -19,6 +20,8 @@ const DayExercises: React.FC = () => {
   
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Find active plan if planId is not provided
   const activePlan = planId 
@@ -31,13 +34,39 @@ const DayExercises: React.FC = () => {
   const day = plan?.workoutTemplates.find(t => t.id === dayId) || 
               workoutTemplates.find(t => t.id === dayId);
   
-  if (!day) {
+  useEffect(() => {
+    // Simulate data loading to ensure client-side data is ready
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      
+      if (!day) {
+        setError("Could not load this workout. Please try again.");
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [day]);
+  
+  if (isLoading) {
+    return (
+      <div className="app-container animate-fade-in">
+        <Header title="Loading Workout..." />
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
+  
+  if (error || !day) {
     // Handle the case where day is not found
     return (
       <div className="app-container animate-fade-in">
         <Header title="Workout Not Found" />
         <div className="p-4 text-center">
-          <p className="mb-4">The workout day could not be found.</p>
+          <p className="mb-4">{error || "The workout day could not be found."}</p>
           <Button 
             variant="outline" 
             onClick={() => navigate(-1)}

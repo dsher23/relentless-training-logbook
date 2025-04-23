@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
@@ -22,9 +23,15 @@ const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
     e.stopPropagation();
     
     if (workout.isTemplate) {
-      const planId = activePlan?.id || '';
-      navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+      // For template workouts, use the plan ID if available, otherwise use a direct path
+      const planId = activePlan?.id;
+      if (planId) {
+        navigate(`/exercise-plans/${planId}/days/${workout.id}`);
+      } else {
+        navigate(`/exercise-plans/days/${workout.id}`);
+      }
     } else {
+      // For regular workouts, use the workout builder path
       navigate(`/workouts/builder/${workout.id}`);
     }
   };
