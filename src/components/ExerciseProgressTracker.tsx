@@ -1,35 +1,15 @@
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  ReferenceLine
-} from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Star, StarOff, BarChart } from "lucide-react";
+import { Star, Search, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateOneRepMax } from "@/utils/numberUtils";
+import { ExerciseSelect } from "./exercise-tracker/ExerciseSelect";
+import { ExerciseStats } from "./exercise-tracker/ExerciseStats";
+import { ExerciseHistory } from "./exercise-tracker/ExerciseHistory";
+import { ProgressChart } from "./exercise-tracker/ProgressChart";
 
 interface ExerciseSetData {
   date: Date;
@@ -283,68 +263,20 @@ const ExerciseProgressTracker: React.FC = () => {
       
       <CardContent className="pt-2 pb-6">
         <div className="mb-4">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between"
-              >
-                {selectedExercise
-                  ? selectedExercise
-                  : "Select an exercise..."}
-                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
-              <Command>
-                <CommandInput 
-                  placeholder="Search exercises..." 
-                  className="h-9"
-                  value={searchTerm}
-                  onValueChange={setSearchTerm}
-                />
-                <CommandEmpty>No exercise found.</CommandEmpty>
-                <CommandGroup className="max-h-64 overflow-auto">
-                  {filteredExerciseNames.map((exercise) => (
-                    <CommandItem
-                      key={exercise}
-                      value={exercise}
-                      onSelect={() => {
-                        setSelectedExercise(exercise);
-                        setOpen(false);
-                      }}
-                      className="flex justify-between items-center"
-                    >
-                      <span>{exercise}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(exercise);
-                        }}
-                      >
-                        {isExerciseFavorite(exercise) ? (
-                          <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                        ) : (
-                          <StarOff className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="sr-only">
-                          {isExerciseFavorite(exercise) ? "Remove from favorites" : "Add to favorites"}
-                        </span>
-                      </Button>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <ExerciseSelect
+            selectedExercise={selectedExercise}
+            exerciseNames={filteredExerciseNames}
+            favorites={favorites}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onSelectExercise={setSelectedExercise}
+            onToggleFavorite={toggleFavorite}
+            open={open}
+            setOpen={setOpen}
+          />
         </div>
         
-        {selectedExercise && (
+        {selectedExercise ? (
           <>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-medium">{selectedExercise}</h3>
@@ -361,215 +293,36 @@ const ExerciseProgressTracker: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <StarOff className="h-4 w-4 mr-1" />
+                    <Star className="h-4 w-4 mr-1" />
                     <span className="text-xs">Add to favorites</span>
                   </>
                 )}
               </Button>
             </div>
             
-            {progressMetrics && (
-              <div className="mb-4 p-3 rounded-md bg-muted/50">
-                <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                  <div>
-                    <p className="text-muted-foreground text-xs">Weight</p>
-                    <Badge 
-                      variant={progressMetrics.weightChange > 0 ? "default" : "destructive"} 
-                      className={`mt-1 text-xs ${progressMetrics.weightChange > 0 ? 'bg-green-500 hover:bg-green-600' : ''}`}
-                    >
-                      {progressMetrics.weightChange > 0 ? "+" : ""}
-                      {progressMetrics.weightChange} kg ({progressMetrics.weightPercentage.toFixed(1)}%)
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Est. 1RM</p>
-                    <Badge 
-                      variant={progressMetrics.oneRMChange > 0 ? "default" : "destructive"}
-                      className={`mt-1 text-xs ${progressMetrics.oneRMChange > 0 ? 'bg-green-500 hover:bg-green-600' : ''}`}
-                    >
-                      {progressMetrics.oneRMChange > 0 ? "+" : ""}
-                      {progressMetrics.oneRMChange.toFixed(1)} kg ({progressMetrics.oneRMPercentage.toFixed(1)}%)
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs">Timespan</p>
-                    <p className="text-xs font-medium mt-1">{progressMetrics.timespan}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {personalRecords && (
-              <div className="mb-4 flex justify-between text-xs">
-                <div className="text-center">
-                  <p className="text-muted-foreground">Max Weight</p>
-                  <p className="font-medium">{personalRecords.maxWeight} kg</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-muted-foreground">Est. 1RM</p>
-                  <p className="font-medium">{personalRecords.maxOneRM.toFixed(1)} kg</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-muted-foreground">Max Volume</p>
-                  <p className="font-medium">{personalRecords.maxVolume} kg</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-muted-foreground">Max Reps</p>
-                  <p className="font-medium">{personalRecords.maxReps}</p>
-                </div>
-              </div>
-            )}
+            <ExerciseStats
+              progressMetrics={progressMetrics}
+              personalRecords={personalRecords}
+            />
             
             <div className="h-64">
-              {chartData.length > 0 ? (
-                <ChartContainer
-                  className="mb-4"
-                  config={{
-                    progress: { label: "Progress" },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis 
-                        tick={{ fontSize: 10 }}
-                        tickLine={false}
-                        axisLine={false}
-                        domain={getYAxisDomain()}
-                        allowDecimals={displayMode !== "reps"}
-                        label={{ 
-                          value: getYAxisLabel(), 
-                          angle: -90, 
-                          position: 'insideLeft', 
-                          style: { fontSize: 10, textAnchor: 'middle' } 
-                        }}
-                      />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            const fullData = data.fullData as ExerciseSetData;
-                            
-                            return (
-                              <div className="rounded-lg border bg-background p-2 shadow-md">
-                                <div className="grid gap-1">
-                                  <div className="font-medium">{data.date}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {displayMode === "topSet" && <span>Weight: <span className="font-medium">{fullData.weight} kg</span> × {fullData.reps} reps</span>}
-                                    {displayMode === "volume" && <span>Volume: <span className="font-medium">{fullData.volume} kg</span> ({fullData.sets} sets)</span>}
-                                    {displayMode === "reps" && <span>Reps: <span className="font-medium">{fullData.reps}</span> at {fullData.weight} kg</span>}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Est. 1RM: <span className="font-medium">{data.estimatedOneRM} kg</span>
-                                  </div>
-                                  {fullData.notes && (
-                                    <div className="text-xs italic mt-1 text-muted-foreground">
-                                      "{fullData.notes}"
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey={
-                          displayMode === "topSet" 
-                            ? "Top Set" 
-                            : displayMode === "volume" 
-                              ? "Volume" 
-                              : "Reps"
-                        }
-                        stroke="#8884d8"
-                        strokeWidth={2}
-                        dot={{ r: 4, strokeWidth: 2 }}
-                        activeDot={{ r: 6, strokeWidth: 2 }}
-                      />
-                      {personalRecords && displayMode === "topSet" && (
-                        <ReferenceLine 
-                          y={personalRecords.maxWeight} 
-                          stroke="green" 
-                          strokeDasharray="3 3" 
-                          label={{ 
-                            value: 'PR', 
-                            position: 'insideTopRight',
-                            fill: 'green',
-                            fontSize: 10
-                          }} 
-                        />
-                      )}
-                      {personalRecords && displayMode === "volume" && (
-                        <ReferenceLine 
-                          y={personalRecords.maxVolume} 
-                          stroke="green" 
-                          strokeDasharray="3 3" 
-                          label={{ 
-                            value: 'PR', 
-                            position: 'insideTopRight',
-                            fill: 'green',
-                            fontSize: 10
-                          }} 
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full border rounded-md border-dashed">
-                  <p className="text-muted-foreground text-sm">
-                    No data available for this exercise
-                  </p>
-                </div>
-              )}
+              <ProgressChart
+                data={chartData}
+                displayMode={displayMode}
+                maxValue={personalRecords?.[
+                  displayMode === "topSet" 
+                    ? "maxWeight" 
+                    : displayMode === "volume" 
+                      ? "maxVolume" 
+                      : "maxReps"
+                ]}
+                yAxisLabel={getYAxisLabel()}
+              />
             </div>
             
-            {chartData.length > 0 && (
-              <div className="mt-4 text-sm">
-                <h4 className="font-medium mb-2 text-sm">Recent History</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="border-b">
-                      <tr>
-                        <th className="py-2 text-left font-medium">Date</th>
-                        <th className="py-2 text-right font-medium">Weight</th>
-                        <th className="py-2 text-right font-medium">Reps</th>
-                        <th className="py-2 text-right font-medium">Volume</th>
-                        <th className="py-2 text-right font-medium">Est. 1RM</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {exerciseData.slice(-3).reverse().map((entry, idx) => (
-                        <tr key={idx} className="border-b border-gray-100">
-                          <td className="py-2 text-left">{entry.dateFormatted}</td>
-                          <td className="py-2 text-right">{entry.weight} kg</td>
-                          <td className="py-2 text-right">{entry.reps}</td>
-                          <td className="py-2 text-right">{entry.volume} kg</td>
-                          <td className="py-2 text-right">
-                            {calculateOneRepMax(Number(entry.weight), Number(entry.reps)).toFixed(1)} kg
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+            <ExerciseHistory exerciseData={exerciseData.slice(-3)} />
           </>
-        )}
-        
-        {!selectedExercise && (
+        ) : (
           <div className="h-64 flex flex-col items-center justify-center text-muted-foreground">
             <Search className="h-8 w-8 mb-2 opacity-50" />
             <p>Select an exercise to view progress</p>
