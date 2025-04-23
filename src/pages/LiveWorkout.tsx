@@ -154,12 +154,17 @@ const LiveWorkout = () => {
           foundWorkout = {
             id: crypto.randomUUID(),
             name: template.name,
-            exercises: [...template.exercises],
+            exercises: [...template.exercises.map(ex => ({
+              ...ex,
+              sets: ex.sets.map(set => ({ ...set })) // Deep copy to avoid reference issues
+            }))],
             date: new Date(),
-            completed: false
+            completed: false,
+            notes: ''
           } as Workout;
           
-          addWorkout(foundWorkout);
+          const savedWorkout = addWorkout(foundWorkout);
+          foundWorkout = savedWorkout;
         }
       } else {
         foundWorkout = workouts.find(w => w.id === id) || null;
@@ -184,8 +189,10 @@ const LiveWorkout = () => {
           const previousExercise = previousWorkout?.exercises.find(e => e.name === exercise.name);
           
           initialData[exercise.id] = {
-            sets: exercise.sets.length > 0 ? [...exercise.sets] : Array(3).fill({ reps: 0, weight: 0 }),
-            notes: "",
+            sets: exercise.sets.length > 0 
+              ? exercise.sets.map(set => ({ ...set })) // Create deep copy to avoid reference issues
+              : Array(3).fill({ reps: 0, weight: 0 }),
+            notes: exercise.notes || "",
             previousStats: previousExercise?.sets
           };
         });
@@ -229,7 +236,7 @@ const LiveWorkout = () => {
       
       return {
         ...exercise,
-        sets: data.sets,
+        sets: data.sets.map(set => ({ ...set })), // Create deep copy
         notes: data.notes || "",  // Ensure notes is always a string
         lastProgressDate: new Date()
       };

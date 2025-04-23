@@ -11,7 +11,10 @@ export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => 
     date: new Date(),
     completed: false,
     notes: '', // Set a default empty string for notes since it's required in Workout
-    exercises: template.exercises,
+    exercises: template.exercises.map(exercise => ({
+      ...exercise,
+      sets: exercise.sets.map(set => ({ ...set })), // Deep copy sets to avoid reference issues
+    })),
     scheduledTime: template.scheduledTime
   };
 };
@@ -20,7 +23,6 @@ export const useWorkoutLoader = (id: string | undefined) => {
   const { getWorkoutById, workoutTemplates, workouts } = useAppContext();
   const [workout, setWorkout] = useState<Workout | WorkoutTemplate | undefined>();
   const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
   const [isTemplate, setIsTemplate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -37,7 +39,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
       // Try to find as regular workout first
       let foundWorkout = getWorkoutById(id);
       
-      if (foundWorkout?.id) {
+      if (foundWorkout && foundWorkout.id) {
         console.log("Workout found using getWorkoutById:", foundWorkout);
         setWorkout(foundWorkout);
         setIsLoading(false);
@@ -70,6 +72,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
     };
     
     setIsLoading(true);
+    setError(null); // Reset error state when loading a new workout
     loadWorkout();
   }, [id, getWorkoutById, workoutTemplates, workouts]);
 

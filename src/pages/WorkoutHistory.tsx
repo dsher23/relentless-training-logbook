@@ -68,17 +68,16 @@ const WorkoutHistory: React.FC = () => {
                 <WorkoutCard 
                   workout={workout}
                   onClick={() => navigate(`/workouts/${workout.id}`)}
+                  actionButton={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={(e) => confirmDelete(workout.id, e)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete
+                    </Button>
+                  }
                 />
-                <div className="absolute top-3 right-3">
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => confirmDelete(workout.id, e)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             ))}
           </div>

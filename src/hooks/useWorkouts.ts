@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Workout, Exercise } from '@/types';
@@ -11,7 +12,13 @@ export const useWorkouts = () => {
     try {
       const storedWorkouts = localStorage.getItem('workouts');
       if (storedWorkouts) {
-        setWorkouts(JSON.parse(storedWorkouts));
+        const parsedWorkouts = JSON.parse(storedWorkouts);
+        // Ensure all workouts have proper date objects
+        const validatedWorkouts = parsedWorkouts.map((w: Workout) => ({
+          ...w,
+          date: new Date(w.date) // Ensure dates are properly parsed
+        }));
+        setWorkouts(validatedWorkouts);
       }
     } catch (error) {
       console.error('Error loading workouts from localStorage:', error);
@@ -69,16 +76,19 @@ export const useWorkouts = () => {
       ...workout,
       id: workout.id || uuidv4(),
       date: workout.date || new Date(),
-      completed: workout.completed || false
+      completed: workout.completed || false,
+      notes: workout.notes || '' // Ensure notes exists
     };
     setWorkouts(prev => [...prev, newWorkout]);
+    return newWorkout; // Return the created workout for further use
   }, []);
 
   const updateWorkout = useCallback((workout: Workout) => {
     const updatedWorkout = {
       ...workout,
       date: workout.date || new Date(),
-      completed: typeof workout.completed === 'boolean' ? workout.completed : false
+      completed: typeof workout.completed === 'boolean' ? workout.completed : false,
+      notes: workout.notes || '' // Ensure notes exists
     };
     
     setWorkouts(prev => {
@@ -89,6 +99,8 @@ export const useWorkouts = () => {
         return [...prev, updatedWorkout];
       }
     });
+    
+    return updatedWorkout; // Return the updated workout for further use
   }, []);
 
   const deleteWorkout = useCallback((id: string) => {
@@ -102,10 +114,13 @@ export const useWorkouts = () => {
         ...workoutToDuplicate,
         id: uuidv4(),
         name: `${workoutToDuplicate.name} (Copy)`,
-        date: new Date()
+        date: new Date(),
+        completed: false // Reset completion status for duplicated workouts
       };
       setWorkouts(prev => [...prev, newWorkout]);
+      return newWorkout; // Return the duplicated workout
     }
+    return null;
   }, [workouts]);
 
   const toggleDeloadMode = useCallback((workoutId: string, isDeload: boolean) => {
@@ -114,8 +129,10 @@ export const useWorkouts = () => {
     ));
   }, []);
 
-  const getWorkoutById = useCallback((id: string): Workout => {
-    return workouts.find(w => w.id === id) || {} as Workout;
+  const getWorkoutById = useCallback((id: string): Workout | undefined => {
+    if (!id) return undefined;
+    const workout = workouts.find(w => w.id === id);
+    return workout;
   }, [workouts]);
 
   return {

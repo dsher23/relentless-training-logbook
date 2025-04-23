@@ -8,7 +8,7 @@ import { Workout } from "@/context/AppContext";
 interface WorkoutCardProps {
   workout: Workout;
   onClick?: () => void;
-  actionButton?: React.ReactNode; // Add this prop
+  actionButton?: React.ReactNode;
 }
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onClick, actionButton }) => {

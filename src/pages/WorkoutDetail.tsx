@@ -48,6 +48,14 @@ const WorkoutDetail: React.FC = () => {
       // Do not navigate away immediately, show the error in the UI instead
     }
   }, [isLoading, rawWorkout, id, toast]);
+
+  const handleEditExercise = (exerciseId: string) => {
+    const exercise = workout?.exercises.find(ex => ex.id === exerciseId);
+    if (exercise) {
+      setEditingExerciseId(exerciseId);
+      setShowExerciseForm(true);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -104,6 +112,7 @@ const WorkoutDetail: React.FC = () => {
       };
       
       updateWorkout(updatedWorkout);
+      setWorkout(updatedWorkout);
       setEditingExerciseId(null);
       toast({
         title: "Exercise updated",
@@ -116,6 +125,7 @@ const WorkoutDetail: React.FC = () => {
       };
       
       updateWorkout(updatedWorkout);
+      setWorkout(updatedWorkout);
       toast({
         title: "Exercise added",
         description: `${exercise.name} has been added to your workout.`
@@ -202,6 +212,7 @@ const WorkoutDetail: React.FC = () => {
                 <ExerciseDetailCard 
                   key={exercise.id}
                   exercise={exercise}
+                  onEdit={workout.completed ? undefined : () => handleEditExercise(exercise.id)}
                 />
               ))}
             </div>
