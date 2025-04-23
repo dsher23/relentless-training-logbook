@@ -1,41 +1,34 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
+import { Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useAppContext, Workout } from "@/context/AppContext";
 import { WorkoutHeader } from "@/components/workout/WorkoutHeader";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { ExerciseLog } from "@/components/workout/ExerciseLog";
+import { WorkoutControls } from "@/components/workout/WorkoutControls";
+import { DeleteSetDialog } from "@/components/workout/DeleteSetDialog";
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
-import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
+import { useLiveWorkout } from "@/hooks/useLiveWorkout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
 
 const LiveWorkout = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isTemplate = searchParams.get("isTemplate") === "true";
-  const { toast } = useToast();
-  const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
   const isMobile = useIsMobile();
+  const {
+    workout,
+    currentExerciseIndex,
+    setCurrentExerciseIndex,
+    hasAttemptedSave,
+    setHasAttemptedSave,
+    debugMode,
+    setDebugMode,
+    finishWorkout,
+    loadWorkout,
+  } = useLiveWorkout();
   
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [isResting, setIsResting] = useState(false);
   const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
   const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
-  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [debugMode, setDebugMode] = useState<boolean>(false);
   
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
@@ -47,271 +40,10 @@ const LiveWorkout = () => {
 
   const { workoutTime, restTime, initialRestTime, startRest, setRestTime } = useWorkoutTimer(isTimerRunning, isResting);
 
-  const handleSetUpdate = useCallback((exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets[setIndex] = { 
-        ...updatedSets[setIndex], 
-        [field]: value 
-      };
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
-    
-    if (workout) {
-      try {
-        const currentData = JSON.stringify({ 
-          workoutId: workout.id, 
-          exerciseData, 
-          currentExerciseIndex 
-        });
-        localStorage.setItem('workout_in_progress', currentData);
-      } catch (error) {
-        console.error("Failed to save workout progress", error);
-      }
-    }
-  }, [workout, exerciseData, currentExerciseIndex]);
-
-  const handleAddSet = useCallback((exerciseId: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const lastSet = exercise.sets[exercise.sets.length - 1];
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: [...exercise.sets, { 
-            reps: lastSet?.reps || 0, 
-            weight: lastSet?.weight || 0 
-          }]
-        }
-      };
-    });
-  }, []);
-
-  const handleRemoveSet = useCallback((exerciseId: string, setIndex: number) => {
-    setDeleteSetInfo({ exerciseId, setIndex });
-    setConfirmDeleteSetDialog(true);
-  }, []);
-  
-  const confirmDeleteSet = useCallback(() => {
-    if (!deleteSetInfo) return;
-    
-    const { exerciseId, setIndex } = deleteSetInfo;
-    
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets.splice(setIndex, 1);
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
-    
-    setConfirmDeleteSetDialog(false);
-    setDeleteSetInfo(null);
-    
-    toast({
-      title: "Set removed",
-      description: "The set has been removed from this exercise."
-    });
-  }, [deleteSetInfo, toast]);
-
-  const handleNoteChange = useCallback((exerciseId: string, note: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          notes: note
-        }
-      };
-    });
-  }, []);
-
-  const startRestPeriod = useCallback(() => {
-    setIsResting(true);
-    startRest();
-  }, [startRest]);
-
-  const finishRest = useCallback(() => {
-    setIsResting(false);
-    setRestTime(0);
-  }, [setRestTime]);
-
-  const finishWorkout = useCallback(() => {
-    if (!workout) {
-      toast({
-        title: "Error",
-        description: "Unable to save workout: missing workout data.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      setHasAttemptedSave(true);
-      
-      const updatedExercises = workout.exercises.map(exercise => {
-        const data = exerciseData[exercise.id];
-        if (!data) return exercise;
-        
-        return {
-          ...exercise,
-          sets: data.sets.map(set => ({ ...set })),
-          notes: data.notes || "",
-          lastProgressDate: new Date()
-        };
-      });
-
-      const completedWorkout = {
-        id: workout.id,
-        name: workout.name, 
-        exercises: updatedExercises,
-        completed: true,
-        date: new Date(),
-        notes: workout.notes || ""
-      };
-      
-      updateWorkout(completedWorkout);
-      
-      localStorage.removeItem('workout_in_progress');
-      
-      toast({
-        title: "Workout Completed!",
-        description: "Your workout has been saved successfully to history.",
-      });
-      
-      setTimeout(() => {
-        navigate("/workout-history");
-      }, 1500);
-    } catch (error) {
-      console.error("Error saving workout:", error);
-      toast({
-        title: "Save Error",
-        description: "There was a problem saving your workout. Please try again.",
-        variant: "destructive"
-      });
-    }
-  }, [workout, exerciseData, updateWorkout, toast, navigate]);
-
   useEffect(() => {
-    const loadWorkout = async () => {
-      if (!id) return;
-      
-      try {
-        const savedProgress = localStorage.getItem('workout_in_progress');
-        if (savedProgress) {
-          const progressData = JSON.parse(savedProgress);
-          if (progressData.workoutId === id) {
-            setExerciseData(progressData.exerciseData || {});
-            setCurrentExerciseIndex(progressData.currentExerciseIndex || 0);
-          }
-        }
-        
-        let foundWorkout: Workout | undefined;
-        
-        if (isTemplate) {
-          const template = workoutTemplates.find(t => t.id === id);
-          if (template) {
-            const convertedWorkout = convertTemplateToWorkout(template);
-            
-            if (convertedWorkout) {
-              addWorkout(convertedWorkout);
-              foundWorkout = convertedWorkout;
-              
-              if (!foundWorkout) {
-                throw new Error("Failed to create workout from template");
-              }
-            }
-          }
-        } else {
-          foundWorkout = workouts.find(w => w.id === id);
-        }
-        
-        if (foundWorkout) {
-          const safeWorkout = {
-            ...foundWorkout,
-            notes: foundWorkout.notes || "",
-            date: foundWorkout.date || new Date(),
-            completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false
-          };
-          
-          setWorkout(safeWorkout);
-          
-          if (!savedProgress || JSON.parse(savedProgress).workoutId !== id) {
-            const initialData: {
-              [key: string]: {
-                sets: { reps: number; weight: number }[];
-                notes: string;
-                previousStats?: { reps: number; weight: number }[];
-              }
-            } = {};
-            
-            safeWorkout.exercises.forEach(exercise => {
-              const previousWorkout = workouts
-                .filter(w => w.id !== safeWorkout.id && w.completed && w.exercises.some(e => e.name === exercise.name))
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-              
-              const previousExercise = previousWorkout?.exercises.find(e => e.name === exercise.name);
-              
-              initialData[exercise.id] = {
-                sets: exercise.sets.length > 0 
-                  ? exercise.sets.map(set => ({ ...set }))
-                  : Array(3).fill({ reps: 0, weight: 0 }),
-                notes: exercise.notes || "",
-                previousStats: previousExercise?.sets
-              };
-            });
-            
-            setExerciseData(initialData);
-          }
-        } else {
-          throw new Error("Workout not found");
-        }
-      } catch (error) {
-        console.error("Error loading workout:", error);
-        
-        toast({
-          title: "Workout Not Found",
-          description: "The requested workout could not be loaded. Returning to workouts.",
-          variant: "destructive",
-        });
-        
-        setTimeout(() => {
-          navigate("/workouts");
-        }, 500);
-      } finally {
-        setIsTimerRunning(true);
-      }
-    };
-    
     loadWorkout();
-    
-    setHasAttemptedSave(false);
-  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
+    setIsTimerRunning(true);
+  }, [loadWorkout]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -339,17 +71,11 @@ const LiveWorkout = () => {
     };
   }, [workout, exerciseData, currentExerciseIndex, hasAttemptedSave]);
 
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
-  };
-
-  const toggleDebugMode = () => {
-    setDebugMode(!debugMode);
-  };
+  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
+  const toggleDebugMode = () => setDebugMode(!debugMode);
 
   const nextExercise = () => {
     if (!workout) return;
-    
     if (currentExerciseIndex < workout.exercises.length - 1) {
       setCurrentExerciseIndex(prev => prev + 1);
     }
@@ -359,6 +85,77 @@ const LiveWorkout = () => {
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex(prev => prev - 1);
     }
+  };
+
+  const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets[setIndex] = { 
+        ...updatedSets[setIndex], 
+        [field]: value 
+      };
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+  };
+
+  const handleAddSet = (exerciseId: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const lastSet = exercise.sets[exercise.sets.length - 1];
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: [...exercise.sets, { 
+            reps: lastSet?.reps || 0, 
+            weight: lastSet?.weight || 0 
+          }]
+        }
+      };
+    });
+  };
+
+  const handleRemoveSet = (exerciseId: string, setIndex: number) => {
+    setDeleteSetInfo({ exerciseId, setIndex });
+    setConfirmDeleteSetDialog(true);
+  };
+
+  const confirmDeleteSet = () => {
+    if (!deleteSetInfo) return;
+    
+    const { exerciseId, setIndex } = deleteSetInfo;
+    
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets.splice(setIndex, 1);
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+    
+    setConfirmDeleteSetDialog(false);
+    setDeleteSetInfo(null);
   };
 
   if (!workout) {
@@ -446,7 +243,7 @@ const LiveWorkout = () => {
         <RestTimer 
           restTime={restTime}
           initialRestTime={initialRestTime}
-          onSkipRest={finishRest}
+          onSkipRest={() => setIsResting(false)}
         />
       ) : (
         <>
@@ -459,48 +256,25 @@ const LiveWorkout = () => {
               handleSetUpdate(currentExercise.id, setIndex, field, value)
             }
             onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
-            onUpdateNotes={(notes) => handleNoteChange(currentExercise.id, notes)}
-            onStartRest={startRestPeriod}
+            onStartRest={startRest}
           />
           
           <div className="flex justify-between p-4">
-            {safeCurrentExerciseIndex === workout.exercises.length - 1 ? (
-              <Button 
-                onClick={finishWorkout} 
-                className={`${isMobile ? 'w-full' : ''} bg-green-600 hover:bg-green-700 text-white flex items-center justify-center`}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" /> Complete Workout
-              </Button>
-            ) : (
-              <Button 
-                onClick={nextExercise} 
-                className={`${isMobile ? 'w-full' : ''} bg-primary hover:bg-primary/90 flex items-center justify-center`}
-              >
-                Next Exercise <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
+            <WorkoutControls
+              isLastExercise={safeCurrentExerciseIndex === workout.exercises.length - 1}
+              onNextExercise={nextExercise}
+              onFinishWorkout={finishWorkout}
+              isMobile={isMobile}
+            />
           </div>
         </>
       )}
       
-      <Dialog open={confirmDeleteSetDialog} onOpenChange={setConfirmDeleteSetDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Set</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this set? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteSetDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDeleteSet}>
-              Delete Set
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteSetDialog
+        open={confirmDeleteSetDialog}
+        onOpenChange={setConfirmDeleteSetDialog}
+        onConfirm={confirmDeleteSet}
+      />
     </div>
   );
 };
