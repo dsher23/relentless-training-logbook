@@ -199,7 +199,10 @@ const LiveWorkout = () => {
       console.log('CRITICAL - Type of completed property:', typeof updatedWorkout.completed);
       console.log('CRITICAL - Full workout object to be saved:', JSON.stringify(updatedWorkout));
       
-      const savedWorkout = updateWorkout(updatedWorkout);
+      const savedWorkout = updateWorkout({
+        ...updatedWorkout,
+        completed: true // Redundant but ensuring it's set here too
+      });
       
       console.log('CRITICAL - Result of updateWorkout operation:', savedWorkout);
       
@@ -416,6 +419,13 @@ const LiveWorkout = () => {
     );
   }
 
+  const debugInfo = debugMode ? (
+    <div className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+      <p>Workout ID: {workout.id.substring(0, 8)}...</p>
+      <p>Completed: {String(workout.completed)}</p>
+    </div>
+  ) : null;
+
   return (
     <div className="app-container pb-8 animate-fade-in">
       <WorkoutHeader
@@ -423,14 +433,9 @@ const LiveWorkout = () => {
         workoutTime={workoutTime}
         isTimerRunning={isTimerRunning}
         onToggleTimer={toggleTimer}
-      >
-        {debugMode && (
-          <div className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
-            <p>Workout ID: {workout.id.substring(0, 8)}...</p>
-            <p>Completed: {String(workout.completed)}</p>
-          </div>
-        )}
-      </WorkoutHeader>
+        debugMode={debugMode}
+        debugInfo={debugInfo}
+      />
       
       <div className="px-4 pb-2">
         <div className="text-sm flex justify-between items-center">

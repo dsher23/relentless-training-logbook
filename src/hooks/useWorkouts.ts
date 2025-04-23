@@ -16,11 +16,12 @@ export const useWorkouts = () => {
         const parsedWorkouts = JSON.parse(storedWorkouts);
         
         // Ensure all workouts have proper date objects and required fields
+        // CRITICAL FIX: Normalize completed status to boolean
         const validatedWorkouts = parsedWorkouts.map((w: any) => ({
           ...w,
           id: w.id || uuidv4(),
           date: w.date ? new Date(w.date) : new Date(),  // Ensure dates are properly parsed
-          completed: w.completed === true,  // Normalize to boolean
+          completed: w.completed === true,  // Explicitly normalize to boolean
           notes: w.notes || '',
           exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
             ...ex,
@@ -56,7 +57,7 @@ export const useWorkouts = () => {
   useEffect(() => {
     if (workouts.length > 0) {
       try {
-        // Ensure completed status is correctly serialized
+        // CRITICAL FIX: Ensure completed status is correctly serialized
         const workoutsToStore = workouts.map(w => ({
           ...w,
           completed: w.completed === true  // Normalize to boolean
@@ -148,7 +149,7 @@ export const useWorkouts = () => {
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // Force ensure workout has completed status properly set as a boolean
+      // CRITICAL FIX: Force ensure workout has completed status properly set as a boolean
       const completed = workout.completed === true;
       
       // Ensure workout has all required fields and explicitly parse the completed status
@@ -168,6 +169,7 @@ export const useWorkouts = () => {
       
       console.log('Updating workout with ID:', updatedWorkout.id);
       console.log('Completed status before update:', completed);
+      console.log('Type of completed property:', typeof updatedWorkout.completed);
       
       // Use a function to update state to ensure we have the latest state
       setWorkouts(prev => {

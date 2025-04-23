@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Bug } from 'lucide-react';
@@ -27,26 +26,25 @@ const WorkoutHistory: React.FC = () => {
       console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed}, type=${typeof workout.completed}`);
     });
     
-    // Try multiple filtering approaches to identify the issue
+    // Use a strict boolean comparison to ensure we only get truly completed workouts
+    // CRITICAL FIX: Ensure we're properly filtering for completed===true (boolean)
     const strictCompleted = workouts.filter(w => w.completed === true);
-    const looseCompleted = workouts.filter(w => w.completed);
-    const allWorkouts = [...workouts]; // Clone the array
     
     console.log('Strict completed filter found:', strictCompleted.length);
-    console.log('Loose completed filter found:', looseCompleted.length);
+    console.log('Completed workout IDs:', strictCompleted.map(w => w.id));
     
-    // Use the strict comparison to ensure we only get truly completed workouts
-    const completed = strictCompleted.sort((a, b) => 
+    // Sort completed workouts by date, newest first
+    const sortedCompleted = strictCompleted.sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
-    console.log('WorkoutHistory - Completed workouts found:', completed.length);
-    if (completed.length > 0) {
-      console.log('WorkoutHistory - First completed workout:', completed[0]);
+    console.log('WorkoutHistory - Completed workouts found:', sortedCompleted.length);
+    if (sortedCompleted.length > 0) {
+      console.log('WorkoutHistory - First completed workout:', sortedCompleted[0]);
     }
     
     // Set the completed workouts state
-    setCompletedWorkouts(completed);
+    setCompletedWorkouts(sortedCompleted);
   }, [workouts]);
 
   const handleDeleteWorkout = () => {

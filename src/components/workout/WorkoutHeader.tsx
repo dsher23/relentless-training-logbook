@@ -2,13 +2,15 @@
 import React from 'react';
 import { formatDuration } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Bug } from 'lucide-react';
 
 interface WorkoutHeaderProps {
   workoutName: string;
   workoutTime: number;
   isTimerRunning: boolean;
   onToggleTimer: () => void;
+  debugMode?: boolean;
+  debugInfo?: React.ReactNode;
 }
 
 export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
@@ -16,6 +18,8 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
   workoutTime,
   isTimerRunning,
   onToggleTimer,
+  debugMode,
+  debugInfo
 }) => {
   return (
     <div className="sticky top-0 bg-background z-10 border-b">
@@ -42,6 +46,12 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
           </div>
         </div>
       </div>
+      
+      {debugMode && debugInfo && (
+        <div className="px-4 pb-2">
+          {debugInfo}
+        </div>
+      )}
     </div>
   );
 };
