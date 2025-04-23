@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Calendar, Edit, Trash2 } from "lucide-react";
@@ -23,7 +24,9 @@ const WorkoutDays: React.FC = () => {
     addWorkoutTemplate,
     removeTemplateFromPlan,
     updateWorkoutTemplate,
-    deleteWorkoutPlan
+    deleteWorkoutPlan,
+    weeklyRoutines,
+    updateWeeklyRoutine,
   } = useAppContext();
 
   const [isCreateDayDialogOpen, setIsCreateDayDialogOpen] = useState(false);
@@ -34,6 +37,10 @@ const WorkoutDays: React.FC = () => {
   const [pendingDeleteDayId, setPendingDeleteDayId] = useState<string | null>(null);
 
   const plan = workoutPlans.find((p) => p.id === planId);
+
+  // New: Confirm delete dialog for workout day (not just inside edit dialog)
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [dayToBulkDelete, setDayToBulkDelete] = useState<WorkoutTemplate | null>(null);
 
   if (!plan) {
     return (
@@ -84,11 +91,26 @@ const WorkoutDays: React.FC = () => {
   };
 
   const handleDeleteDay = (dayId: string) => {
+    // Remove from this plan
     removeTemplateFromPlan(plan.id, dayId);
 
+    // Remove references from ALL weekly routines
+    if (weeklyRoutines && Array.isArray(weeklyRoutines)) {
+      weeklyRoutines.forEach((routine) => {
+        if (routine.workoutDays.some(wd => wd.workoutTemplateId === dayId)) {
+          const updatedRoutine = {
+            ...routine,
+            workoutDays: routine.workoutDays.filter(wd => wd.workoutTemplateId !== dayId)
+          };
+          updateWeeklyRoutine(updatedRoutine);
+        }
+      });
+    }
+
     toast({
-      title: "Success",
-      description: "Removed workout day from plan",
+      title: "Workout Day Deleted",
+      description: "This workout day has been permanently deleted from this plan and any assigned weekly routines.",
+      variant: "destructive",
     });
   };
 
@@ -137,6 +159,20 @@ const WorkoutDays: React.FC = () => {
       setIsEditDialogOpen(false);
       setEditingDay(null);
     }
+  };
+
+  // New: Handle full card "Delete Workout Day" click
+  const handleBulkDeleteClick = (day: WorkoutTemplate, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDayToBulkDelete(day);
+    setConfirmBulkDelete(true);
+  };
+  // New handler for the dialog confirm
+  const handleConfirmBulkDelete = () => {
+    if (!dayToBulkDelete) return;
+    handleDeleteDay(dayToBulkDelete.id);
+    setDayToBulkDelete(null);
+    setConfirmBulkDelete(false);
   };
 
   const totalSets: number = (plan.workoutTemplates as WorkoutTemplate[]).reduce(
@@ -202,17 +238,14 @@ const WorkoutDays: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex gap-2">
+                      {/* NEW: Delete Workout Day Button, triggers bulk delete dialog */}
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setPendingDeleteDayId(day.id);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                        aria-label="Delete Workout"
+                        onClick={e => handleBulkDeleteClick(day, e)}
+                        aria-label="Delete Workout Day"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>
                       <Button
                         size="sm"
@@ -233,6 +266,7 @@ const WorkoutDays: React.FC = () => {
         )}
       </div>
 
+      {/* Create Dialog */}
       <Dialog open={isCreateDayDialogOpen} onOpenChange={setIsCreateDayDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -256,6 +290,7 @@ const WorkoutDays: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px] w-full max-w-full">
           <DialogHeader>
@@ -342,6 +377,7 @@ const WorkoutDays: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Delete dialog from inside edit */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -364,8 +400,33 @@ const WorkoutDays: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* NEW: Delete dialog for bulk card delete */}
+      <Dialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Workout Day</DialogTitle>
+          </DialogHeader>
+          <div className="mb-4">
+            Are you sure you want to delete this workout day? This will also remove it from any assigned weekly plans and this cannot be undone.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmBulkDelete}
+              aria-label="Delete Workout Day"
+            >
+              Yes, Delete Workout Day
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default WorkoutDays;
+
