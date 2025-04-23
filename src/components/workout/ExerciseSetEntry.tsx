@@ -33,6 +33,20 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     return null;
   };
 
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+    if (!isNaN(value)) {
+      onUpdateSet('weight', value);
+    }
+  };
+
+  const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+    if (!isNaN(value)) {
+      onUpdateSet('reps', value);
+    }
+  };
+
   return (
     <div className="grid grid-cols-12 gap-2 items-center">
       <div className="col-span-1 text-sm">{setIndex + 1}</div>
@@ -40,16 +54,22 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
         <Input 
           type="number"
           value={set.weight || ''}
-          onChange={(e) => onUpdateSet('weight', parseInt(e.target.value) || 0)}
+          onChange={handleWeightChange}
           className="h-9"
+          min="0"
+          step="0.5"
+          inputMode="decimal"
         />
       </div>
       <div className="col-span-4">
         <Input 
           type="number"
           value={set.reps || ''}
-          onChange={(e) => onUpdateSet('reps', parseInt(e.target.value) || 0)}
+          onChange={handleRepsChange}
           className="h-9"
+          min="0"
+          step="1"
+          inputMode="numeric"
         />
       </div>
       <div className="col-span-2 flex items-center">
