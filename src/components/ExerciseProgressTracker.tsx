@@ -123,8 +123,8 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          const weight = Number((set as ExerciseSetData).weight || 0);
-          const reps = Number((set as ExerciseSetData).reps || 0);
+          const weight = Number((set as any).weight || 0);
+          const reps = Number((set as any).reps || 0);
           
           if (weight && reps) {
             const setVolume = weight * reps;
@@ -155,7 +155,7 @@ const ExerciseProgressTracker: React.FC = () => {
       }
     });
     
-    return data;
+    return data.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [completedWorkouts, selectedExercise]);
 
   const calculateOneRepMax = (weight: number, reps: number): number => {
