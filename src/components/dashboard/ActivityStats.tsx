@@ -21,28 +21,28 @@ const ActivityStats = () => {
   const supplementCount = supplements.length;
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <Link to="/measurements">
-        <Card className="transition-all hover:shadow-md hover:-translate-y-1">
-          <CardContent className="p-4 flex flex-col">
+    <div className="grid grid-cols-2 gap-4 h-full">
+      <Link to="/measurements" className="h-full">
+        <Card className="transition-all hover:shadow-md hover:-translate-y-1 h-full flex flex-col">
+          <CardContent className="p-4 flex flex-col flex-grow">
             <div className="flex items-center gap-2 mb-2">
               <Ruler className="h-5 w-5 text-gym-purple" />
               <h3 className="font-medium text-base">Measurements Tracker</h3>
             </div>
-            <div className="text-2xl font-bold">{measurementCount}</div>
+            <div className="text-2xl font-bold mt-auto">{measurementCount}</div>
             <div className="text-sm text-muted-foreground">Last: {latestMeasurementDate}</div>
           </CardContent>
         </Card>
       </Link>
       
-      <Link to="/supplements">
-        <Card className="transition-all hover:shadow-md hover:-translate-y-1">
-          <CardContent className="p-4 flex flex-col">
+      <Link to="/supplements" className="h-full">
+        <Card className="transition-all hover:shadow-md hover:-translate-y-1 h-full flex flex-col">
+          <CardContent className="p-4 flex flex-col flex-grow">
             <div className="flex items-center gap-2 mb-2">
               <PillIcon className="h-5 w-5 text-gym-purple" />
               <h3 className="font-medium text-base">Supplements Tracker</h3>
             </div>
-            <div className="text-2xl font-bold">{supplementCount}</div>
+            <div className="text-2xl font-bold mt-auto">{supplementCount}</div>
             <div className="text-sm text-muted-foreground">Active Supplements</div>
           </CardContent>
         </Card>
@@ -52,3 +52,4 @@ const ActivityStats = () => {
 };
 
 export default ActivityStats;
+
