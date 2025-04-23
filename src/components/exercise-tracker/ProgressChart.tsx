@@ -40,9 +40,9 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
     if (data.length === 0) return [0, 10];
     
     const values = data.map(d => 
-      displayMode === "topSet" ? d["Top Set"] : 
-      displayMode === "volume" ? d["Volume"] : 
-      d["Reps"]
+      displayMode === "topSet" ? Number(d["Top Set"]) : 
+      displayMode === "volume" ? Number(d["Volume"]) : 
+      Number(d["Reps"])
     );
     
     const max = Math.max(...values);
@@ -102,17 +102,17 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
                       <div className="font-medium">{data.date}</div>
                       <div className="text-sm text-muted-foreground">
                         {displayMode === "topSet" && 
-                          <span>Weight: <span className="font-medium">{data.fullData.weight} kg</span> × {data.fullData.reps} reps</span>
+                          <span>Weight: <span className="font-medium">{Number(data.fullData.weight)} kg</span> × {Number(data.fullData.reps)} reps</span>
                         }
                         {displayMode === "volume" && 
-                          <span>Volume: <span className="font-medium">{data.fullData.volume} kg</span></span>
+                          <span>Volume: <span className="font-medium">{Number(data.fullData.volume)} kg</span></span>
                         }
                         {displayMode === "reps" && 
-                          <span>Reps: <span className="font-medium">{data.fullData.reps}</span> at {data.fullData.weight} kg</span>
+                          <span>Reps: <span className="font-medium">{Number(data.fullData.reps)}</span> at {Number(data.fullData.weight)} kg</span>
                         }
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Est. 1RM: <span className="font-medium">{data.estimatedOneRM} kg</span>
+                        Est. 1RM: <span className="font-medium">{Number(data.estimatedOneRM)} kg</span>
                       </div>
                       {data.fullData.notes && (
                         <div className="text-xs italic mt-1 text-muted-foreground">
@@ -142,7 +142,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
           />
           {maxValue && (
             <ReferenceLine 
-              y={maxValue} 
+              y={Number(maxValue)} 
               stroke="green" 
               strokeDasharray="3 3" 
               label={{ 
