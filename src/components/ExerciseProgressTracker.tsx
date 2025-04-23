@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -123,6 +124,7 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
+          // Explicitly convert weight and reps to numbers
           const weight = Number(set.weight || 0);
           const reps = Number(set.reps || 0);
           
