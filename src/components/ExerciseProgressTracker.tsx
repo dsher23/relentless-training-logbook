@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -33,7 +32,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Exercise } from "@/types";
 
-// Define the types for our data
 interface ExerciseSetData {
   date: Date;
   weight: number;
@@ -62,10 +60,8 @@ const ExerciseProgressTracker: React.FC = () => {
     return savedFavorites ? JSON.parse(savedFavorites) : [];
   });
 
-  // Get all completed workouts
   const completedWorkouts = workouts.filter(workout => workout.completed === true);
 
-  // Extract all unique exercise names from completed workouts
   const exerciseNames = useMemo(() => {
     const namesSet = new Set<string>();
     
@@ -78,7 +74,6 @@ const ExerciseProgressTracker: React.FC = () => {
     return Array.from(namesSet).sort();
   }, [completedWorkouts]);
 
-  // Filter exercise names based on search term
   const filteredExerciseNames = useMemo(() => {
     if (!searchTerm) {
       return exerciseNames;
@@ -89,12 +84,10 @@ const ExerciseProgressTracker: React.FC = () => {
     );
   }, [exerciseNames, searchTerm]);
 
-  // Check if an exercise is in favorites
   const isExerciseFavorite = (name: string) => {
     return favorites.some(fav => fav.name === name);
   };
 
-  // Toggle favorite status for an exercise
   const toggleFavorite = (name: string) => {
     let newFavorites: FavoriteExercise[];
     
@@ -111,7 +104,6 @@ const ExerciseProgressTracker: React.FC = () => {
     localStorage.setItem("favoriteExercises", JSON.stringify(newFavorites));
   };
 
-  // Get performance data for selected exercise
   const exerciseData = useMemo(() => {
     if (!selectedExercise) return [];
     
@@ -123,25 +115,26 @@ const ExerciseProgressTracker: React.FC = () => {
       );
       
       if (matchingExercise && matchingExercise.sets.length > 0) {
-        // Calculate top set (highest weight × reps)
         let topSetValue = 0;
         let topSetWeight = 0;
         let topSetReps = 0;
         
-        // Calculate total volume and find top set
         let totalVolume = 0;
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          if (set.weight && set.reps) {
-            const setVolume = set.weight * set.reps;
+          const weight = Number(set.weight || 0);
+          const reps = Number(set.reps || 0);
+          
+          if (weight && reps) {
+            const setVolume = weight * reps;
             totalVolume += setVolume;
-            totalReps += set.reps;
+            totalReps += reps;
             
             if (setVolume > topSetValue) {
               topSetValue = setVolume;
-              topSetWeight = set.weight;
-              topSetReps = set.reps;
+              topSetWeight = weight;
+              topSetReps = reps;
             }
           }
         });
@@ -162,17 +155,17 @@ const ExerciseProgressTracker: React.FC = () => {
       }
     });
     
-    // Sort by date
     return data.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [completedWorkouts, selectedExercise]);
 
-  // Calculate one-rep max estimate using Epley formula
   const calculateOneRepMax = (weight: number, reps: number): number => {
-    if (reps === 1) return weight;
-    return weight * (1 + reps / 30);
+    const numWeight = Number(weight);
+    const numReps = Number(reps);
+    
+    if (numReps === 1) return numWeight;
+    return numWeight * (1 + numReps / 30);
   };
 
-  // Get data formatted for chart display based on selected mode
   const chartData = useMemo(() => {
     return exerciseData.map(data => {
       const oneRM = calculateOneRepMax(data.weight, data.reps);
@@ -189,7 +182,6 @@ const ExerciseProgressTracker: React.FC = () => {
     });
   }, [exerciseData, displayMode]);
 
-  // Find personal records
   const personalRecords = useMemo(() => {
     if (!exerciseData.length) return null;
     
@@ -203,7 +195,6 @@ const ExerciseProgressTracker: React.FC = () => {
     return { maxWeight, maxVolume, maxReps, maxOneRM };
   }, [exerciseData]);
 
-  // Calculate progress metrics
   const progressMetrics = useMemo(() => {
     if (exerciseData.length < 2) return null;
     
@@ -234,7 +225,6 @@ const ExerciseProgressTracker: React.FC = () => {
     };
   }, [exerciseData]);
 
-  // Function to get Y-axis label based on display mode
   const getYAxisLabel = () => {
     switch (displayMode) {
       case "topSet":
@@ -248,7 +238,6 @@ const ExerciseProgressTracker: React.FC = () => {
     }
   };
 
-  // Function to pick the maximum value for the Y axis to include some padding
   const getYAxisDomain = () => {
     if (chartData.length === 0) return [0, 10];
     
@@ -370,7 +359,6 @@ const ExerciseProgressTracker: React.FC = () => {
         
         {selectedExercise && (
           <>
-            {/* Favorite toggle */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-medium">{selectedExercise}</h3>
               <Button
@@ -393,7 +381,6 @@ const ExerciseProgressTracker: React.FC = () => {
               </Button>
             </div>
             
-            {/* Progress metrics */}
             {progressMetrics && (
               <div className="mb-4 p-3 rounded-md bg-muted/50">
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
@@ -425,7 +412,6 @@ const ExerciseProgressTracker: React.FC = () => {
               </div>
             )}
             
-            {/* Personal records */}
             {personalRecords && (
               <div className="mb-4 flex justify-between text-xs">
                 <div className="text-center">
@@ -447,7 +433,6 @@ const ExerciseProgressTracker: React.FC = () => {
               </div>
             )}
             
-            {/* Chart */}
             <div className="h-64">
               {chartData.length > 0 ? (
                 <ChartContainer
@@ -563,7 +548,6 @@ const ExerciseProgressTracker: React.FC = () => {
               )}
             </div>
             
-            {/* Data table (optional, showing last 3 entries) */}
             {chartData.length > 0 && (
               <div className="mt-4 text-sm">
                 <h4 className="font-medium mb-2 text-sm">Recent History</h4>
