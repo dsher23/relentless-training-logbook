@@ -71,7 +71,7 @@ export const useWorkouts = () => {
     }
   }, [workouts, toast]);
 
-  const addWorkout = useCallback((workout: Workout) => {
+  const addWorkout = useCallback((workout: Workout): Workout => {
     const newWorkout = {
       ...workout,
       id: workout.id || uuidv4(),
@@ -83,7 +83,7 @@ export const useWorkouts = () => {
     return newWorkout; // Return the created workout for further use
   }, []);
 
-  const updateWorkout = useCallback((workout: Workout) => {
+  const updateWorkout = useCallback((workout: Workout): Workout => {
     const updatedWorkout = {
       ...workout,
       date: workout.date || new Date(),

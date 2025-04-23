@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -9,6 +8,7 @@ import { WorkoutHeader } from "@/components/workout/WorkoutHeader";
 import { RestTimer } from "@/components/workout/RestTimer";
 import { ExerciseLog } from "@/components/workout/ExerciseLog";
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
+import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 import {
   Dialog,
   DialogContent,
@@ -151,20 +151,11 @@ const LiveWorkout = () => {
       if (isTemplate) {
         const template = workoutTemplates.find(t => t.id === id);
         if (template) {
-          foundWorkout = {
-            id: crypto.randomUUID(),
-            name: template.name,
-            exercises: [...template.exercises.map(ex => ({
-              ...ex,
-              sets: ex.sets.map(set => ({ ...set })) // Deep copy to avoid reference issues
-            }))],
-            date: new Date(),
-            completed: false,
-            notes: ''
-          } as Workout;
+          foundWorkout = convertTemplateToWorkout(template);
           
-          const savedWorkout = addWorkout(foundWorkout);
-          foundWorkout = savedWorkout;
+          if (foundWorkout) {
+            foundWorkout = addWorkout(foundWorkout);
+          }
         }
       } else {
         foundWorkout = workouts.find(w => w.id === id) || null;
