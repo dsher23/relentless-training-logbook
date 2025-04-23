@@ -122,8 +122,8 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          const weight = getNumber(set?.weight);
-          const reps = getNumber(set?.reps);
+          const weight = Number(set?.weight || 0);
+          const reps = Number(set?.reps || 0);
           
           if (weight && reps) {
             const setVolume = weight * reps;
