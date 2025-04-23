@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -144,8 +145,8 @@ const LiveWorkout = () => {
     setRestTime(0);
   }, [setRestTime]);
 
-  const finishWorkout = useCallback((): Workout | undefined => {
-    if (!workout) return undefined;
+  const finishWorkout = useCallback(() => {
+    if (!workout) return;
     
     const updatedExercises = workout.exercises.map(exercise => {
       const data = exerciseData[exercise.id];
@@ -166,8 +167,8 @@ const LiveWorkout = () => {
       date: new Date(), // Ensure date is updated to completion time
     };
     
-    // Save the completed workout and return it
-    const savedWorkout = updateWorkout(updatedWorkout);
+    // Save the completed workout without assigning return value
+    updateWorkout(updatedWorkout);
     
     toast({
       title: "Workout Completed",
@@ -175,8 +176,6 @@ const LiveWorkout = () => {
     });
     
     navigate("/workout-history");
-    
-    return savedWorkout;
   }, [workout, exerciseData, updateWorkout, toast, navigate]);
 
   useEffect(() => {
@@ -189,7 +188,9 @@ const LiveWorkout = () => {
           const convertedWorkout = convertTemplateToWorkout(template);
           
           if (convertedWorkout) {
-            foundWorkout = addWorkout(convertedWorkout);
+            // Call addWorkout without assigning to foundWorkout, then assign the converted workout
+            addWorkout(convertedWorkout);
+            foundWorkout = convertedWorkout;
             
             // Ensure foundWorkout is set correctly
             if (!foundWorkout) {
@@ -263,6 +264,10 @@ const LiveWorkout = () => {
       setCurrentExerciseIndex(prev => prev - 1);
     }
   };
+
+  if (!workout) {
+    return <div className="p-4 text-center">Loading workout...</div>;
+  }
 
   const safeCurrentExerciseIndex = Math.min(
     currentExerciseIndex,
