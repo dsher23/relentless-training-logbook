@@ -156,6 +156,17 @@ const LiveWorkout = () => {
           
           if (convertedWorkout) {
             foundWorkout = addWorkout(convertedWorkout);
+            
+            // Ensure foundWorkout is set correctly
+            if (!foundWorkout) {
+              toast({
+                title: "Error",
+                description: "Failed to create workout from template",
+                variant: "destructive"
+              });
+              navigate("/workouts");
+              return;
+            }
           }
         }
       } else {

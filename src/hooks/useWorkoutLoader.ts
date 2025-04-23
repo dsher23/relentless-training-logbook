@@ -3,17 +3,20 @@ import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { useAppContext } from '@/context/AppContext';
 import { Workout, WorkoutTemplate } from '@/types';
+import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 
 // Helper function to convert a template to a workout
 export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => {
   return {
-    ...template,
+    id: uuidv4(), // Generate a new unique ID for the workout
+    name: template.name,
     date: new Date(),
     completed: false,
     notes: '', // Set a default empty string for notes since it's required in Workout
     exercises: template.exercises.map(exercise => ({
       ...exercise,
       sets: exercise.sets.map(set => ({ ...set })), // Deep copy sets to avoid reference issues
+      lastProgressDate: new Date(), // Add last progress date
     })),
     scheduledTime: template.scheduledTime
   };
