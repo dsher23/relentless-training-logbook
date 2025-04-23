@@ -33,7 +33,6 @@ export const RestTimer: React.FC<RestTimerProps> = ({
           <Progress 
             value={progressPercentage} 
             className="h-2 mb-6" 
-            indicatorClassName="bg-primary" 
           />
           
           <Button 
