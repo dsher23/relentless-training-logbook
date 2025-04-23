@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -19,23 +18,25 @@ const WorkoutHistory: React.FC = () => {
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
   
   useEffect(() => {
+    // Debug the workouts state
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
-    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({
-      id: w.id, 
-      completed: w.completed, 
-      completedType: typeof w.completed,
-      name: w.name, 
-      date: w.date
-    })));
     
+    // Log each workout's completion status in detail for debugging
+    workouts.forEach(workout => {
+      console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed}, type=${typeof workout.completed}`);
+    });
+    
+    // Explicitly filter for workouts where completed is strictly true (boolean true)
     const completed = workouts
-      .filter(workout => workout.completed === true)
+      .filter(workout => workout.completed === true) 
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    setCompletedWorkouts(completed);
-    
     console.log('WorkoutHistory - Completed workouts found:', completed.length);
-    console.log('WorkoutHistory - Completed workout IDs:', completed.map(w => w.id));
+    if (completed.length > 0) {
+      console.log('WorkoutHistory - First completed workout:', completed[0]);
+    }
+    
+    setCompletedWorkouts(completed);
   }, [workouts]);
 
   const handleDeleteWorkout = () => {
