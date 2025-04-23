@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical, Home } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
 import { DndContext } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
-import { Workout, Exercise, WorkoutTemplate } from "@/types";
+import { WorkoutTemplate, Exercise } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -23,20 +23,19 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 
-interface ExerciseItemProps {
-  exercise: Exercise;
-  index: number;
-  moveExercise: (dragIndex: number, hoverIndex: number) => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-
-const ExerciseItem: React.FC<ExerciseItemProps> = ({
+// Exercise item (sortable)
+const ExerciseItem = ({
   exercise,
   index,
   moveExercise,
   onEdit,
   onDelete,
+}: {
+  exercise: Exercise;
+  index: number;
+  moveExercise: (dragIndex: number, hoverIndex: number) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: exercise.id,
@@ -61,9 +60,16 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
       {...listeners}
     >
       <CardContent className="flex items-center justify-between p-3">
-        <div className="flex items-center">
-          <GripVertical className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>{exercise.name}</span>
+        <div>
+          <div className="flex items-center gap-2">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <span className="font-semibold">{exercise.name}</span>
+            <span className="ml-2 text-xs text-muted-foreground">
+              {exercise.sets.length} sets × {exercise.sets[0]?.reps ?? "-"} reps,{" "}
+              {exercise.sets[0]?.weight ?? "-"} kg/lb
+              {exercise.restTime ? `, ${exercise.restTime}s rest` : ""}
+            </span>
+          </div>
         </div>
         <div className="space-x-2">
           <Button
@@ -94,6 +100,15 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   );
 };
 
+// Unified add/edit exercise form (inline, not modal)
+const defaultExerciseFormState = {
+  name: "",
+  sets: 3,
+  reps: 10,
+  weight: 0,
+  restTime: "",
+};
+
 const WorkoutBuilder: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
@@ -101,14 +116,15 @@ const WorkoutBuilder: React.FC = () => {
   const { toast } = useToast();
   const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates } = useAppContext();
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [exerciseName, setExerciseName] = useState("");
-  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
-  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [showExerciseForm, setShowExerciseForm] = useState(false);
+  const [exerciseForm, setExerciseForm] = useState({ ...defaultExerciseFormState });
+  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
+  // Load plan for editing
   useEffect(() => {
     if (id) {
       const workoutToEdit = workoutTemplates.find(template => template.id === id);
@@ -130,11 +146,32 @@ const WorkoutBuilder: React.FC = () => {
 
   const { startAfterCreation } = location.state || {};
 
+  // ----- Exercise Form Handlers -----
+
+  // Initialize form for edit/create
+  const openExerciseForm = (exercise?: Exercise) => {
+    if (exercise) {
+      setExerciseForm({
+        name: exercise.name,
+        sets: exercise.sets.length,
+        reps: exercise.sets[0]?.reps ?? 10,
+        weight: exercise.sets[0]?.weight ?? 0,
+        restTime: exercise.restTime ? exercise.restTime.toString() : "",
+      });
+      setEditingExerciseId(exercise.id);
+    } else {
+      setExerciseForm({ ...defaultExerciseFormState });
+      setEditingExerciseId(null);
+    }
+    setShowExerciseForm(true);
+  };
+
+  // Add new exercise
   const handleAddExercise = () => {
-    if (exerciseName.trim() === "") {
+    if (!exerciseForm.name.trim()) {
       toast({
-        title: "Error",
-        description: "Exercise name cannot be empty.",
+        title: "Exercise name required",
+        description: "Please provide a name for the exercise.",
         variant: "destructive",
       });
       return;
@@ -142,82 +179,96 @@ const WorkoutBuilder: React.FC = () => {
 
     const newExercise: Exercise = {
       id: uuidv4(),
-      name: exerciseName,
-      sets: [],
+      name: exerciseForm.name.trim(),
+      sets: Array(Number(exerciseForm.sets)).fill({
+        reps: Number(exerciseForm.reps),
+        weight: Number(exerciseForm.weight)
+      }),
+      restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined,
       lastProgressDate: new Date(),
     };
 
     setExercises([...exercises, newExercise]);
-    setExerciseName("");
-    setShowAddExercise(false);
+    setExerciseForm({ ...defaultExerciseFormState });
+    setShowExerciseForm(false);
   };
 
+  // Start editing exercise
   const handleEditExercise = (id: string) => {
-    setEditingExerciseId(id);
     const exerciseToEdit = exercises.find((exercise) => exercise.id === id);
     if (exerciseToEdit) {
-      setExerciseName(exerciseToEdit.name);
-      setShowAddExercise(true);
+      openExerciseForm(exerciseToEdit);
     }
   };
 
+  // Update existing exercise
   const handleUpdateExercise = () => {
-    if (exerciseName.trim() === "") {
+    if (!exerciseForm.name.trim()) {
       toast({
-        title: "Error",
-        description: "Exercise name cannot be empty.",
+        title: "Exercise name required",
+        description: "Please provide a name for the exercise.",
         variant: "destructive",
       });
       return;
     }
 
-    const updatedExercises = exercises.map((exercise) =>
+    setExercises(exercises.map((exercise) =>
       exercise.id === editingExerciseId
-        ? { ...exercise, name: exerciseName }
+        ? {
+            ...exercise,
+            name: exerciseForm.name.trim(),
+            sets: Array(Number(exerciseForm.sets)).fill({
+              reps: Number(exerciseForm.reps),
+              weight: Number(exerciseForm.weight)
+            }),
+            restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined
+          }
         : exercise
-    );
+    ));
 
-    setExercises(updatedExercises);
-    setExerciseName("");
+    setExerciseForm({ ...defaultExerciseFormState });
     setEditingExerciseId(null);
-    setShowAddExercise(false);
+    setShowExerciseForm(false);
   };
 
+  // Delete prompt
   const promptDeleteExercise = (id: string) => {
     setExerciseToDelete(id);
     setConfirmDeleteExercise(true);
   };
 
+  // Delete execution
   const handleDeleteExercise = () => {
     if (!exerciseToDelete) return;
-    
     setExercises(exercises.filter((exercise) => exercise.id !== exerciseToDelete));
     setConfirmDeleteExercise(false);
     setExerciseToDelete(null);
-    
+
     toast({
       title: "Exercise deleted",
       description: "The exercise has been removed from this workout."
     });
   };
 
+  // DND handlers
   const moveExercise = (dragIndex: number, hoverIndex: number) => {
     setExercises((items) => arrayMove(items, dragIndex, hoverIndex));
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    
+
     if (active.id !== over.id) {
       setExercises((items) => {
         const oldIndex = items.findIndex(item => item.id === active.id);
         const newIndex = items.findIndex(item => item.id === over.id);
-        
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
+  // Cancel workflow
   const handleCancelClick = () => {
     if (exercises.length > 0 || workoutName.trim() !== "") {
       setConfirmCancel(true);
@@ -226,6 +277,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
+  // Complete/save workout
   const handleComplete = () => {
     if (!workoutName) {
       toast({
@@ -281,6 +333,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
+  // --- UI ---
   return (
     <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
       <div className="app-container animate-fade-in">
@@ -295,44 +348,114 @@ const WorkoutBuilder: React.FC = () => {
             className="mb-4"
           />
 
+          {/* Exercises Section */}
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Exercises</h2>
-                <Button size="sm" onClick={() => setShowAddExercise(true)}>
+                <Button size="sm" onClick={() => openExerciseForm()}>
                   <Plus className="h-4 w-4 mr-2" /> Add Exercise
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {showAddExercise && (
+          {/* Exercise Form inline */}
+          {showExerciseForm && (
             <Card className="mb-4">
-              <CardContent className="p-4">
-                <Label htmlFor="exerciseName">Exercise Name</Label>
-                <Input
-                  type="text"
-                  id="exerciseName"
-                  placeholder="e.g., Bench Press"
-                  value={exerciseName}
-                  onChange={(e) => setExerciseName(e.target.value)}
-                  className="mb-3"
-                />
-                <div className="flex justify-end space-x-2">
+              <CardContent className="p-4 space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="ex-name">Exercise Name *</Label>
+                    <Input
+                      id="ex-name"
+                      value={exerciseForm.name}
+                      onChange={(e) =>
+                        setExerciseForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                      placeholder="e.g., Bench Press"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ex-sets">Sets</Label>
+                    <Input
+                      id="ex-sets"
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={exerciseForm.sets}
+                      onChange={(e) =>
+                        setExerciseForm((f) => ({
+                          ...f,
+                          sets: Math.max(1, parseInt(e.target.value) || 1),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ex-reps">Reps per Set</Label>
+                    <Input
+                      id="ex-reps"
+                      type="number"
+                      min={1}
+                      max={200}
+                      value={exerciseForm.reps}
+                      onChange={(e) =>
+                        setExerciseForm((f) => ({
+                          ...f,
+                          reps: Math.max(1, parseInt(e.target.value) || 1),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ex-weight">Weight (kg/lb)</Label>
+                    <Input
+                      id="ex-weight"
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={exerciseForm.weight}
+                      onChange={(e) =>
+                        setExerciseForm((f) => ({
+                          ...f,
+                          weight: Number(e.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ex-rest">Rest Time (seconds, optional)</Label>
+                    <Input
+                      id="ex-rest"
+                      type="number"
+                      min={0}
+                      step={5}
+                      value={exerciseForm.restTime}
+                      onChange={(e) =>
+                        setExerciseForm((f) => ({
+                          ...f,
+                          restTime: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., 90"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"
                     onClick={() => {
-                      setShowAddExercise(false);
-                      setExerciseName("");
+                      setShowExerciseForm(false);
+                      setExerciseForm({ ...defaultExerciseFormState });
                       setEditingExerciseId(null);
                     }}
                   >
                     Cancel
                   </Button>
                   <Button
-                    onClick={
-                      editingExerciseId ? handleUpdateExercise : handleAddExercise
-                    }
+                    onClick={editingExerciseId ? handleUpdateExercise : handleAddExercise}
                   >
                     {editingExerciseId ? "Update Exercise" : "Add Exercise"}
                   </Button>
@@ -341,6 +464,7 @@ const WorkoutBuilder: React.FC = () => {
             </Card>
           )}
 
+          {/* Show Exercises List for review/edit */}
           {exercises.length === 0 ? (
             <Card>
               <CardContent className="text-center p-5">
@@ -349,7 +473,7 @@ const WorkoutBuilder: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <SortableContext 
+            <SortableContext
               items={exercises.map(exercise => exercise.id)}
               strategy={verticalListSortingStrategy}
             >
@@ -376,7 +500,7 @@ const WorkoutBuilder: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Confirm Delete Exercise Dialog */}
       <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
         <DialogContent>
@@ -396,7 +520,7 @@ const WorkoutBuilder: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Confirm Cancel Dialog */}
       <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
         <DialogContent>
@@ -421,3 +545,4 @@ const WorkoutBuilder: React.FC = () => {
 };
 
 export default WorkoutBuilder;
+
