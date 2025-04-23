@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Bug } from 'lucide-react';
@@ -27,7 +28,7 @@ const WorkoutHistory: React.FC = () => {
     });
     
     // Use a strict boolean comparison to ensure we only get truly completed workouts
-    // CRITICAL FIX: Ensure we're properly filtering for completed===true (boolean)
+    // CRITICAL FIX: Make sure we're using very strict filtering for completed===true
     const strictCompleted = workouts.filter(w => w.completed === true);
     
     console.log('Strict completed filter found:', strictCompleted.length);

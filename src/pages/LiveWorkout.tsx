@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -185,7 +186,8 @@ const LiveWorkout = () => {
           lastProgressDate: new Date()
         };
       });
-      
+
+      // CRITICAL FIX: Create a new object with completed explicitly set to true
       const updatedWorkout = {
         ...workout,
         exercises: updatedExercises,
@@ -198,13 +200,16 @@ const LiveWorkout = () => {
       console.log('CRITICAL - Completed status before save:', updatedWorkout.completed);
       console.log('CRITICAL - Type of completed property:', typeof updatedWorkout.completed);
       console.log('CRITICAL - Full workout object to be saved:', JSON.stringify(updatedWorkout));
+      console.log("Saving workout:", updatedWorkout); // Added debugging log
       
+      // CRITICAL FIX: Force the completed flag to true when saving
       const savedWorkout = updateWorkout({
         ...updatedWorkout,
-        completed: true // Redundant but ensuring it's set here too
+        completed: true // CRITICAL: Force this to be true
       });
       
       console.log('CRITICAL - Result of updateWorkout operation:', savedWorkout);
+      console.log('CRITICAL - Updated workout completed status:', savedWorkout?.completed);
       
       setTimeout(() => {
         const allWorkouts = workouts || [];
@@ -533,3 +538,4 @@ const LiveWorkout = () => {
 };
 
 export default LiveWorkout;
+

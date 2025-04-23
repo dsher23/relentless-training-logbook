@@ -149,15 +149,16 @@ export const useWorkouts = () => {
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // CRITICAL FIX: Force ensure workout has completed status properly set as a boolean
-      const completed = workout.completed === true;
+      // CRITICAL FIX: Force ensure workout has completed status properly set
+      // Make a deliberate check for true to ensure the boolean type
+      const isCompleted = workout.completed === true;
       
       // Ensure workout has all required fields and explicitly parse the completed status
       const updatedWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: completed, // Ensure boolean conversion and preserve true status
+        completed: isCompleted, // Ensure boolean conversion and preserve true status
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -167,25 +168,26 @@ export const useWorkouts = () => {
         })) : []
       };
       
-      console.log('Updating workout with ID:', updatedWorkout.id);
-      console.log('Completed status before update:', completed);
-      console.log('Type of completed property:', typeof updatedWorkout.completed);
+      console.log('updateWorkout - Updating workout with ID:', updatedWorkout.id);
+      console.log('updateWorkout - Completed status before update:', isCompleted);
+      console.log('updateWorkout - Type of completed property:', typeof updatedWorkout.completed);
+      console.log('updateWorkout - Full workout object:', JSON.stringify(updatedWorkout));
       
       // Use a function to update state to ensure we have the latest state
       setWorkouts(prev => {
         const exists = prev.some(w => w.id === updatedWorkout.id);
-        console.log(`Workout ${updatedWorkout.id} exists in state: ${exists}`);
+        console.log(`updateWorkout - Workout ${updatedWorkout.id} exists in state: ${exists}`);
         
         if (exists) {
           const newWorkouts = prev.map(w => 
             w.id === updatedWorkout.id ? updatedWorkout : w
           );
-          console.log('Updated workouts array length:', newWorkouts.length);
-          console.log('Updated completed workouts:', newWorkouts.filter(w => w.completed === true).length);
+          console.log('updateWorkout - Updated workouts array length:', newWorkouts.length);
+          console.log('updateWorkout - Updated completed workouts:', newWorkouts.filter(w => w.completed === true).length);
           return newWorkouts;
         } else {
           const newWorkouts = [...prev, updatedWorkout];
-          console.log('Added new workout, total:', newWorkouts.length);
+          console.log('updateWorkout - Added new workout, total:', newWorkouts.length);
           return newWorkouts;
         }
       });
