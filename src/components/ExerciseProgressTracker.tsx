@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -30,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Star, StarOff, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getNumber, calculateOneRepMax } from "@/utils/numberUtils";
+import { calculateOneRepMax } from "@/utils/numberUtils";
 
 interface ExerciseSetData {
   date: Date;
@@ -558,7 +557,7 @@ const ExerciseProgressTracker: React.FC = () => {
                           <td className="py-2 text-right">{entry.reps}</td>
                           <td className="py-2 text-right">{entry.volume} kg</td>
                           <td className="py-2 text-right">
-                            {calculateOneRepMax(entry.weight, entry.reps).toFixed(1)} kg
+                            {calculateOneRepMax(Number(entry.weight), Number(entry.reps)).toFixed(1)} kg
                           </td>
                         </tr>
                       ))}

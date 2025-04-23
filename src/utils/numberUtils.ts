@@ -21,8 +21,8 @@ export function getNumber(value: string | number | undefined | null | any): numb
  * Calculates one rep max using Brzycki formula
  */
 export function calculateOneRepMax(weight: number | string | undefined | null, reps: number | string | undefined | null): number {
-  const numWeight = getNumber(weight);
-  const numReps = getNumber(reps);
+  const numWeight = Number(weight || 0);
+  const numReps = Number(reps || 0);
   
   if (numReps === 1) return numWeight;
   return numWeight * (1 + numReps / 30);
