@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { useAppContext, Workout, WorkoutTemplate } from '@/context/AppContext';
@@ -8,7 +9,7 @@ export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => 
     ...template,
     date: new Date(),
     completed: false,
-    notes: template.notes || '', // Ensure notes is always a string
+    notes: '', // Set a default empty string for notes since it's required in Workout
     exercises: template.exercises,
     scheduledTime: template.scheduledTime
   };
