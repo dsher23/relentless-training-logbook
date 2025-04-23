@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Play, Calendar as CalendarIcon } from "lucide-react";
+import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderExtended from "@/components/HeaderExtended";
 import ActivityStats from "@/components/dashboard/ActivityStats";
@@ -27,9 +27,24 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <HeaderExtended title="Dashboard" hasBackButton={false} />
+      <HeaderExtended title="IronLog" hasBackButton={false} />
       
-      <div className="px-4 space-y-8">
+      <div className="px-4 space-y-6">
+        {/* Main action button */}
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="mt-4"
+        >
+          <Button 
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-8 flex items-center justify-center shadow-lg rounded-xl text-lg"
+            onClick={() => navigate("/workout-selection")}
+          >
+            <Play className="mr-3 h-6 w-6" />
+            Start Workout
+          </Button>
+        </motion.div>
+      
         {/* Today's Workout */}
         {todaysWorkout && (
           <div className="mt-4">
@@ -38,7 +53,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <CalendarIcon className="h-4 w-4 text-primary" />
+                      <Calendar className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium text-primary">Today's Workout</span>
                     </div>
                     <h3 className="text-lg font-semibold">{todaysWorkout.name}</h3>
@@ -47,7 +62,6 @@ const Dashboard: React.FC = () => {
                     </p>
                   </div>
                   <Button 
-                    className="bg-gym-blue hover:bg-gym-blue/90 text-white"
                     onClick={() => navigate(`/live-workout/${todaysWorkout.id}?isTemplate=true`)}
                   >
                     <Play className="h-4 w-4 mr-2" />
@@ -73,45 +87,58 @@ const Dashboard: React.FC = () => {
             </Card>
           </div>
         )}
-      
-        {/* Training Hub and Start Workout Buttons */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+        
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/workout-history")}
           >
-            <Button 
-              className="w-full bg-gym-blue hover:bg-gym-blue/90 text-white font-semibold py-6 flex items-center justify-center shadow-lg rounded-xl"
-              onClick={() => navigate("/training")}
-            >
-              <Dumbbell className="mr-3 h-5 w-5" />
-              Training Hub
-            </Button>
-          </motion.div>
-          
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            <Clock className="h-5 w-5" />
+            <span>Workout History</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/measurements")}
           >
-            <Button 
-              className="w-full bg-gym-purple hover:bg-gym-purple/90 text-white font-semibold py-6 flex items-center justify-center shadow-lg rounded-xl"
-              onClick={() => navigate("/workout-selection")}
-            >
-              <Play className="mr-3 h-5 w-5" />
-              Start Workout
-            </Button>
-          </motion.div>
+            <Activity className="h-5 w-5" />
+            <span>Measurements</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/supplements")}
+          >
+            <PillIcon className="h-5 w-5" />
+            <span>Supplements</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/training")}
+          >
+            <Dumbbell className="h-5 w-5" />
+            <span>Training Hub</span>
+          </Button>
         </div>
 
         {/* Activity Stats */}
         <div>
-          <h2 className="text-xl font-bold mb-4">Activity Overview</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Activity Overview
+          </h2>
           <ActivityStats />
         </div>
 
         {/* Weekly Progress */}
         <div className="pb-8">
-          <h2 className="text-xl font-bold mb-4">Weekly Progress</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Weekly Progress
+          </h2>
           <WeeklyProgress />
         </div>
       </div>

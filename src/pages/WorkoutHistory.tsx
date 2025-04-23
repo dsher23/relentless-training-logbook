@@ -72,7 +72,7 @@ const WorkoutHistory: React.FC = () => {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
-                You haven't completed any workouts yet. Complete a workout to see it here.
+                No workouts logged yet — start one from the Dashboard.
               </p>
             </CardContent>
           </Card>

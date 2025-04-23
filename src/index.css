@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
 
 @tailwind base;
@@ -46,10 +47,12 @@
   body {
     @apply bg-gym-dark text-gym-text-primary antialiased selection:bg-gym-blue/25;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-bold tracking-tight;
+    font-family: 'Poppins', sans-serif;
   }
 }
 
@@ -77,10 +80,34 @@
   .card-gradient {
     @apply bg-gradient-to-br from-background to-secondary/50;
   }
+  
+  /* Added styles for better touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
 
 @layer utilities {
   .glass-effect {
     @apply bg-black/40 backdrop-blur-sm border border-white/10;
   }
+  
+  /* Animation classes */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* Better tap target size for mobile */
+button, 
+a, 
+input[type="button"], 
+input[type="submit"],
+.interactive {
+  touch-action: manipulation;
 }

@@ -1,16 +1,14 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Dumbbell, 
   Calendar, 
-  LineChart, 
   Clock, 
-  Trophy,
+  Plus,
   Play,
-  CalendarDays,
-  Home,
-  Edit,
-  Trash2
+  ArrowLeft,
+  Edit 
 } from "lucide-react";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +24,6 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useState } from "react";
 
 const Training: React.FC = () => {
   const navigate = useNavigate();
@@ -51,28 +48,48 @@ const Training: React.FC = () => {
     if (activePlan) {
       navigate(`/exercise-plans/${activePlan.id}/days/${workoutId}`);
     } else {
-      // If no active plan, still try to navigate to the workout edit page
       navigate(`/exercise-plans/days/${workoutId}`);
     }
   };
     
   const handleDeleteConfirm = () => {
     if (!itemToDelete) return;
-    
-    if (itemToDelete.type === 'workout') {
-      // Handle workout deletion
-      console.log(`Deleting workout: ${itemToDelete.id}`);
-    }
-    
     setConfirmDialog(false);
     setItemToDelete(null);
   };
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title="Training Hub" />
+      <Header title="Workouts">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </Header>
       
       <div className="p-4 space-y-6">
+        {/* Start Workout Button */}
+        <Button
+          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 flex items-center justify-center shadow-lg rounded-xl"
+          onClick={() => navigate("/workout-selection")}
+        >
+          <Play className="mr-3 h-5 w-5" />
+          Start Workout
+        </Button>
+        
+        {/* Create Workout Button */}
+        <Button
+          variant="outline"
+          className="w-full py-4 flex items-center justify-center"
+          onClick={() => navigate("/workouts/new")}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Workout
+        </Button>
+      
         {/* Today's workout if scheduled */}
         {todaysWorkout && (
           <Card className="bg-primary/10 mb-2">
@@ -96,7 +113,6 @@ const Training: React.FC = () => {
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-gym-blue hover:bg-gym-blue/90 text-white"
                     onClick={() => navigate(`/live-workout/${todaysWorkout.id}?isTemplate=true`)}
                   >
                     Start
@@ -107,18 +123,18 @@ const Training: React.FC = () => {
           </Card>
         )}
       
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/workouts")}>
               <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-gym-blue/10">
-                  <Dumbbell className="h-6 w-6 text-gym-blue" />
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Dumbbell className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">My Workouts</h3>
+                  <h3 className="font-bold text-lg">My Workout Library</h3>
                   <p className="text-muted-foreground">Browse and manage your workout collection</p>
                 </div>
               </CardContent>
@@ -131,8 +147,8 @@ const Training: React.FC = () => {
           >
             <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/workout-history")}>
               <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-gym-orange/10">
-                  <Clock className="h-6 w-6 text-gym-orange" />
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Workout History</h3>
@@ -146,27 +162,10 @@ const Training: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/plans")}>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-gym-green/10">
-                  <Calendar className="h-6 w-6 text-gym-green" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Workout Plans</h3>
-                  <p className="text-muted-foreground">Schedule and follow structured plans</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
             <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/weekly-overview")}>
               <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-gym-purple/10">
-                  <CalendarDays className="h-6 w-6 text-gym-purple" />
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Calendar className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Weekly Schedule</h3>
@@ -175,26 +174,6 @@ const Training: React.FC = () => {
               </CardContent>
             </Card>
           </motion.div>
-        </div>
-
-        <div className="mt-4">
-          <Card className="bg-gradient-to-r from-gym-blue to-gym-purple">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold text-xl text-white">Ready to train?</h3>
-                  <p className="text-white/80">Start a new workout session now</p>
-                </div>
-                <Button 
-                  onClick={() => navigate("/workout-selection")}
-                  className="bg-white text-gym-purple hover:bg-white/90"
-                >
-                  <Play className="mr-2 h-4 w-4" /> 
-                  Start Workout
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
       
