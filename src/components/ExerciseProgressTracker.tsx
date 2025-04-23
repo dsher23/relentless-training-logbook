@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -190,14 +191,14 @@ const ExerciseProgressTracker: React.FC = () => {
     const first = exerciseData[0];
     const last = exerciseData[exerciseData.length - 1];
     
-    const weightChange = last.weight - first.weight;
-    const weightPercentage = first.weight > 0 ? (weightChange / first.weight) * 100 : 0;
+    const weightChange = getNumber(last.weight) - getNumber(first.weight);
+    const weightPercentage = getNumber(first.weight) > 0 ? (weightChange / getNumber(first.weight)) * 100 : 0;
     
-    const volumeChange = last.volume - first.volume;
-    const volumePercentage = first.volume > 0 ? (volumeChange / first.volume) * 100 : 0;
+    const volumeChange = getNumber(last.volume) - getNumber(first.volume);
+    const volumePercentage = getNumber(first.volume) > 0 ? (volumeChange / getNumber(first.volume)) * 100 : 0;
     
-    const firstOneRM = calculateOneRepMax(first.weight, first.reps);
-    const lastOneRM = calculateOneRepMax(last.weight, last.reps);
+    const firstOneRM = calculateOneRepMax(getNumber(first.weight), getNumber(first.reps));
+    const lastOneRM = calculateOneRepMax(getNumber(last.weight), getNumber(last.reps));
     const oneRMChange = lastOneRM - firstOneRM;
     const oneRMPercentage = firstOneRM > 0 ? (oneRMChange / firstOneRM) * 100 : 0;
     
