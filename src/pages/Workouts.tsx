@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Plus, Calendar, ClipboardList, Star, CalendarDays } from "lucide-react";
@@ -25,7 +24,7 @@ const Workouts: React.FC = () => {
   
   // Group workouts by completion status and sort by date
   const completedWorkouts = workouts
-    .filter(w => w.completed)
+    .filter(w => w.completed === true)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   // Get active workout plan

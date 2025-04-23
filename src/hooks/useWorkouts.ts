@@ -38,6 +38,7 @@ export const useWorkouts = () => {
         }
 
         localStorage.setItem('workouts', JSON.stringify(prunedWorkouts));
+        console.log('Saved workouts to localStorage:', prunedWorkouts.length);
       } catch (error) {
         console.error('Error saving workouts to localStorage:', error);
         
@@ -66,13 +67,28 @@ export const useWorkouts = () => {
   const addWorkout = useCallback((workout: Workout) => {
     const newWorkout = {
       ...workout,
-      id: workout.id || uuidv4()
+      id: workout.id || uuidv4(),
+      date: workout.date || new Date(),
+      completed: workout.completed || false
     };
     setWorkouts(prev => [...prev, newWorkout]);
   }, []);
 
   const updateWorkout = useCallback((workout: Workout) => {
-    setWorkouts(prev => prev.map(w => w.id === workout.id ? workout : w));
+    const updatedWorkout = {
+      ...workout,
+      date: workout.date || new Date(),
+      completed: typeof workout.completed === 'boolean' ? workout.completed : false
+    };
+    
+    setWorkouts(prev => {
+      const exists = prev.some(w => w.id === updatedWorkout.id);
+      if (exists) {
+        return prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w);
+      } else {
+        return [...prev, updatedWorkout];
+      }
+    });
   }, []);
 
   const deleteWorkout = useCallback((id: string) => {

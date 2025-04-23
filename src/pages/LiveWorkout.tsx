@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -229,7 +230,7 @@ const LiveWorkout = () => {
       return {
         ...exercise,
         sets: data.sets,
-        notes: data.notes || undefined,
+        notes: data.notes || "",  // Ensure notes is always a string
         lastProgressDate: new Date()
       };
     });
@@ -238,8 +239,10 @@ const LiveWorkout = () => {
       ...workout,
       exercises: updatedExercises,
       completed: true,
+      date: new Date(), // Ensure date is updated to completion time
     };
     
+    // Save the completed workout
     updateWorkout(updatedWorkout);
     
     toast({

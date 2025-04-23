@@ -1,16 +1,18 @@
 
 import React from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppContext } from '@/context/AppContext';
 
 const WorkoutHistory: React.FC = () => {
   const { workouts } = useAppContext();
+  const navigate = useNavigate();
   
   // Get completed workouts and sort by date (newest first)
   const completedWorkouts = workouts
-    .filter(workout => workout.completed)
+    .filter(workout => workout.completed === true) // Explicit equality check
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
@@ -29,7 +31,11 @@ const WorkoutHistory: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {completedWorkouts.map(workout => (
-              <Card key={workout.id}>
+              <Card 
+                key={workout.id}
+                className="cursor-pointer hover:border-primary"
+                onClick={() => navigate(`/workouts/${workout.id}`)}
+              >
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <div>
