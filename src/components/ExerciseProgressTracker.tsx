@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -123,8 +124,9 @@ const ExerciseProgressTracker: React.FC = () => {
         let totalReps = 0;
         
         matchingExercise.sets.forEach(set => {
-          const weight = Number((set as any).weight || 0);
-          const reps = Number((set as any).reps || 0);
+          // Fix: Explicitly convert weight and reps to numbers with fallback to 0
+          const weight = Number(set?.weight || 0);
+          const reps = Number(set?.reps || 0);
           
           if (weight && reps) {
             const setVolume = weight * reps;
