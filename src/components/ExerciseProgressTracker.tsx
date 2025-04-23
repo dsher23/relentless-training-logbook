@@ -214,8 +214,11 @@ const ExerciseProgressTracker: React.FC = () => {
       d["Reps"]
     );
     
-    const max = Math.max(...values);
-    const min = Math.min(...values);
+   const weightChange = Number(last.weight ?? 0) - Number(first.weight ?? 0);
+const weightPercentage = Number(first.weight ?? 0) > 0
+  ? (weightChange / Number(first.weight)) * 100
+  : 0;
+
     const padding = (max - min) * 0.1;
     
     return [Math.max(0, min - padding), max + padding];
