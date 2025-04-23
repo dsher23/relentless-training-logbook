@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight } from "lucide-react";
@@ -189,7 +188,7 @@ const LiveWorkout = () => {
       const updatedWorkout = {
         ...workout,
         exercises: updatedExercises,
-        completed: true, // Explicitly set to true
+        completed: true, // Explicitly set to true as a boolean
         date: new Date(), // Ensure date is updated to completion time
         notes: workout.notes || "", // Ensure notes exists
       };
@@ -212,7 +211,7 @@ const LiveWorkout = () => {
       // Wait a moment before redirecting to ensure state updates
       setTimeout(() => {
         navigate("/workout-history");
-      }, 500);
+      }, 1000); // Increased delay to ensure state updates properly
     } catch (error) {
       console.error("Error saving workout:", error);
       toast({

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +20,13 @@ const WorkoutHistory: React.FC = () => {
   
   useEffect(() => {
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
-    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed, name: w.name, date: w.date})));
+    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({
+      id: w.id, 
+      completed: w.completed, 
+      completedType: typeof w.completed,
+      name: w.name, 
+      date: w.date
+    })));
     
     const completed = workouts
       .filter(workout => workout.completed === true)
@@ -65,7 +72,7 @@ const WorkoutHistory: React.FC = () => {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
-                No completed workouts yet. Complete a workout to see it here.
+                You haven't completed any workouts yet. Complete a workout to see it here.
               </p>
             </CardContent>
           </Card>

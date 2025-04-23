@@ -20,7 +20,7 @@ export const useWorkouts = () => {
           ...w,
           id: w.id || uuidv4(),
           date: w.date ? new Date(w.date) : new Date(),  // Ensure dates are properly parsed
-          completed: typeof w.completed === 'boolean' ? w.completed : false,
+          completed: w.completed === true,  // Normalize to boolean
           notes: w.notes || '',
           exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
             ...ex,
@@ -56,8 +56,14 @@ export const useWorkouts = () => {
   useEffect(() => {
     if (workouts.length > 0) {
       try {
+        // Ensure completed status is correctly serialized
+        const workoutsToStore = workouts.map(w => ({
+          ...w,
+          completed: w.completed === true  // Normalize to boolean
+        }));
+        
         // Preserve completed status during sorting and storing
-        const sortedWorkouts = [...workouts].sort(
+        const sortedWorkouts = [...workoutsToStore].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         
@@ -108,7 +114,7 @@ export const useWorkouts = () => {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: typeof workout.completed === 'boolean' ? workout.completed : false,
+        completed: workout.completed === true,  // Normalize to boolean
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -142,7 +148,7 @@ export const useWorkouts = () => {
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // Force ensure workout has completed status properly set
+      // Force ensure workout has completed status properly set as a boolean
       const completed = workout.completed === true;
       
       // Ensure workout has all required fields and explicitly parse the completed status
