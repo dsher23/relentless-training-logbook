@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -188,27 +187,29 @@ const LiveWorkout = () => {
         };
       });
 
-      // Create a new workout object with completed explicitly set to true
+      // CRITICAL FIX: Create a clean new workout object with completed EXPLICITLY set to true
+      // No conditionals, no type checking, just set it directly to true
       const completedWorkout = {
         id: workout.id,
         name: workout.name,
         exercises: updatedExercises,
-        completed: true, // CRITICAL FIX: Always set to true explicitly
+        completed: true, // EXPLICIT true value - this is the key fix
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      console.log("CRITICAL DEBUGGING - WORKOUT OBJECT BEFORE SAVE:", {
-        id: completedWorkout.id,
-        name: completedWorkout.name,
-        completed: completedWorkout.completed,
-        completedType: typeof completedWorkout.completed
+      // Enhanced debugging before save
+      console.log("CRITICAL - FINISH WORKOUT - Object being saved:", completedWorkout);
+      console.log("CRITICAL - FINISH WORKOUT - completed field:", {
+        value: completedWorkout.completed,
+        type: typeof completedWorkout.completed
       });
       
       // Save the workout with completed: true
       updateWorkout(completedWorkout);
       
-      console.log("CRITICAL DEBUGGING - FULL WORKOUT OBJECT:", JSON.stringify(completedWorkout));
+      // Additional logging after save to verify
+      console.log("CRITICAL - FINISH WORKOUT - Object after updateWorkout call:", JSON.stringify(completedWorkout));
       
       localStorage.removeItem('workout_in_progress');
       

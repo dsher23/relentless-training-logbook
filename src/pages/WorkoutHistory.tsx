@@ -19,40 +19,60 @@ const WorkoutHistory: React.FC = () => {
   const [debugMode, setDebugMode] = useState<boolean>(true); // Keep debug mode on for troubleshooting
   
   useEffect(() => {
-    // Critical debugging logs - expanded for more visibility
+    // Enhanced debugging logs with more details
     console.log('WorkoutHistory - All workouts:', workouts);
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     
-    // Log detailed information about each workout with more clarity
-    workouts.forEach(workout => {
-      console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed} (type: ${typeof workout.completed})`);
+    // Log every workout with its completed status
+    workouts.forEach((workout, index) => {
+      console.log(`Workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed} (type: ${typeof workout.completed}), JSON=${JSON.stringify(workout)}`);
     });
     
-    // CRITICAL FIX: Force boolean comparison and show exact matches for debugging
-    const trueCompletedWorkouts = workouts.filter(w => w.completed === true);
-    const falseCompletedWorkouts = workouts.filter(w => w.completed === false);
-    const nullishCompletedWorkouts = workouts.filter(w => w.completed == null);
+    // Try multiple approaches to identify completed workouts - CRITICAL DEBUG
+    const strictTrueWorkouts = workouts.filter(w => w.completed === true);
+    const looseCompletedWorkouts = workouts.filter(w => w.completed);
+    const allWorkouts = [...workouts]; // Create a copy to avoid mutation
     
-    console.log('WorkoutHistory - CRITICAL - Strictly completed workouts (=== true):', trueCompletedWorkouts.length);
-    console.log('WorkoutHistory - False completed workouts (=== false):', falseCompletedWorkouts.length);
-    console.log('WorkoutHistory - Nullish completed workouts (== null):', nullishCompletedWorkouts.length);
+    console.log('CRITICAL DEBUG - Strict true workouts count:', strictTrueWorkouts.length);
+    console.log('CRITICAL DEBUG - Loose completed workouts count:', looseCompletedWorkouts.length);
+    console.log('CRITICAL DEBUG - First 3 strict completed workouts:', strictTrueWorkouts.slice(0, 3));
     
-    // Detailed workout inspection for first 5 workouts
-    workouts.slice(0, 5).forEach((w, i) => {
-      console.log(`Detailed workout ${i}: id=${w.id}, completed=${w.completed}, type=${typeof w.completed}, JSON:`, JSON.stringify(w.completed));
-    });
+    // CRITICAL FIX: Instead of relying on filtering, let's manually inspect each workout
+    const manuallyIdentifiedCompleted = [];
     
-    // Sort completed workouts by date, newest first - ONLY include TRUE completed workouts
-    const sortedCompleted = trueCompletedWorkouts.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    
-    console.log('WorkoutHistory - Sorted TRUE completed workouts found:', sortedCompleted.length);
-    if (sortedCompleted.length > 0) {
-      console.log('WorkoutHistory - First completed workout:', sortedCompleted[0]);
+    for (const workout of allWorkouts) {
+      // Convert whatever the completed value is to a strict boolean
+      const isActuallyCompleted = Boolean(workout.completed);
+      
+      // Log detailed inspection
+      console.log(`Manual check - Workout ${workout.id?.substring(0, 8)} - Raw completed value:`, workout.completed);
+      console.log(`Manual check - Workout ${workout.id?.substring(0, 8)} - Converted to boolean:`, isActuallyCompleted);
+      
+      // If it should be considered completed after our check, add it
+      if (isActuallyCompleted) {
+        // Create a clean copy with completed explicitly set to true
+        manuallyIdentifiedCompleted.push({
+          ...workout,
+          completed: true // Force it to be true for our display
+        });
+      }
     }
     
-    // Set the completed workouts state - ONLY using TRUE completed workouts
+    // Log the results of our manual identification
+    console.log('CRITICAL DEBUG - Manually identified completed workouts:', manuallyIdentifiedCompleted.length);
+    
+    // Sort all workouts (both manually identified and strict true) by date, newest first
+    const sortedCompleted = [...manuallyIdentifiedCompleted, ...strictTrueWorkouts]
+      // Remove duplicates based on ID
+      .filter((workout, index, self) => 
+        index === self.findIndex(w => w.id === workout.id)
+      )
+      // Sort by date, newest first  
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    console.log('WorkoutHistory - Final sorted completed workouts:', sortedCompleted.length);
+    
+    // Set the state with our manually verified completed workouts
     setCompletedWorkouts(sortedCompleted);
   }, [workouts]);
 
@@ -75,6 +95,29 @@ const WorkoutHistory: React.FC = () => {
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  // Added debugging function to help diagnose the issue
+  const forceCompletedWorkout = () => {
+    if (workouts.length > 0) {
+      const firstWorkout = workouts[0];
+      
+      // Force add a completed workout to our local state for testing
+      setCompletedWorkouts(prev => [
+        {
+          ...firstWorkout,
+          id: firstWorkout.id + "-test", // Ensure unique ID
+          name: `${firstWorkout.name} (TEST)`,
+          completed: true // EXPLICITLY set to true
+        },
+        ...prev
+      ]);
+      
+      toast({
+        title: "Test workout created",
+        description: "A test completed workout has been added to the view (not saved to storage)"
+      });
+    }
   };
 
   return (
@@ -105,12 +148,39 @@ const WorkoutHistory: React.FC = () => {
             <CardContent className="p-4 text-xs">
               <h3 className="font-bold mb-1">Critical Debug Info:</h3>
               <p>Total workouts: {workouts.length}</p>
-              <p>TRUE completed workouts: {workouts.filter(w => w.completed === true).length}</p>
-              <p>FALSE completed workouts: {workouts.filter(w => w.completed === false).length}</p>
-              <p>UNDEFINED/NULL completed: {workouts.filter(w => w.completed == null).length}</p>
-              <p className="font-bold mt-2">All Workouts:</p>
+              <p>Strict TRUE completed: {workouts.filter(w => w.completed === true).length}</p>
+              <p>Boolean completed: {workouts.filter(w => Boolean(w.completed)).length}</p>
+              <p>Displayed completed: {completedWorkouts.length}</p>
+              
+              <div className="mt-3 p-2 border border-yellow-400 rounded">
+                <p className="font-bold text-amber-700">WORKOUT DISPLAY DEBUG:</p>
+                <div className="flex gap-2 mt-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="text-xs"
+                    onClick={forceCompletedWorkout}
+                  >
+                    Test: Add Completed Workout
+                  </Button>
+                </div>
+                
+                <div className="mt-3">
+                  <p className="font-bold">Displayed Workout IDs:</p>
+                  <ul className="list-disc pl-5 mt-1">
+                    {completedWorkouts.slice(0, 5).map(w => (
+                      <li key={w.id} className="text-green-600">
+                        {w.id.substring(0, 8)}... - {w.name} - completed:{" "}
+                        <span className="font-bold">{String(w.completed)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              <p className="font-bold mt-3">All Workouts (raw):</p>
               <ul className="list-disc pl-5">
-                {workouts.slice(0, 20).map(w => (
+                {workouts.slice(0, 10).map(w => (
                   <li key={w.id}>
                     {w.id.substring(0, 8)}... - {w.name} - 
                     completed: <span className={w.completed === true ? "text-green-600 font-bold" : "text-red-600"}>
@@ -119,35 +189,6 @@ const WorkoutHistory: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 p-2 border border-yellow-400 rounded">
-                <p className="font-bold text-amber-700">TESTING ONLY:</p>
-                {completedWorkouts.length === 0 && (
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    className="mt-2"
-                    onClick={() => {
-                      // Create a test completed workout for debugging
-                      const testWorkout = workouts[0];
-                      if (testWorkout) {
-                        // Force a completed workout into state for testing
-                        setCompletedWorkouts([{
-                          ...testWorkout,
-                          id: testWorkout.id,
-                          name: `${testWorkout.name} (TEST)`,
-                          completed: true
-                        }]);
-                        toast({
-                          title: "Test workout created",
-                          description: "A test workout has been added to your view (not saved)"
-                        });
-                      }
-                    }}
-                  >
-                    Create Test Workout
-                  </Button>
-                )}
-              </div>
             </CardContent>
           </Card>
         )}
