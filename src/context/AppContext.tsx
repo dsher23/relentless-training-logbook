@@ -17,6 +17,7 @@ import { useMoodLogs } from '@/hooks/useMoodLogs';
 import { useWeakPoints } from '@/hooks/useWeakPoints';
 import { useWeeklyRoutines } from '@/hooks/useWeeklyRoutines';
 import { useTrainingBlocks } from '@/hooks/useTrainingBlocks';
+import { useToast } from '@/hooks/use-toast';
 
 export type { 
   Workout, Exercise, BodyMeasurement, Supplement, 
@@ -135,6 +136,8 @@ export interface AppContextType {
 export const AppContext = createContext<AppContextType>({} as AppContextType);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { toast } = useToast();
+  
   const {
     workouts,
     setWorkouts,
@@ -366,119 +369,209 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return csvData;
   };
 
-  useEffect(() => {
-    const storedWorkouts = localStorage.getItem('workouts');
-    if (storedWorkouts) {
-      setWorkouts(JSON.parse(storedWorkouts));
+  // Helper function to safely save to localStorage
+  const safeLocalStorage = {
+    setItem: (key: string, value: string): boolean => {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (error) {
+        console.error(`Error saving ${key} to localStorage:`, error);
+        toast({
+          title: "Storage error",
+          description: `Unable to save ${key}. Consider exporting your data.`,
+          variant: "destructive",
+        });
+        return false;
+      }
     }
-    
-    const storedWorkoutTemplates = localStorage.getItem('workoutTemplates');
-    if (storedWorkoutTemplates) {
-      setWorkoutTemplates(JSON.parse(storedWorkoutTemplates));
-    }
-    
-    const storedWorkoutPlans = localStorage.getItem('workoutPlans');
-    if (storedWorkoutPlans) {
-      setWorkoutPlans(JSON.parse(storedWorkoutPlans));
-    }
-    
-    const storedSupplements = localStorage.getItem('supplements');
-    if (storedSupplements) {
-      setSupplements(JSON.parse(storedSupplements));
-    }
-    
-    const storedSupplementLogs = localStorage.getItem('supplementLogs');
-    if (storedSupplementLogs) {
-      setSupplementLogs(JSON.parse(storedSupplementLogs));
-    }
-    
-    const storedSteroidCycles = localStorage.getItem('steroidCycles');
-    if (storedSteroidCycles) {
-      setSteroidCycles(JSON.parse(storedSteroidCycles));
-    }
-    
-    const storedCompounds = localStorage.getItem('compounds');
-    if (storedCompounds) {
-      setCompounds(JSON.parse(storedCompounds));
-    }
+  };
 
-    const storedReminders = localStorage.getItem('reminders');
-    if (storedReminders) {
-      setReminders(JSON.parse(storedReminders));
+  // Load data from localStorage
+  useEffect(() => {
+    // The workouts are now loaded in the useWorkouts hook
+    
+    try {
+      const storedWorkoutTemplates = localStorage.getItem('workoutTemplates');
+      if (storedWorkoutTemplates) {
+        setWorkoutTemplates(JSON.parse(storedWorkoutTemplates));
+      }
+    } catch (error) {
+      console.error('Error loading workout templates:', error);
     }
     
-    const storedBodyMeasurements = localStorage.getItem('bodyMeasurements');
-    if (storedBodyMeasurements && setBodyMeasurements) {
-      setBodyMeasurements(JSON.parse(storedBodyMeasurements));
+    try {
+      const storedWorkoutPlans = localStorage.getItem('workoutPlans');
+      if (storedWorkoutPlans) {
+        setWorkoutPlans(JSON.parse(storedWorkoutPlans));
+      }
+    } catch (error) {
+      console.error('Error loading workout plans:', error);
     }
     
-    const storedMoodLogs = localStorage.getItem('moodLogs');
-    if (storedMoodLogs && setMoodLogs) {
-      setMoodLogs(JSON.parse(storedMoodLogs));
+    try {
+      const storedSupplements = localStorage.getItem('supplements');
+      if (storedSupplements) {
+        setSupplements(JSON.parse(storedSupplements));
+      }
+    } catch (error) {
+      console.error('Error loading supplements:', error);
     }
     
-    const storedWeakPoints = localStorage.getItem('weakPoints');
-    if (storedWeakPoints && setWeakPoints) {
-      setWeakPoints(JSON.parse(storedWeakPoints));
+    try {
+      const storedSupplementLogs = localStorage.getItem('supplementLogs');
+      if (storedSupplementLogs) {
+        setSupplementLogs(JSON.parse(storedSupplementLogs));
+      }
+    } catch (error) {
+      console.error('Error loading supplement logs:', error);
     }
     
-    const storedWeeklyRoutines = localStorage.getItem('weeklyRoutines');
-    if (storedWeeklyRoutines && setWeeklyRoutines) {
-      setWeeklyRoutines(JSON.parse(storedWeeklyRoutines));
+    try {
+      const storedSteroidCycles = localStorage.getItem('steroidCycles');
+      if (storedSteroidCycles) {
+        setSteroidCycles(JSON.parse(storedSteroidCycles));
+      }
+    } catch (error) {
+      console.error('Error loading steroid cycles:', error);
     }
     
-    const storedTrainingBlocks = localStorage.getItem('trainingBlocks');
-    if (storedTrainingBlocks && setTrainingBlocks) {
-      setTrainingBlocks(JSON.parse(storedTrainingBlocks));
+    try {
+      const storedCompounds = localStorage.getItem('compounds');
+      if (storedCompounds) {
+        setCompounds(JSON.parse(storedCompounds));
+      }
+    } catch (error) {
+      console.error('Error loading compounds:', error);
     }
     
-    const storedProgressPhotos = localStorage.getItem('progressPhotos');
-    if (storedProgressPhotos && setProgressPhotos) {
-      setProgressPhotos(JSON.parse(storedProgressPhotos));
+    try {
+      const storedReminders = localStorage.getItem('reminders');
+      if (storedReminders) {
+        setReminders(JSON.parse(storedReminders));
+      }
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+    }
+    
+    try {
+      const storedBodyMeasurements = localStorage.getItem('bodyMeasurements');
+      if (storedBodyMeasurements && setBodyMeasurements) {
+        setBodyMeasurements(JSON.parse(storedBodyMeasurements));
+      }
+    } catch (error) {
+      console.error('Error loading body measurements:', error);
+    }
+    
+    try {
+      const storedMoodLogs = localStorage.getItem('moodLogs');
+      if (storedMoodLogs && setMoodLogs) {
+        setMoodLogs(JSON.parse(storedMoodLogs));
+      }
+    } catch (error) {
+      console.error('Error loading mood logs:', error);
+    }
+    
+    try {
+      const storedWeakPoints = localStorage.getItem('weakPoints');
+      if (storedWeakPoints && setWeakPoints) {
+        setWeakPoints(JSON.parse(storedWeakPoints));
+      }
+    } catch (error) {
+      console.error('Error loading weak points:', error);
+    }
+    
+    try {
+      const storedWeeklyRoutines = localStorage.getItem('weeklyRoutines');
+      if (storedWeeklyRoutines && setWeeklyRoutines) {
+        setWeeklyRoutines(JSON.parse(storedWeeklyRoutines));
+      }
+    } catch (error) {
+      console.error('Error loading weekly routines:', error);
+    }
+    
+    try {
+      const storedTrainingBlocks = localStorage.getItem('trainingBlocks');
+      if (storedTrainingBlocks && setTrainingBlocks) {
+        setTrainingBlocks(JSON.parse(storedTrainingBlocks));
+      }
+    } catch (error) {
+      console.error('Error loading training blocks:', error);
+    }
+    
+    try {
+      const storedProgressPhotos = localStorage.getItem('progressPhotos');
+      if (storedProgressPhotos && setProgressPhotos) {
+        setProgressPhotos(JSON.parse(storedProgressPhotos));
+      }
+    } catch (error) {
+      console.error('Error loading progress photos:', error);
     }
   }, [
-    setWorkouts, setWorkoutTemplates, setWorkoutPlans, 
+    setWorkoutTemplates, setWorkoutPlans, 
     setSupplements, setSupplementLogs, setSteroidCycles, 
     setCompounds, setReminders, setBodyMeasurements,
     setMoodLogs, setWeakPoints, setWeeklyRoutines, setTrainingBlocks,
     setProgressPhotos
   ]);
 
+  // Save data to localStorage with error handling
   useEffect(() => {
-    localStorage.setItem('workouts', JSON.stringify(workouts));
-    localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
-    localStorage.setItem('workoutPlans', JSON.stringify(workoutPlans));
-    localStorage.setItem('supplements', JSON.stringify(supplements));
-    localStorage.setItem('supplementLogs', JSON.stringify(supplementLogs));
-    localStorage.setItem('steroidCycles', JSON.stringify(steroidCycles));
-    localStorage.setItem('compounds', JSON.stringify(compounds));
-    localStorage.setItem('reminders', JSON.stringify(reminders));
+    // Workouts are now saved in the useWorkouts hook
+    
+    if (workoutTemplates.length > 0) {
+      safeLocalStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
+    }
+    
+    if (workoutPlans.length > 0) {
+      safeLocalStorage.setItem('workoutPlans', JSON.stringify(workoutPlans));
+    }
+    
+    if (supplements.length > 0) {
+      safeLocalStorage.setItem('supplements', JSON.stringify(supplements));
+    }
+    
+    if (supplementLogs.length > 0) {
+      safeLocalStorage.setItem('supplementLogs', JSON.stringify(supplementLogs));
+    }
+    
+    if (steroidCycles.length > 0) {
+      safeLocalStorage.setItem('steroidCycles', JSON.stringify(steroidCycles));
+    }
+    
+    if (compounds.length > 0) {
+      safeLocalStorage.setItem('compounds', JSON.stringify(compounds));
+    }
+    
+    if (reminders.length > 0) {
+      safeLocalStorage.setItem('reminders', JSON.stringify(reminders));
+    }
     
     if (bodyMeasurements.length > 0) {
-      localStorage.setItem('bodyMeasurements', JSON.stringify(bodyMeasurements));
+      safeLocalStorage.setItem('bodyMeasurements', JSON.stringify(bodyMeasurements));
     }
     
     if (moodLogs.length > 0) {
-      localStorage.setItem('moodLogs', JSON.stringify(moodLogs));
+      safeLocalStorage.setItem('moodLogs', JSON.stringify(moodLogs));
     }
     
     if (weakPoints.length > 0) {
-      localStorage.setItem('weakPoints', JSON.stringify(weakPoints));
+      safeLocalStorage.setItem('weakPoints', JSON.stringify(weakPoints));
     }
     
     if (weeklyRoutines.length > 0) {
-      localStorage.setItem('weeklyRoutines', JSON.stringify(weeklyRoutines));
+      safeLocalStorage.setItem('weeklyRoutines', JSON.stringify(weeklyRoutines));
     }
     
     if (trainingBlocks.length > 0) {
-      localStorage.setItem('trainingBlocks', JSON.stringify(trainingBlocks));
+      safeLocalStorage.setItem('trainingBlocks', JSON.stringify(trainingBlocks));
     }
     
     if (progressPhotos && progressPhotos.length > 0) {
-      localStorage.setItem('progressPhotos', JSON.stringify(progressPhotos));
+      safeLocalStorage.setItem('progressPhotos', JSON.stringify(progressPhotos));
     }
   }, [
-    workouts, workoutTemplates, workoutPlans, 
+    workoutTemplates, workoutPlans, 
     supplements, supplementLogs, steroidCycles, 
     compounds, reminders, bodyMeasurements,
     moodLogs, weakPoints, weeklyRoutines, trainingBlocks,
