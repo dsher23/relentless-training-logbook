@@ -22,6 +22,7 @@ import DayExercises from './pages/DayExercises';
 import WeeklyOverview from './pages/WeeklyOverview';
 import Measurements from './pages/Measurements';
 import Supplements from './pages/Supplements';
+import Recovery from './pages/Recovery';
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
           
           <Route path="/measurements" element={<Measurements />} />
           <Route path="/supplements" element={<Supplements />} />
+          <Route path="/recovery" element={<Recovery />} />
           
           <Route path="/home" element={<Index />} />
         </Routes>
