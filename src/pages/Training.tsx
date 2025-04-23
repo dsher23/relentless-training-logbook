@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -78,7 +77,7 @@ const Training: React.FC = () => {
                     size="sm"
                     variant="outline"
                     className="flex items-center"
-                    onClick={() => navigate(`/exercise-plans/days/${todaysWorkout.id}`)}
+                    onClick={() => navigate(`/workouts/builder/${todaysWorkout.id}`)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit

@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
-import { useAppContext, Workout } from '@/context/AppContext';
+import { useAppContext, Workout, WorkoutTemplate } from '@/context/AppContext';
 
 export const useWorkoutLoader = (id: string | undefined) => {
-  const { getWorkoutById } = useAppContext();
-  const [workout, setWorkout] = useState<Workout | undefined>();
+  const { getWorkoutById, workoutTemplates } = useAppContext();
+  const [workout, setWorkout] = useState<Workout | WorkoutTemplate | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+  const [isTemplate, setIsTemplate] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,14 +17,25 @@ export const useWorkoutLoader = (id: string | undefined) => {
 
     if (!workout?.id && id && retryCount < maxRetries) {
       const timer = setTimeout(() => {
+        // Try to find as regular workout first
         const foundWorkout = getWorkoutById(id);
-        setWorkout(foundWorkout);
         
         if (foundWorkout?.id) {
+          setWorkout(foundWorkout);
           setIsLoading(false);
           console.log("Workout found:", foundWorkout);
         } else {
-          setRetryCount(prev => prev + 1);
+          // If not found, try to find as template
+          const foundTemplate = workoutTemplates.find(t => t.id === id);
+          
+          if (foundTemplate?.id) {
+            setWorkout(foundTemplate);
+            setIsTemplate(true);
+            setIsLoading(false);
+            console.log("Workout template found:", foundTemplate);
+          } else {
+            setRetryCount(prev => prev + 1);
+          }
         }
       }, retryDelay);
       
@@ -31,12 +43,13 @@ export const useWorkoutLoader = (id: string | undefined) => {
     } else {
       setIsLoading(false);
     }
-  }, [id, workout, getWorkoutById, retryCount]);
+  }, [id, workout, getWorkoutById, workoutTemplates, retryCount]);
 
   return {
     workout,
     setWorkout,
     isLoading,
-    retryCount
+    retryCount,
+    isTemplate
   };
 };

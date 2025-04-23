@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
-import { WorkoutTemplate, Exercise } from "@/types";
+import { WorkoutTemplate, Exercise, Workout } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +21,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Exercise item (sortable)
 const ExerciseItem = ({
@@ -114,7 +114,7 @@ const WorkoutBuilder: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates } = useAppContext();
+  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout } = useAppContext();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
   const [showExerciseForm, setShowExerciseForm] = useState(false);
@@ -123,26 +123,43 @@ const WorkoutBuilder: React.FC = () => {
   const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRegularWorkout, setIsRegularWorkout] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load plan for editing
+  // Load workout for editing
   useEffect(() => {
-    if (id) {
-      const workoutToEdit = workoutTemplates.find(template => template.id === id);
-      if (workoutToEdit) {
-        setWorkoutName(workoutToEdit.name);
-        setExercises(workoutToEdit.exercises);
-      } else {
-        toast({
-          title: "Workout not found",
-          description: "The workout you're trying to edit does not exist.",
-          variant: "destructive"
-        });
-        navigate("/workouts");
-      }
-    } else if (location.state?.workoutName) {
-      setWorkoutName(location.state.workoutName);
+    if (!id) {
+      setIsLoading(false);
+      return;
     }
-  }, [id, location.state, navigate, toast, workoutTemplates]);
+
+    // First check if it's a regular workout
+    const regularWorkout = workouts.find(w => w.id === id);
+    if (regularWorkout) {
+      setWorkoutName(regularWorkout.name);
+      setExercises(regularWorkout.exercises);
+      setIsRegularWorkout(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Then check if it's a workout template
+    const workoutTemplate = workoutTemplates.find(template => template.id === id);
+    if (workoutTemplate) {
+      setWorkoutName(workoutTemplate.name);
+      setExercises(workoutTemplate.exercises);
+      setIsLoading(false);
+    } else {
+      setLoadError("The workout you're trying to edit could not be found.");
+      toast({
+        title: "Workout not found",
+        description: "The workout you're trying to edit does not exist.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
+  }, [id, workoutTemplates, workouts, toast]);
 
   const { startAfterCreation } = location.state || {};
 
@@ -277,7 +294,7 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Complete/save workout
+  // Complete/save workout with support for both templates and regular workouts
   const handleComplete = () => {
     if (!workoutName) {
       toast({
@@ -300,28 +317,48 @@ const WorkoutBuilder: React.FC = () => {
     try {
       const workoutId = id || uuidv4();
 
-      const newWorkoutTemplate: WorkoutTemplate = {
-        id: workoutId,
-        name: workoutName,
-        exercises: exercises,
-        isFavorite: false,
-      };
-
-      if (id) {
-        updateWorkoutTemplate(newWorkoutTemplate);
+      if (isRegularWorkout) {
+        // Update a regular workout
+        const updatedWorkout: Workout = {
+          ...workouts.find(w => w.id === id)!,
+          id: workoutId,
+          name: workoutName,
+          exercises: exercises
+        };
+        
+        updateWorkout(updatedWorkout);
+        
+        toast({
+          title: "Success",
+          description: "Your workout has been updated successfully.",
+        });
+        
+        navigate(`/workouts/${workoutId}`);
       } else {
-        addWorkoutTemplate(newWorkoutTemplate);
-      }
+        // Handle workout template
+        const newWorkoutTemplate: WorkoutTemplate = {
+          id: workoutId,
+          name: workoutName,
+          exercises: exercises,
+          isFavorite: false,
+        };
 
-      toast({
-        title: "Success",
-        description: "Your workout has been saved successfully.",
-      });
+        if (id) {
+          updateWorkoutTemplate(newWorkoutTemplate);
+        } else {
+          addWorkoutTemplate(newWorkoutTemplate);
+        }
 
-      if (startAfterCreation) {
-        navigate(`/live-workout/${workoutId}?isTemplate=true`);
-      } else {
-        navigate("/workouts");
+        toast({
+          title: "Success",
+          description: "Your workout has been saved successfully.",
+        });
+
+        if (startAfterCreation) {
+          navigate(`/live-workout/${workoutId}?isTemplate=true`);
+        } else {
+          navigate("/workouts");
+        }
       }
     } catch (error) {
       console.error("Error creating workout:", error);
@@ -332,6 +369,36 @@ const WorkoutBuilder: React.FC = () => {
       });
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="app-container animate-fade-in">
+        <Header title="Loading Workout..." />
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (loadError) {
+    return (
+      <div className="app-container animate-fade-in">
+        <Header title="Error" />
+        <div className="p-4 text-center">
+          <p className="mb-4 text-destructive">{loadError}</p>
+          <Button onClick={() => navigate("/workouts")}>
+            Return to Workouts
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // --- UI ---
   return (
@@ -495,7 +562,7 @@ const WorkoutBuilder: React.FC = () => {
               Cancel
             </Button>
             <Button onClick={handleComplete}>
-              {startAfterCreation ? "Save and Start Workout" : "Save Workout"}
+              {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start Workout" : "Save Workout")}
             </Button>
           </div>
         </div>
@@ -545,4 +612,3 @@ const WorkoutBuilder: React.FC = () => {
 };
 
 export default WorkoutBuilder;
-

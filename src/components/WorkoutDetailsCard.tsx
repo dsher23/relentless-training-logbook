@@ -14,6 +14,11 @@ interface WorkoutDetailsCardProps {
 const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
   const navigate = useNavigate();
 
+  const handleEditClick = () => {
+    // Navigate to the workout builder with the workout ID for editing
+    navigate(`/workouts/builder/${workout.id}`);
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -23,7 +28,7 @@ const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
             variant="ghost" 
             size="sm" 
             className="text-muted-foreground"
-            onClick={() => navigate(`/workouts/new?edit=${workout.id}`)}
+            onClick={handleEditClick}
           >
             <Edit className="h-4 w-4 mr-1" /> Edit
           </Button>
