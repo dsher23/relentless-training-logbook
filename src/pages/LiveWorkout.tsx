@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
@@ -151,10 +152,10 @@ const LiveWorkout = () => {
       if (isTemplate) {
         const template = workoutTemplates.find(t => t.id === id);
         if (template) {
-          foundWorkout = convertTemplateToWorkout(template);
+          const convertedWorkout = convertTemplateToWorkout(template);
           
-          if (foundWorkout) {
-            foundWorkout = addWorkout(foundWorkout);
+          if (convertedWorkout) {
+            foundWorkout = addWorkout(convertedWorkout);
           }
         }
       } else {
