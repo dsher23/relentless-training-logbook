@@ -180,44 +180,28 @@ const LiveWorkout = () => {
         
         return {
           ...exercise,
-          sets: data.sets.map(set => ({ ...set })), // Create deep copy
-          notes: data.notes || "",  // Ensure notes is always a string
+          sets: data.sets.map(set => ({ ...set })),
+          notes: data.notes || "",
           lastProgressDate: new Date()
         };
       });
 
-      // CRITICAL FIX: Create a new object with completed explicitly set to true
-      const updatedWorkout = {
+      const completedWorkout: Workout = {
         ...workout,
+        id: workout.id,
+        name: workout.name,
         exercises: updatedExercises,
-        completed: true, // CRITICAL: Explicitly set to true as a boolean
-        date: new Date(), // Ensure date is updated to completion time
-        notes: workout.notes || "", // Ensure notes exists
+        completed: true,
+        date: new Date(),
+        notes: workout.notes || ""
       };
       
-      console.log('CRITICAL - About to save completed workout with ID:', updatedWorkout.id);
-      console.log('CRITICAL - Completed status before save:', updatedWorkout.completed);
-      console.log('CRITICAL - Type of completed property:', typeof updatedWorkout.completed);
-      console.log('CRITICAL - Full workout object to be saved:', JSON.stringify(updatedWorkout));
-      console.log("Saving workout:", updatedWorkout); // Added debugging log
+      console.log("CRITICAL - About to save workout with ID:", completedWorkout.id);
+      console.log("CRITICAL - Completed status type:", typeof completedWorkout.completed);
+      console.log("CRITICAL - Completed status value:", completedWorkout.completed);
+      console.log("CRITICAL - Full workout to be saved:", JSON.stringify(completedWorkout));
       
-      // CRITICAL FIX: Force the completed flag to true when saving
-      updateWorkout({
-        ...updatedWorkout,
-        completed: true // CRITICAL: Force this to be true
-      });
-      
-      console.log('CRITICAL - Result after updateWorkout operation');
-      
-      setTimeout(() => {
-        const allWorkouts = workouts || [];
-        const verifyWorkout = allWorkouts.find(w => w.id === updatedWorkout.id);
-        console.log('CRITICAL - Verification after save:', verifyWorkout ? {
-          id: verifyWorkout.id,
-          completed: verifyWorkout.completed,
-          completedType: typeof verifyWorkout.completed
-        } : 'Workout not found');
-      }, 100);
+      updateWorkout(completedWorkout);
       
       localStorage.removeItem('workout_in_progress');
       
@@ -228,7 +212,7 @@ const LiveWorkout = () => {
       
       setTimeout(() => {
         navigate("/workout-history");
-      }, 1500); // Increased delay to ensure state updates properly
+      }, 1500);
     } catch (error) {
       console.error("CRITICAL - Error saving workout:", error);
       toast({
@@ -237,7 +221,7 @@ const LiveWorkout = () => {
         variant: "destructive"
       });
     }
-  }, [workout, exerciseData, updateWorkout, toast, navigate, workouts]);
+  }, [workout, exerciseData, updateWorkout, toast, navigate]);
 
   useEffect(() => {
     const loadWorkout = async () => {
@@ -301,7 +285,7 @@ const LiveWorkout = () => {
               
               initialData[exercise.id] = {
                 sets: exercise.sets.length > 0 
-                  ? exercise.sets.map(set => ({ ...set })) // Create deep copy to avoid reference issues
+                  ? exercise.sets.map(set => ({ ...set }))
                   : Array(3).fill({ reps: 0, weight: 0 }),
                 notes: exercise.notes || "",
                 previousStats: previousExercise?.sets
@@ -423,9 +407,11 @@ const LiveWorkout = () => {
   }
 
   const debugInfo = debugMode ? (
-    <div className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+    <div>
       <p>Workout ID: {workout.id.substring(0, 8)}...</p>
-      <p>Completed: {String(workout.completed)}</p>
+      <p>Completed: {String(workout.completed)} (type: {typeof workout.completed})</p>
+      <p>Exercise Count: {workout.exercises.length}</p>
+      <p>Current Exercise: {currentExercise.name}</p>
     </div>
   ) : null;
 

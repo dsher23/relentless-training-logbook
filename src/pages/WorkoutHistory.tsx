@@ -19,7 +19,7 @@ const WorkoutHistory: React.FC = () => {
   const [debugMode, setDebugMode] = useState<boolean>(false);
   
   useEffect(() => {
-    // First, log the total number of workouts
+    // First, log the total number of workouts for debugging
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     
     // Log detailed information about each workout for debugging
@@ -27,8 +27,7 @@ const WorkoutHistory: React.FC = () => {
       console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed}, type=${typeof workout.completed}`);
     });
     
-    // Use a strict boolean comparison to ensure we only get truly completed workouts
-    // CRITICAL FIX: Make sure we're using very strict filtering for completed===true
+    // CRITICAL FIX: Use strict boolean comparison for completed workouts
     const strictCompleted = workouts.filter(w => w.completed === true);
     
     console.log('Strict completed filter found:', strictCompleted.length);
@@ -100,7 +99,7 @@ const WorkoutHistory: React.FC = () => {
               <p>Completed workouts: {completedWorkouts.length}</p>
               <p>First few workout IDs:</p>
               <ul className="list-disc pl-5">
-                {workouts.slice(0, 3).map(w => (
+                {workouts.slice(0, 5).map(w => (
                   <li key={w.id}>
                     {w.id.substring(0, 8)}... - {w.name} - 
                     completed: {String(w.completed)} ({typeof w.completed})
