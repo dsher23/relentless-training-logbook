@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -22,16 +21,20 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
     const lastWeekStart = subWeeks(weekStart, 1);
     
+    const completedWorkouts = workouts.filter(w => w.completed === true);
+    
+    console.log(`Total workouts: ${workouts.length}, Completed workouts: ${completedWorkouts.length}`);
+    
     const dailyData: DayData[] = [];
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     
     for (let i = 0; i < 7; i++) {
-      const currentWorkouts = workouts.filter(w => 
+      const currentWorkouts = completedWorkouts.filter(w => 
         isSameWeek(new Date(w.date), date, { weekStartsOn: 1 }) && 
         new Date(w.date).getDay() === (i + 1) % 7
       );
       
-      const lastWeekWorkouts = workouts.filter(w => 
+      const lastWeekWorkouts = completedWorkouts.filter(w => 
         isSameWeek(new Date(w.date), lastWeekStart, { weekStartsOn: 1 }) && 
         new Date(w.date).getDay() === (i + 1) % 7
       );
@@ -69,13 +72,11 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     .reduce((total, day) => total + day.volume, 0);
   const workoutCount = data.filter(d => d.volume > 0).length;
   
-  // Make sure weeklyTotal and lastWeekTotal are numbers for comparison
   const percentageChange = lastWeekTotal > 0 ? 
     ((weeklyTotal - lastWeekTotal) / lastWeekTotal * 100).toFixed(1) : "0";
   
-  // Get workout streak
   const streak = workouts
-    .filter(w => w.completed)
+    .filter(w => w.completed === true)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .reduce((count, workout) => {
       if (count === 0 || isSameWeek(new Date(workout.date), currentDate)) {
@@ -106,7 +107,6 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     );
   };
 
-  // Define color mapping for bars with gradients
   const getBarColor = (entry: DayData) => {
     switch (entry.change) {
       case "increase": return "url(#greenGradient)";

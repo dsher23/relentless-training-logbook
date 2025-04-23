@@ -10,22 +10,28 @@ import { useAppContext } from '@/context/AppContext';
 import WorkoutCard from '@/components/WorkoutCard';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const WorkoutHistory: React.FC = () => {
   const { workouts, deleteWorkout } = useAppContext();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
+  const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
   
-  // Get completed workouts and sort by date (newest first)
-  const completedWorkouts = workouts
-    .filter(workout => workout.completed === true) // Ensure strict equality check
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  console.log('Total workouts:', workouts.length);
-  console.log('Completed workouts:', completedWorkouts.length);
-  console.log('Completed workout IDs:', completedWorkouts.map(w => w.id));
+  // Update completed workouts whenever workouts change
+  useEffect(() => {
+    // Get completed workouts and sort by date (newest first)
+    const completed = workouts
+      .filter(workout => workout.completed === true)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    setCompletedWorkouts(completed);
+    
+    console.log('Total workouts:', workouts.length);
+    console.log('Completed workouts:', completed.length);
+    console.log('Completed workout IDs:', completed.map(w => w.id));
+  }, [workouts]);
 
   const handleDeleteWorkout = () => {
     if (!workoutToDelete) return;

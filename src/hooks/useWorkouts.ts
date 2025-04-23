@@ -53,6 +53,7 @@ export const useWorkouts = () => {
   useEffect(() => {
     if (workouts.length > 0) {
       try {
+        // Preserve completed status during sorting and storing
         const sortedWorkouts = [...workouts].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -103,7 +104,7 @@ export const useWorkouts = () => {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: workout.completed || false,
+        completed: typeof workout.completed === 'boolean' ? workout.completed : false,
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -137,12 +138,12 @@ export const useWorkouts = () => {
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // Ensure workout has all required fields
+      // Ensure workout has all required fields and explicitly parse the completed status
       const updatedWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: typeof workout.completed === 'boolean' ? workout.completed : false,
+        completed: workout.completed === true, // Ensure boolean conversion
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
