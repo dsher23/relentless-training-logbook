@@ -19,7 +19,8 @@ const WorkoutHistory: React.FC = () => {
   const [debugMode, setDebugMode] = useState<boolean>(false);
   
   useEffect(() => {
-    // First, log the total number of workouts for debugging
+    // Log all workouts for debugging
+    console.log('WorkoutHistory - All workouts:', workouts);
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     
     // Log detailed information about each workout for debugging
@@ -30,15 +31,16 @@ const WorkoutHistory: React.FC = () => {
     // CRITICAL FIX: Use strict boolean comparison for completed workouts
     const strictCompleted = workouts.filter(w => w.completed === true);
     
-    console.log('Strict completed filter found:', strictCompleted.length);
-    console.log('Completed workout IDs:', strictCompleted.map(w => w.id));
+    console.log('WorkoutHistory - Strictly completed workouts:', strictCompleted);
+    console.log('WorkoutHistory - Completed count:', strictCompleted.length);
+    console.log('WorkoutHistory - Completed workout IDs:', strictCompleted.map(w => w.id));
     
     // Sort completed workouts by date, newest first
     const sortedCompleted = strictCompleted.sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
-    console.log('WorkoutHistory - Completed workouts found:', sortedCompleted.length);
+    console.log('WorkoutHistory - Sorted completed workouts found:', sortedCompleted.length);
     if (sortedCompleted.length > 0) {
       console.log('WorkoutHistory - First completed workout:', sortedCompleted[0]);
     }
@@ -97,12 +99,14 @@ const WorkoutHistory: React.FC = () => {
               <h3 className="font-bold mb-1">Debug Info:</h3>
               <p>Total workouts: {workouts.length}</p>
               <p>Completed workouts: {completedWorkouts.length}</p>
-              <p>First few workout IDs:</p>
+              <p className="font-bold mt-2">All Workouts:</p>
               <ul className="list-disc pl-5">
-                {workouts.slice(0, 5).map(w => (
+                {workouts.slice(0, 10).map(w => (
                   <li key={w.id}>
                     {w.id.substring(0, 8)}... - {w.name} - 
-                    completed: {String(w.completed)} ({typeof w.completed})
+                    completed: <span className={w.completed === true ? "text-green-600 font-bold" : "text-red-600"}>
+                      {String(w.completed)} ({typeof w.completed})
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -114,8 +118,15 @@ const WorkoutHistory: React.FC = () => {
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
-                No workouts logged yet — start one from the Dashboard.
+                No completed workouts logged yet. Start and complete a workout from the Dashboard.
               </p>
+              <Button 
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate('/training')}
+              >
+                Start a Workout
+              </Button>
             </CardContent>
           </Card>
         ) : (

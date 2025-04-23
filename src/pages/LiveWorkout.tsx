@@ -187,7 +187,6 @@ const LiveWorkout = () => {
       });
 
       const completedWorkout: Workout = {
-        ...workout,
         id: workout.id,
         name: workout.name,
         exercises: updatedExercises,
@@ -196,12 +195,16 @@ const LiveWorkout = () => {
         notes: workout.notes || ""
       };
       
-      console.log("CRITICAL - About to save workout with ID:", completedWorkout.id);
-      console.log("CRITICAL - Completed status type:", typeof completedWorkout.completed);
-      console.log("CRITICAL - Completed status value:", completedWorkout.completed);
-      console.log("CRITICAL - Full workout to be saved:", JSON.stringify(completedWorkout));
+      console.log("SAVING WORKOUT - BEFORE UPDATE:", {
+        id: completedWorkout.id,
+        name: completedWorkout.name,
+        completed: completedWorkout.completed,
+        completedType: typeof completedWorkout.completed
+      });
       
       updateWorkout(completedWorkout);
+      
+      console.log("SAVING WORKOUT - FULL OBJECT:", JSON.stringify(completedWorkout));
       
       localStorage.removeItem('workout_in_progress');
       
@@ -214,7 +217,7 @@ const LiveWorkout = () => {
         navigate("/workout-history");
       }, 1500);
     } catch (error) {
-      console.error("CRITICAL - Error saving workout:", error);
+      console.error("Critical Error - Failed to save workout:", error);
       toast({
         title: "Save Error",
         description: "There was a problem saving your workout. Please try again.",

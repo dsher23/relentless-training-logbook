@@ -48,7 +48,10 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
       </div>
       
       {debugMode && debugInfo && (
-        <div className="px-4 pb-2 text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+        <div className="px-4 pb-3 text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded mb-2 border border-yellow-200 dark:border-yellow-800/30">
+          <div className="font-bold border-b border-yellow-200 dark:border-yellow-800/30 pb-1 mb-1">
+            Debug Information
+          </div>
           {debugInfo}
         </div>
       )}
