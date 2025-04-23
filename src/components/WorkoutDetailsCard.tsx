@@ -46,6 +46,18 @@ const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
             <span>{format(new Date(workout.date), "PPP")}</span>
           </div>
           
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Time</span>
+            <span>{format(new Date(workout.date), "p")}</span>
+          </div>
+          
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Status</span>
+            <span className={`${workout.completed ? "text-green-600" : "text-amber-600"} font-medium`}>
+              {workout.completed ? "Completed" : "In Progress"}
+            </span>
+          </div>
+          
           {workout.notes && (
             <div className="pt-2 border-t mt-2">
               <p className="text-sm text-muted-foreground mb-1">Notes:</p>

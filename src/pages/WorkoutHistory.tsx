@@ -2,9 +2,12 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
+import WorkoutCard from '@/components/WorkoutCard';
 
 const WorkoutHistory: React.FC = () => {
   const { workouts } = useAppContext();
@@ -17,7 +20,16 @@ const WorkoutHistory: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title="Workout History" />
+      <Header title="Workout History">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </Header>
       
       <div className="p-4">
         {completedWorkouts.length === 0 ? (
@@ -31,26 +43,11 @@ const WorkoutHistory: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {completedWorkouts.map(workout => (
-              <Card 
+              <WorkoutCard 
                 key={workout.id}
-                className="cursor-pointer hover:border-primary"
+                workout={workout}
                 onClick={() => navigate(`/workouts/${workout.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{workout.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(workout.date), 'PPP')} • 
-                        {workout.exercises.length} exercises
-                      </p>
-                    </div>
-                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                      Completed
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              />
             ))}
           </div>
         )}

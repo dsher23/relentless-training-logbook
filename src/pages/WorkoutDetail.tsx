@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +11,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Exercise, Workout } from "@/types";
 import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 import WorkoutDetailsCard from "@/components/WorkoutDetailsCard";
-import ExercisesList from "@/components/ExercisesList";
+import ExerciseDetailCard from "@/components/ExerciseDetailCard";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +21,7 @@ const WorkoutDetail: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   
-  const { workout: rawWorkout, setWorkout, isLoading, isTemplate } = useWorkoutLoader(id);
+  const { workout: rawWorkout, setWorkout, isLoading, isTemplate, error } = useWorkoutLoader(id);
   
   // Convert template to workout if needed
   const workout = isTemplate && rawWorkout 
@@ -35,14 +36,22 @@ const WorkoutDetail: React.FC = () => {
         description: "The workout couldn't be loaded or doesn't exist.",
         variant: "destructive"
       });
-      navigate("/workouts");
+      // Do not navigate away immediately, show the error in the UI instead
     }
-  }, [isLoading, rawWorkout, id, navigate, toast]);
+  }, [isLoading, rawWorkout, id, toast]);
   
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Loading Workout..." />
+        <Header title="Loading Workout...">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Header>
         <div className="p-4">
           <Skeleton className="h-12 w-full mb-4" />
           <Skeleton className="h-24 w-full mb-4" />
@@ -55,9 +64,17 @@ const WorkoutDetail: React.FC = () => {
   if (!workout || !workout.id) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Workout Not Found" />
+        <Header title="Workout Not Found">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Header>
         <div className="p-4 text-center">
-          <p className="mb-4">Unable to load workout details.</p>
+          <p className="mb-4">Unable to load workout details. {error}</p>
           <Button onClick={() => navigate("/workouts")}>
             Return to Workouts
           </Button>
@@ -109,13 +126,6 @@ const WorkoutDetail: React.FC = () => {
       navigate("/workouts");
     }
   };
-
-  const handleEditWorkout = () => {
-    // Navigate to the workout builder with the workout ID
-    if (workout && workout.id) {
-      navigate(`/workouts/builder/${workout.id}`);
-    }
-  };
   
   const editingExercise = editingExerciseId 
     ? workout.exercises.find(ex => ex.id === editingExerciseId) 
@@ -123,7 +133,15 @@ const WorkoutDetail: React.FC = () => {
   
   return (
     <div className="app-container animate-fade-in pb-16">
-      <Header title={workout.name} />
+      <Header title={workout.name}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </Header>
       
       <div className="p-4 space-y-6">
         <WorkoutDetailsCard workout={workout} />
@@ -138,51 +156,51 @@ const WorkoutDetail: React.FC = () => {
                 setEditingExerciseId(null);
                 setShowExerciseForm(true);
               }}
+              aria-label="Add exercise"
             >
               <Plus className="h-4 w-4 mr-1" /> Add Exercise
             </Button>
           </div>
           
-          <ExercisesList 
-            exercises={workout.exercises}
-            onAddExercise={() => setShowExerciseForm(true)}
-            onEditExercise={(id) => {
-              setEditingExerciseId(id);
-              setShowExerciseForm(true);
-            }}
-            onDeleteExercise={(exerciseId) => {
-              const updatedWorkout: Workout = {
-                ...workout,
-                exercises: workout.exercises.filter(ex => ex.id !== exerciseId)
-              };
-              updateWorkout(updatedWorkout);
-              toast({
-                title: "Exercise removed",
-                description: "Exercise has been removed from your workout."
-              });
-            }}
-          />
+          {workout.exercises.length === 0 ? (
+            <div className="text-center p-6 bg-muted/30 rounded-md">
+              <p className="text-muted-foreground">No exercises in this workout.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {workout.exercises.map(exercise => (
+                <ExerciseDetailCard 
+                  key={exercise.id}
+                  exercise={exercise}
+                />
+              ))}
+            </div>
+          )}
         </div>
         
-        <div className="pt-4">
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={handleDeleteWorkout}
-            className="w-full"
-          >
-            Delete Workout
-          </Button>
-        </div>
+        {workout.completed === false && (
+          <div className="pt-4">
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleDeleteWorkout}
+              className="w-full"
+            >
+              Delete Workout
+            </Button>
+          </div>
+        )}
         
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t">
-          <Button 
-            className="w-full bg-gym-purple hover:bg-gym-darkPurple"
-            onClick={() => navigate(`/live-workout/${workout.id}`)}
-          >
-            Start Workout
-          </Button>
-        </div>
+        {workout.completed === false && (
+          <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t">
+            <Button 
+              className="w-full bg-gym-purple hover:bg-gym-darkPurple"
+              onClick={() => navigate(`/live-workout/${workout.id}`)}
+            >
+              Start Workout
+            </Button>
+          </div>
+        )}
       </div>
       
       <AddExerciseForm 

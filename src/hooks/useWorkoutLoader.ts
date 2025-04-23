@@ -16,7 +16,7 @@ export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => 
 };
 
 export const useWorkoutLoader = (id: string | undefined) => {
-  const { getWorkoutById, workoutTemplates } = useAppContext();
+  const { getWorkoutById, workoutTemplates, workouts } = useAppContext();
   const [workout, setWorkout] = useState<Workout | WorkoutTemplate | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -35,37 +35,48 @@ export const useWorkoutLoader = (id: string | undefined) => {
 
     if (!workout?.id && id && retryCount < maxRetries) {
       const timer = setTimeout(() => {
+        console.log("Trying to load workout with ID:", id);
+        
         // Try to find as regular workout first
         const foundWorkout = getWorkoutById(id);
         
         if (foundWorkout?.id) {
+          console.log("Workout found:", foundWorkout);
           setWorkout(foundWorkout);
           setIsLoading(false);
-          console.log("Workout found:", foundWorkout);
         } else {
           // If not found, try to find as template
           const foundTemplate = workoutTemplates.find(t => t.id === id);
           
           if (foundTemplate?.id) {
+            console.log("Workout template found:", foundTemplate);
             setWorkout(foundTemplate);
             setIsTemplate(true);
             setIsLoading(false);
-            console.log("Workout template found:", foundTemplate);
           } else {
-            setRetryCount(prev => prev + 1);
-            if (retryCount === maxRetries - 1) {
-              setError(`Could not find workout with ID: ${id}`);
+            // If still not found, try direct lookup from workouts array
+            const directWorkout = workouts.find(w => w.id === id);
+            
+            if (directWorkout) {
+              console.log("Workout found directly:", directWorkout);
+              setWorkout(directWorkout);
               setIsLoading(false);
+            } else {
+              console.log("Retrying workout load, attempt:", retryCount + 1);
+              setRetryCount(prev => prev + 1);
+              if (retryCount === maxRetries - 1) {
+                console.error(`Could not find workout with ID: ${id}`);
+                setError(`Could not find workout with ID: ${id}`);
+                setIsLoading(false);
+              }
             }
           }
         }
       }, retryDelay);
       
       return () => clearTimeout(timer);
-    } else {
-      setIsLoading(false);
     }
-  }, [id, workout, getWorkoutById, workoutTemplates, retryCount]);
+  }, [id, workout, getWorkoutById, workoutTemplates, workouts, retryCount]);
 
   return {
     workout,
