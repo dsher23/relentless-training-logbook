@@ -3,6 +3,18 @@ import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { useAppContext, Workout, WorkoutTemplate } from '@/context/AppContext';
 
+// Helper function to convert a template to a workout
+export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => {
+  return {
+    ...template,
+    date: new Date(),
+    completed: false,
+    // Ensure we don't include template-specific fields in the resulting workout
+    dayName: undefined,
+    isFavorite: undefined
+  };
+};
+
 export const useWorkoutLoader = (id: string | undefined) => {
   const { getWorkoutById, workoutTemplates } = useAppContext();
   const [workout, setWorkout] = useState<Workout | WorkoutTemplate | undefined>();
@@ -50,6 +62,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
     setWorkout,
     isLoading,
     retryCount,
-    isTemplate
+    isTemplate,
+    convertTemplateToWorkout
   };
 };

@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import AddExerciseForm from "@/components/AddExerciseForm";
 import { useAppContext } from "@/context/AppContext";
-import { Exercise } from "@/types";
-import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
+import { Exercise, Workout } from "@/types";
+import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 import WorkoutDetailsCard from "@/components/WorkoutDetailsCard";
 import ExercisesList from "@/components/ExercisesList";
 
@@ -21,11 +21,16 @@ const WorkoutDetail: React.FC = () => {
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
   
-  const { workout, setWorkout, isLoading } = useWorkoutLoader(id);
+  const { workout: rawWorkout, setWorkout, isLoading, isTemplate } = useWorkoutLoader(id);
+  
+  // Convert template to workout if needed
+  const workout = isTemplate && rawWorkout 
+    ? convertTemplateToWorkout(rawWorkout) 
+    : rawWorkout as Workout;
   
   // Show error and navigate away if workout is still not found after loading
   useEffect(() => {
-    if (!isLoading && !workout?.id && id) {
+    if (!isLoading && !rawWorkout?.id && id) {
       toast({
         title: "Workout Not Found",
         description: "The workout couldn't be loaded or doesn't exist.",
@@ -33,7 +38,7 @@ const WorkoutDetail: React.FC = () => {
       });
       navigate("/workouts");
     }
-  }, [isLoading, workout, id, navigate, toast]);
+  }, [isLoading, rawWorkout, id, navigate, toast]);
   
   if (isLoading) {
     return (
@@ -68,7 +73,7 @@ const WorkoutDetail: React.FC = () => {
         ex.id === editingExerciseId ? exercise : ex
       );
       
-      const updatedWorkout = {
+      const updatedWorkout: Workout = {
         ...workout,
         exercises: updatedExercises,
       };
@@ -80,7 +85,7 @@ const WorkoutDetail: React.FC = () => {
         description: `${exercise.name} has been updated.`
       });
     } else {
-      const updatedWorkout = {
+      const updatedWorkout: Workout = {
         ...workout,
         exercises: [...workout.exercises, exercise],
       };
@@ -140,7 +145,7 @@ const WorkoutDetail: React.FC = () => {
               setShowExerciseForm(true);
             }}
             onDeleteExercise={(exerciseId) => {
-              const updatedWorkout = {
+              const updatedWorkout: Workout = {
                 ...workout,
                 exercises: workout.exercises.filter(ex => ex.id !== exerciseId)
               };
