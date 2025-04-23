@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { XCircle, ArrowUp, ArrowDown } from 'lucide-react';
@@ -10,6 +10,7 @@ interface ExerciseSetEntryProps {
   previousSet?: { reps: number; weight: number };
   onUpdateSet: (field: 'reps' | 'weight', value: number) => void;
   onRemoveSet: () => void;
+  isMobile?: boolean;
 }
 
 export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
@@ -18,15 +19,22 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   previousSet,
   onUpdateSet,
   onRemoveSet,
+  isMobile = false,
 }) => {
-  const [weightInput, setWeightInput] = useState(set.weight.toString());
-  const [repsInput, setRepsInput] = useState(set.reps.toString());
+  const [weightInput, setWeightInput] = useState(set.weight?.toString() || "0");
+  const [repsInput, setRepsInput] = useState(set.reps?.toString() || "0");
 
   const renderProgressIndicator = () => {
     if (!previousSet) return null;
     
-    const prevVolume = previousSet.reps * previousSet.weight;
-    const currentVolume = set.reps * set.weight;
+    // Handle potential undefined or NaN values safely
+    const prevWeight = previousSet.weight || 0;
+    const prevReps = previousSet.reps || 0;
+    const currWeight = set.weight || 0;
+    const currReps = set.reps || 0;
+    
+    const prevVolume = prevReps * prevWeight;
+    const currentVolume = currReps * currWeight;
     
     if (currentVolume > prevVolume) {
       return <ArrowUp className="h-4 w-4 text-green-500" />;
@@ -47,33 +55,43 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   };
 
   const handleWeightBlur = () => {
-    const value = weightInput === '' ? 0 : parseFloat(weightInput);
-    if (!isNaN(value)) {
-      onUpdateSet('weight', value);
-    } else {
-      setWeightInput(set.weight.toString());
+    try {
+      const value = weightInput === '' ? 0 : parseFloat(weightInput);
+      if (!isNaN(value)) {
+        onUpdateSet('weight', value);
+      } else {
+        setWeightInput((set.weight || 0).toString());
+      }
+    } catch (error) {
+      console.error("Error updating weight:", error);
+      setWeightInput((set.weight || 0).toString());
     }
   };
 
   const handleRepsBlur = () => {
-    const value = repsInput === '' ? 0 : parseInt(repsInput, 10);
-    if (!isNaN(value)) {
-      onUpdateSet('reps', value);
-    } else {
-      setRepsInput(set.reps.toString());
+    try {
+      const value = repsInput === '' ? 0 : parseInt(repsInput, 10);
+      if (!isNaN(value)) {
+        onUpdateSet('reps', value);
+      } else {
+        setRepsInput((set.reps || 0).toString());
+      }
+    } catch (error) {
+      console.error("Error updating reps:", error);
+      setRepsInput((set.reps || 0).toString());
     }
   };
 
   // Update local input state when props change
-  React.useEffect(() => {
-    setWeightInput(set.weight.toString());
-    setRepsInput(set.reps.toString());
+  useEffect(() => {
+    setWeightInput((set.weight || 0).toString());
+    setRepsInput((set.reps || 0).toString());
   }, [set.weight, set.reps]);
 
   return (
-    <div className="grid grid-cols-12 gap-2 items-center">
-      <div className="col-span-1 text-sm">{setIndex + 1}</div>
-      <div className="col-span-4">
+    <div className={`grid ${isMobile ? 'grid-cols-10' : 'grid-cols-12'} gap-2 items-center`}>
+      <div className={`${isMobile ? 'col-span-1' : 'col-span-1'} text-sm`}>{setIndex + 1}</div>
+      <div className={`${isMobile ? 'col-span-3' : 'col-span-4'}`}>
         <Input 
           type="number"
           value={weightInput}
@@ -86,7 +104,7 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
           aria-label="Weight"
         />
       </div>
-      <div className="col-span-4">
+      <div className={`${isMobile ? 'col-span-3' : 'col-span-4'}`}>
         <Input 
           type="number"
           value={repsInput}
@@ -99,10 +117,10 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
           aria-label="Reps"
         />
       </div>
-      <div className="col-span-2 flex items-center">
+      <div className={`${isMobile ? 'col-span-2' : 'col-span-2'} flex items-center`}>
         {renderProgressIndicator()}
       </div>
-      <div className="col-span-1">
+      <div className={`${isMobile ? 'col-span-1' : 'col-span-1'}`}>
         <Button 
           variant="ghost" 
           size="icon" 

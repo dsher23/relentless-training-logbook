@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext, Workout } from "@/context/AppContext";
@@ -10,6 +10,7 @@ import { RestTimer } from "@/components/workout/RestTimer";
 import { ExerciseLog } from "@/components/workout/ExerciseLog";
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
 import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ const LiveWorkout = () => {
   const isTemplate = searchParams.get("isTemplate") === "true";
   const { toast } = useToast();
   const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
+  const isMobile = useIsMobile();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -33,6 +35,7 @@ const LiveWorkout = () => {
   const [isResting, setIsResting] = useState(false);
   const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
   const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
@@ -63,7 +66,21 @@ const LiveWorkout = () => {
         }
       };
     });
-  }, []);
+    
+    // Save progress as we go (useful for mobile where sessions might be interrupted)
+    if (workout) {
+      try {
+        const currentData = JSON.stringify({ 
+          workoutId: workout.id, 
+          exerciseData, 
+          currentExerciseIndex 
+        });
+        localStorage.setItem('workout_in_progress', currentData);
+      } catch (error) {
+        console.error("Failed to save workout progress", error);
+      }
+    }
+  }, [workout, exerciseData, currentExerciseIndex]);
 
   const handleAddSet = useCallback((exerciseId: string) => {
     setExerciseData(prev => {
@@ -146,106 +163,195 @@ const LiveWorkout = () => {
   }, [setRestTime]);
 
   const finishWorkout = useCallback(() => {
-    if (!workout) return;
+    if (!workout) {
+      toast({
+        title: "Error",
+        description: "Unable to save workout: missing workout data.",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    const updatedExercises = workout.exercises.map(exercise => {
-      const data = exerciseData[exercise.id];
-      if (!data) return exercise;
+    try {
+      setHasAttemptedSave(true);
       
-      return {
-        ...exercise,
-        sets: data.sets.map(set => ({ ...set })), // Create deep copy
-        notes: data.notes || "",  // Ensure notes is always a string
-        lastProgressDate: new Date()
+      const updatedExercises = workout.exercises.map(exercise => {
+        const data = exerciseData[exercise.id];
+        if (!data) return exercise;
+        
+        return {
+          ...exercise,
+          sets: data.sets.map(set => ({ ...set })), // Create deep copy
+          notes: data.notes || "",  // Ensure notes is always a string
+          lastProgressDate: new Date()
+        };
+      });
+      
+      const updatedWorkout: Workout = {
+        ...workout,
+        exercises: updatedExercises,
+        completed: true,
+        date: new Date(), // Ensure date is updated to completion time
+        notes: workout.notes || "", // Ensure notes exists
       };
-    });
-    
-    const updatedWorkout: Workout = {
-      ...workout,
-      exercises: updatedExercises,
-      completed: true,
-      date: new Date(), // Ensure date is updated to completion time
-    };
-    
-    // Save the completed workout without assigning return value
-    updateWorkout(updatedWorkout);
-    
-    toast({
-      title: "Workout Completed",
-      description: "Your workout has been logged successfully!",
-    });
-    
-    navigate("/workout-history");
+      
+      // Save the completed workout
+      updateWorkout(updatedWorkout);
+      
+      // Clear in-progress data
+      localStorage.removeItem('workout_in_progress');
+      
+      toast({
+        title: "Workout Completed!",
+        description: "Your workout has been saved successfully.",
+      });
+      
+      // Use setTimeout to ensure toast is visible before navigation
+      setTimeout(() => {
+        navigate("/workout-history");
+      }, 500);
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      toast({
+        title: "Save Error",
+        description: "There was a problem saving your workout. Please try again.",
+        variant: "destructive"
+      });
+    }
   }, [workout, exerciseData, updateWorkout, toast, navigate]);
 
+  // Load workout or restore in-progress workout
   useEffect(() => {
-    if (id) {
-      let foundWorkout: Workout | undefined = undefined;
+    const loadWorkout = async () => {
+      if (!id) return;
       
-      if (isTemplate) {
-        const template = workoutTemplates.find(t => t.id === id);
-        if (template) {
-          const convertedWorkout = convertTemplateToWorkout(template);
-          
-          if (convertedWorkout) {
-            // Call addWorkout without assigning to foundWorkout, then assign the converted workout
-            addWorkout(convertedWorkout);
-            foundWorkout = convertedWorkout;
-            
-            // Ensure foundWorkout is set correctly
-            if (!foundWorkout) {
-              toast({
-                title: "Error",
-                description: "Failed to create workout from template",
-                variant: "destructive"
-              });
-              navigate("/workouts");
-              return;
-            }
+      try {
+        // Check for in-progress workout first
+        const savedProgress = localStorage.getItem('workout_in_progress');
+        if (savedProgress) {
+          const progressData = JSON.parse(savedProgress);
+          if (progressData.workoutId === id) {
+            // Restore previous exercise data and position
+            setExerciseData(progressData.exerciseData || {});
+            setCurrentExerciseIndex(progressData.currentExerciseIndex || 0);
           }
         }
-      } else {
-        foundWorkout = workouts.find(w => w.id === id);
-      }
-      
-      if (foundWorkout) {
-        setWorkout(foundWorkout);
         
-        const initialData: {
-          [key: string]: {
-            sets: { reps: number; weight: number }[];
-            notes: string;
-            previousStats?: { reps: number; weight: number }[];
+        let foundWorkout: Workout | undefined;
+        
+        if (isTemplate) {
+          const template = workoutTemplates.find(t => t.id === id);
+          if (template) {
+            const convertedWorkout = convertTemplateToWorkout(template);
+            
+            if (convertedWorkout) {
+              // Add workout to context and set as current
+              addWorkout(convertedWorkout);
+              foundWorkout = convertedWorkout;
+              
+              if (!foundWorkout) {
+                throw new Error("Failed to create workout from template");
+              }
+            }
           }
-        } = {};
+        } else {
+          foundWorkout = workouts.find(w => w.id === id);
+        }
         
-        foundWorkout.exercises.forEach(exercise => {
-          const previousWorkout = workouts
-            .filter(w => w.id !== foundWorkout?.id && w.completed && w.exercises.some(e => e.name === exercise.name))
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-          
-          const previousExercise = previousWorkout?.exercises.find(e => e.name === exercise.name);
-          
-          initialData[exercise.id] = {
-            sets: exercise.sets.length > 0 
-              ? exercise.sets.map(set => ({ ...set })) // Create deep copy to avoid reference issues
-              : Array(3).fill({ reps: 0, weight: 0 }),
-            notes: exercise.notes || "",
-            previousStats: previousExercise?.sets
+        if (foundWorkout) {
+          // Ensure all required fields have default values
+          const safeWorkout = {
+            ...foundWorkout,
+            notes: foundWorkout.notes || "",
+            date: foundWorkout.date || new Date(),
+            completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false
           };
-        });
+          
+          setWorkout(safeWorkout);
+          
+          // Only initialize exercise data if not restored from in-progress
+          if (!savedProgress || JSON.parse(savedProgress).workoutId !== id) {
+            const initialData: {
+              [key: string]: {
+                sets: { reps: number; weight: number }[];
+                notes: string;
+                previousStats?: { reps: number; weight: number }[];
+              }
+            } = {};
+            
+            safeWorkout.exercises.forEach(exercise => {
+              const previousWorkout = workouts
+                .filter(w => w.id !== safeWorkout.id && w.completed && w.exercises.some(e => e.name === exercise.name))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+              
+              const previousExercise = previousWorkout?.exercises.find(e => e.name === exercise.name);
+              
+              initialData[exercise.id] = {
+                sets: exercise.sets.length > 0 
+                  ? exercise.sets.map(set => ({ ...set })) // Create deep copy to avoid reference issues
+                  : Array(3).fill({ reps: 0, weight: 0 }),
+                notes: exercise.notes || "",
+                previousStats: previousExercise?.sets
+              };
+            });
+            
+            setExerciseData(initialData);
+          }
+        } else {
+          throw new Error("Workout not found");
+        }
+      } catch (error) {
+        console.error("Error loading workout:", error);
         
-        setExerciseData(initialData);
-      } else {
         toast({
           title: "Workout Not Found",
-          description: "The requested workout could not be found.",
+          description: "The requested workout could not be loaded. Returning to workouts.",
           variant: "destructive",
         });
-        navigate("/workouts");
+        
+        // Use setTimeout to ensure toast is visible before navigation
+        setTimeout(() => {
+          navigate("/workouts");
+        }, 500);
+      } finally {
+        setIsTimerRunning(true); // Ensure timer is running for new workout
       }
-    }
+    };
+    
+    loadWorkout();
+    
+    // Reset save attempt state when loading a new workout
+    setHasAttemptedSave(false);
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
+
+  // Before unload handler to warn user of unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (workout && !hasAttemptedSave) {
+        // Save progress before closing
+        try {
+          const currentData = JSON.stringify({ 
+            workoutId: workout.id, 
+            exerciseData, 
+            currentExerciseIndex 
+          });
+          localStorage.setItem('workout_in_progress', currentData);
+          
+          // Standard message for beforeunload dialog
+          e.preventDefault();
+          e.returnValue = '';
+          return '';
+        } catch (error) {
+          console.error("Failed to save workout progress", error);
+        }
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [workout, exerciseData, currentExerciseIndex, hasAttemptedSave]);
 
   const toggleTimer = () => {
     setIsTimerRunning(!isTimerRunning);
@@ -266,7 +372,14 @@ const LiveWorkout = () => {
   };
 
   if (!workout) {
-    return <div className="p-4 text-center">Loading workout...</div>;
+    return (
+      <div className="flex items-center justify-center h-60 p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading workout...</p>
+        </div>
+      </div>
+    );
   }
 
   const safeCurrentExerciseIndex = Math.min(
@@ -287,7 +400,14 @@ const LiveWorkout = () => {
   const currentExerciseData = exerciseData[currentExercise.id];
 
   if (!currentExerciseData) {
-    return <div className="p-4 text-center">Loading exercise data...</div>;
+    return (
+      <div className="flex items-center justify-center h-60 p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading exercise data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -346,11 +466,17 @@ const LiveWorkout = () => {
           
           <div className="flex justify-between p-4">
             {safeCurrentExerciseIndex === workout.exercises.length - 1 ? (
-              <Button onClick={finishWorkout} className="bg-green-600 hover:bg-green-700 text-white flex items-center">
+              <Button 
+                onClick={finishWorkout} 
+                className={`${isMobile ? 'w-full' : ''} bg-green-600 hover:bg-green-700 text-white flex items-center justify-center`}
+              >
                 <CheckCircle2 className="h-4 w-4 mr-2" /> Complete Workout
               </Button>
             ) : (
-              <Button onClick={nextExercise} className="bg-primary hover:bg-primary/90 flex items-center">
+              <Button 
+                onClick={nextExercise} 
+                className={`${isMobile ? 'w-full' : ''} bg-primary hover:bg-primary/90 flex items-center justify-center`}
+              >
                 Next Exercise <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             )}

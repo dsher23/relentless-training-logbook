@@ -13,17 +13,41 @@ export const useWorkouts = () => {
       const storedWorkouts = localStorage.getItem('workouts');
       if (storedWorkouts) {
         const parsedWorkouts = JSON.parse(storedWorkouts);
-        // Ensure all workouts have proper date objects
-        const validatedWorkouts = parsedWorkouts.map((w: Workout) => ({
+        
+        // Ensure all workouts have proper date objects and required fields
+        const validatedWorkouts = parsedWorkouts.map((w: any) => ({
           ...w,
-          date: new Date(w.date) // Ensure dates are properly parsed
+          id: w.id || uuidv4(),
+          date: w.date ? new Date(w.date) : new Date(),  // Ensure dates are properly parsed
+          completed: typeof w.completed === 'boolean' ? w.completed : false,
+          notes: w.notes || '',
+          exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
+            ...ex,
+            id: ex.id || uuidv4(),
+            sets: Array.isArray(ex.sets) ? ex.sets : [],
+            notes: ex.notes || ''
+          })) : []
         }));
+        
         setWorkouts(validatedWorkouts);
+        console.log("Loaded workouts from localStorage:", validatedWorkouts.length);
       }
     } catch (error) {
       console.error('Error loading workouts from localStorage:', error);
+      
+      // Try to recover from corrupt data
+      try {
+        localStorage.removeItem('workouts');
+        toast({
+          title: "Data Recovery",
+          description: "Had to reset workout data due to corruption. Starting fresh.",
+          variant: "destructive",
+        });
+      } catch (innerError) {
+        console.error('Error removing corrupted workouts data:', innerError);
+      }
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (workouts.length > 0) {
@@ -72,67 +96,146 @@ export const useWorkouts = () => {
   }, [workouts, toast]);
 
   const addWorkout = useCallback((workout: Workout): Workout => {
-    const newWorkout = {
-      ...workout,
-      id: workout.id || uuidv4(),
-      date: workout.date || new Date(),
-      completed: workout.completed || false,
-      notes: workout.notes || '' // Ensure notes exists
-    };
-    setWorkouts(prev => [...prev, newWorkout]);
-    return newWorkout; // Return the created workout for further use
-  }, []);
+    try {
+      // Ensure workout has all required fields
+      const newWorkout = {
+        ...workout,
+        id: workout.id || uuidv4(),
+        date: workout.date || new Date(),
+        completed: workout.completed || false,
+        notes: workout.notes || '',
+        exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
+          ...ex,
+          id: ex.id || uuidv4(),
+          sets: Array.isArray(ex.sets) ? ex.sets : [],
+          notes: ex.notes || ''
+        })) : []
+      };
+      
+      setWorkouts(prev => [...prev, newWorkout]);
+      return newWorkout; // Return the created workout for further use
+    } catch (error) {
+      console.error('Error adding workout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add workout. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Return a minimal valid workout object to prevent crashes
+      return {
+        id: uuidv4(),
+        name: 'Error Workout',
+        date: new Date(),
+        completed: false,
+        exercises: [],
+        notes: ''
+      };
+    }
+  }, [toast]);
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
-    const updatedWorkout = {
-      ...workout,
-      date: workout.date || new Date(),
-      completed: typeof workout.completed === 'boolean' ? workout.completed : false,
-      notes: workout.notes || '' // Ensure notes exists
-    };
-    
-    setWorkouts(prev => {
-      const exists = prev.some(w => w.id === updatedWorkout.id);
-      if (exists) {
-        return prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w);
-      } else {
-        return [...prev, updatedWorkout];
-      }
-    });
-    
-    return updatedWorkout; // Return the updated workout for further use
-  }, []);
+    try {
+      // Ensure workout has all required fields
+      const updatedWorkout = {
+        ...workout,
+        id: workout.id || uuidv4(),
+        date: workout.date || new Date(),
+        completed: typeof workout.completed === 'boolean' ? workout.completed : false,
+        notes: workout.notes || '',
+        exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
+          ...ex,
+          id: ex.id || uuidv4(),
+          sets: Array.isArray(ex.sets) ? ex.sets : [],
+          notes: ex.notes || ''
+        })) : []
+      };
+      
+      setWorkouts(prev => {
+        const exists = prev.some(w => w.id === updatedWorkout.id);
+        if (exists) {
+          return prev.map(w => w.id === updatedWorkout.id ? updatedWorkout : w);
+        } else {
+          return [...prev, updatedWorkout];
+        }
+      });
+      
+      return updatedWorkout; // Return the updated workout for further use
+    } catch (error) {
+      console.error('Error updating workout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update workout. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Return the original workout to prevent crashes
+      return workout;
+    }
+  }, [toast]);
 
   const deleteWorkout = useCallback((id: string) => {
-    setWorkouts(prev => prev.filter(w => w.id !== id));
-  }, []);
+    try {
+      setWorkouts(prev => prev.filter(w => w.id !== id));
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete workout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const duplicateWorkout = useCallback((id: string) => {
-    const workoutToDuplicate = workouts.find(w => w.id === id);
-    if (workoutToDuplicate) {
-      const newWorkout = {
-        ...workoutToDuplicate,
-        id: uuidv4(),
-        name: `${workoutToDuplicate.name} (Copy)`,
-        date: new Date(),
-        completed: false // Reset completion status for duplicated workouts
-      };
-      setWorkouts(prev => [...prev, newWorkout]);
-      return newWorkout; // Return the duplicated workout
+    try {
+      const workoutToDuplicate = workouts.find(w => w.id === id);
+      if (workoutToDuplicate) {
+        const newWorkout = {
+          ...workoutToDuplicate,
+          id: uuidv4(),
+          name: `${workoutToDuplicate.name} (Copy)`,
+          date: new Date(),
+          completed: false // Reset completion status for duplicated workouts
+        };
+        setWorkouts(prev => [...prev, newWorkout]);
+        return newWorkout; // Return the duplicated workout
+      }
+    } catch (error) {
+      console.error('Error duplicating workout:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate workout. Please try again.",
+        variant: "destructive",
+      });
     }
     return null;
-  }, [workouts]);
+  }, [workouts, toast]);
 
   const toggleDeloadMode = useCallback((workoutId: string, isDeload: boolean) => {
-    setWorkouts(prev => prev.map(w => 
-      w.id === workoutId ? { ...w, isDeload } : w
-    ));
-  }, []);
+    try {
+      setWorkouts(prev => prev.map(w => 
+        w.id === workoutId ? { ...w, isDeload } : w
+      ));
+    } catch (error) {
+      console.error('Error toggling deload mode:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update workout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const getWorkoutById = useCallback((id: string): Workout | undefined => {
     if (!id) return undefined;
-    const workout = workouts.find(w => w.id === id);
-    return workout;
+    try {
+      const workout = workouts.find(w => w.id === id);
+      return workout;
+    } catch (error) {
+      console.error('Error getting workout by ID:', error);
+      return undefined;
+    }
   }, [workouts]);
 
   return {
