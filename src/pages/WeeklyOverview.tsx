@@ -25,11 +25,17 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { WeeklyRoutine } from "@/types";
 
 const WeeklyOverview: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { weeklyRoutines, workoutTemplates, assignWorkoutToDay, removeWorkoutFromDay } = useAppContext();
+  const { 
+    weeklyRoutines, 
+    workoutTemplates, 
+    addWeeklyRoutine,
+    updateWeeklyRoutine
+  } = useAppContext();
   
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -72,11 +78,40 @@ const WeeklyOverview: React.FC = () => {
         ? workoutTemplates.find(t => t.id === selectedWorkoutId)?.name || ""
         : "";
         
-      assignWorkoutToDay(activeRoutine.id, selectedDayIndex, selectedWorkoutId, workoutName);
+      // Update the routine with the new workout assignment
+      const updatedWorkoutDays = [...activeRoutine.workoutDays];
+      const existingDayIndex = updatedWorkoutDays.findIndex(day => day.dayOfWeek === selectedDayIndex);
+      
+      if (existingDayIndex >= 0) {
+        // Update existing day
+        if (selectedWorkoutId) {
+          updatedWorkoutDays[existingDayIndex] = {
+            ...updatedWorkoutDays[existingDayIndex],
+            workoutTemplateId: selectedWorkoutId,
+            workoutName
+          };
+        } else {
+          // Remove the day if no workout selected (rest day)
+          updatedWorkoutDays.splice(existingDayIndex, 1);
+        }
+      } else if (selectedWorkoutId) {
+        // Add new day
+        updatedWorkoutDays.push({
+          id: uuidv4(),
+          dayOfWeek: selectedDayIndex,
+          workoutTemplateId: selectedWorkoutId,
+          workoutName
+        });
+      }
+      
+      updateWeeklyRoutine({
+        ...activeRoutine,
+        workoutDays: updatedWorkoutDays
+      });
     } else if (selectedWorkoutId) {
       // If no routine exists but a workout was selected, create a new routine
       const workoutName = workoutTemplates.find(t => t.id === selectedWorkoutId)?.name || "";
-      const newRoutine = {
+      const newRoutine: WeeklyRoutine = {
         id: uuidv4(),
         name: "Weekly Plan",
         workoutDays: [{
@@ -99,7 +134,19 @@ const WeeklyOverview: React.FC = () => {
     
     const activeRoutine = weeklyRoutines.find(r => !r.archived);
     if (activeRoutine) {
-      removeWorkoutFromDay(activeRoutine.id, selectedDayIndex);
+      const updatedWorkoutDays = activeRoutine.workoutDays.filter(
+        day => day.dayOfWeek !== selectedDayIndex
+      );
+      
+      updateWeeklyRoutine({
+        ...activeRoutine,
+        workoutDays: updatedWorkoutDays
+      });
+      
+      toast({
+        title: "Workout removed",
+        description: `Workout removed from day ${selectedDayIndex + 1}`
+      });
     }
     
     setConfirmDeleteDialogOpen(false);
