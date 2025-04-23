@@ -10,12 +10,14 @@ interface HeaderProps {
   title: string;
   hasBackButton?: boolean;
   rightContent?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const Header: React.FC<HeaderProps> = ({
   title,
   hasBackButton = true,
   rightContent,
+  children,
 }) => {
   const navigate = useNavigate();
   
@@ -34,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({
           </Button>
         )}
         <h1 className="text-xl font-bold">{title}</h1>
+        {children}
       </div>
       <div className="flex items-center gap-2">
         {rightContent}
