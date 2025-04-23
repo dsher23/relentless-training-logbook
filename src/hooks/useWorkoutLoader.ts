@@ -9,9 +9,11 @@ export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => 
     ...template,
     date: new Date(),
     completed: false,
-    // Ensure we don't include template-specific fields in the resulting workout
-    dayName: undefined,
-    isFavorite: undefined
+    // Remove non-standard properties
+    // Do not spread template to avoid including unwanted properties
+    exercises: template.exercises,
+    notes: template.notes,
+    scheduledTime: template.scheduledTime
   };
 };
 
