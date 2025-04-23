@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
@@ -8,9 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
 import WorkoutCard from '@/components/WorkoutCard';
-import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
 
 const WorkoutHistory: React.FC = () => {
   const { workouts, deleteWorkout } = useAppContext();
@@ -19,13 +17,10 @@ const WorkoutHistory: React.FC = () => {
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
   
-  // Update completed workouts whenever workouts change
   useEffect(() => {
-    // Debug logs to understand what's in the workouts array
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed, name: w.name, date: w.date})));
     
-    // Use loose equality (==) to catch both true and "true" string values for backwards compatibility
     const completed = workouts
       .filter(workout => workout.completed === true)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
