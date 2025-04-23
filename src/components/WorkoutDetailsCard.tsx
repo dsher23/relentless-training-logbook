@@ -14,9 +14,14 @@ interface WorkoutDetailsCardProps {
 const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
   const navigate = useNavigate();
 
-  const handleEditClick = () => {
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Navigate to the workout builder with the workout ID for editing
-    navigate(`/workouts/builder/${workout.id}`);
+    if (workout && workout.id) {
+      navigate(`/workouts/builder/${workout.id}`);
+    }
   };
 
   return (

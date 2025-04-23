@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -108,6 +107,13 @@ const WorkoutDetail: React.FC = () => {
         description: `${workout.name} has been deleted.`
       });
       navigate("/workouts");
+    }
+  };
+
+  const handleEditWorkout = () => {
+    // Navigate to the workout builder with the workout ID
+    if (workout && workout.id) {
+      navigate(`/workouts/builder/${workout.id}`);
     }
   };
   

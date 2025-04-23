@@ -21,11 +21,17 @@ export const useWorkoutLoader = (id: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [isTemplate, setIsTemplate] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const maxRetries = 5;
     const retryDelay = 300;
+
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
 
     if (!workout?.id && id && retryCount < maxRetries) {
       const timer = setTimeout(() => {
@@ -47,6 +53,10 @@ export const useWorkoutLoader = (id: string | undefined) => {
             console.log("Workout template found:", foundTemplate);
           } else {
             setRetryCount(prev => prev + 1);
+            if (retryCount === maxRetries - 1) {
+              setError(`Could not find workout with ID: ${id}`);
+              setIsLoading(false);
+            }
           }
         }
       }, retryDelay);
@@ -63,6 +73,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
     isLoading,
     retryCount,
     isTemplate,
+    error,
     convertTemplateToWorkout
   };
 };

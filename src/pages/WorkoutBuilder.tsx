@@ -22,8 +22,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 
-// Exercise item (sortable)
 const ExerciseItem = ({
   exercise,
   index,
@@ -100,7 +100,6 @@ const ExerciseItem = ({
   );
 };
 
-// Unified add/edit exercise form (inline, not modal)
 const defaultExerciseFormState = {
   name: "",
   sets: 3,
@@ -126,46 +125,60 @@ const WorkoutBuilder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegularWorkout, setIsRegularWorkout] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const dataLoaded = useRef(false);
 
-  // Load workout for editing
+  const { workout: loadedWorkout, isTemplate } = useWorkoutLoader(id);
+
   useEffect(() => {
     if (!id) {
       setIsLoading(false);
       return;
     }
 
-    // First check if it's a regular workout
-    const regularWorkout = workouts.find(w => w.id === id);
-    if (regularWorkout) {
-      setWorkoutName(regularWorkout.name);
-      setExercises(regularWorkout.exercises);
-      setIsRegularWorkout(true);
-      setIsLoading(false);
+    if (dataLoaded.current) {
       return;
     }
 
-    // Then check if it's a workout template
-    const workoutTemplate = workoutTemplates.find(template => template.id === id);
-    if (workoutTemplate) {
-      setWorkoutName(workoutTemplate.name);
-      setExercises(workoutTemplate.exercises);
+    if (loadedWorkout && loadedWorkout.id) {
+      setWorkoutName(loadedWorkout.name);
+      setExercises(loadedWorkout.exercises);
+      setIsRegularWorkout(!isTemplate);
       setIsLoading(false);
-    } else {
-      setLoadError("The workout you're trying to edit could not be found.");
-      toast({
-        title: "Workout not found",
-        description: "The workout you're trying to edit does not exist.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
+      dataLoaded.current = true;
+      return;
     }
-  }, [id, workoutTemplates, workouts, toast]);
+
+    if (!loadedWorkout && !isLoading) {
+      const regularWorkout = workouts.find(w => w.id === id);
+      if (regularWorkout) {
+        setWorkoutName(regularWorkout.name);
+        setExercises(regularWorkout.exercises);
+        setIsRegularWorkout(true);
+        setIsLoading(false);
+        dataLoaded.current = true;
+        return;
+      }
+
+      const workoutTemplate = workoutTemplates.find(template => template.id === id);
+      if (workoutTemplate) {
+        setWorkoutName(workoutTemplate.name);
+        setExercises(workoutTemplate.exercises);
+        setIsLoading(false);
+        dataLoaded.current = true;
+      } else {
+        setLoadError("The workout you're trying to edit could not be found.");
+        toast({
+          title: "Workout not found",
+          description: "The workout you're trying to edit does not exist.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+      }
+    }
+  }, [id, workoutTemplates, workouts, loadedWorkout, isTemplate, isLoading, toast]);
 
   const { startAfterCreation } = location.state || {};
 
-  // ----- Exercise Form Handlers -----
-
-  // Initialize form for edit/create
   const openExerciseForm = (exercise?: Exercise) => {
     if (exercise) {
       setExerciseForm({
@@ -183,7 +196,6 @@ const WorkoutBuilder: React.FC = () => {
     setShowExerciseForm(true);
   };
 
-  // Add new exercise
   const handleAddExercise = () => {
     if (!exerciseForm.name.trim()) {
       toast({
@@ -210,7 +222,6 @@ const WorkoutBuilder: React.FC = () => {
     setShowExerciseForm(false);
   };
 
-  // Start editing exercise
   const handleEditExercise = (id: string) => {
     const exerciseToEdit = exercises.find((exercise) => exercise.id === id);
     if (exerciseToEdit) {
@@ -218,7 +229,6 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Update existing exercise
   const handleUpdateExercise = () => {
     if (!exerciseForm.name.trim()) {
       toast({
@@ -248,13 +258,11 @@ const WorkoutBuilder: React.FC = () => {
     setShowExerciseForm(false);
   };
 
-  // Delete prompt
   const promptDeleteExercise = (id: string) => {
     setExerciseToDelete(id);
     setConfirmDeleteExercise(true);
   };
 
-  // Delete execution
   const handleDeleteExercise = () => {
     if (!exerciseToDelete) return;
     setExercises(exercises.filter((exercise) => exercise.id !== exerciseToDelete));
@@ -267,7 +275,6 @@ const WorkoutBuilder: React.FC = () => {
     });
   };
 
-  // DND handlers
   const moveExercise = (dragIndex: number, hoverIndex: number) => {
     setExercises((items) => arrayMove(items, dragIndex, hoverIndex));
   };
@@ -285,7 +292,6 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Cancel workflow
   const handleCancelClick = () => {
     if (exercises.length > 0 || workoutName.trim() !== "") {
       setConfirmCancel(true);
@@ -294,7 +300,6 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Complete/save workout with support for both templates and regular workouts
   const handleComplete = () => {
     if (!workoutName) {
       toast({
@@ -318,7 +323,6 @@ const WorkoutBuilder: React.FC = () => {
       const workoutId = id || uuidv4();
 
       if (isRegularWorkout) {
-        // Update a regular workout
         const updatedWorkout: Workout = {
           ...workouts.find(w => w.id === id)!,
           id: workoutId,
@@ -335,7 +339,6 @@ const WorkoutBuilder: React.FC = () => {
         
         navigate(`/workouts/${workoutId}`);
       } else {
-        // Handle workout template
         const newWorkoutTemplate: WorkoutTemplate = {
           id: workoutId,
           name: workoutName,
@@ -370,7 +373,6 @@ const WorkoutBuilder: React.FC = () => {
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
@@ -385,7 +387,6 @@ const WorkoutBuilder: React.FC = () => {
     );
   }
 
-  // Show error state
   if (loadError) {
     return (
       <div className="app-container animate-fade-in">
@@ -400,7 +401,6 @@ const WorkoutBuilder: React.FC = () => {
     );
   }
 
-  // --- UI ---
   return (
     <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
       <div className="app-container animate-fade-in">
@@ -415,7 +415,6 @@ const WorkoutBuilder: React.FC = () => {
             className="mb-4"
           />
 
-          {/* Exercises Section */}
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -427,7 +426,6 @@ const WorkoutBuilder: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Exercise Form inline */}
           {showExerciseForm && (
             <Card className="mb-4">
               <CardContent className="p-4 space-y-4">
@@ -531,7 +529,6 @@ const WorkoutBuilder: React.FC = () => {
             </Card>
           )}
 
-          {/* Show Exercises List for review/edit */}
           {exercises.length === 0 ? (
             <Card>
               <CardContent className="text-center p-5">
@@ -568,7 +565,6 @@ const WorkoutBuilder: React.FC = () => {
         </div>
       </div>
 
-      {/* Confirm Delete Exercise Dialog */}
       <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
         <DialogContent>
           <DialogHeader>
@@ -588,7 +584,6 @@ const WorkoutBuilder: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Cancel Dialog */}
       <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
         <DialogContent>
           <DialogHeader>
