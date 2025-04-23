@@ -8,6 +8,7 @@ export const useWorkouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const { toast } = useToast();
 
+  // Load workouts from localStorage
   useEffect(() => {
     try {
       const storedWorkouts = localStorage.getItem('workouts');
@@ -32,6 +33,7 @@ export const useWorkouts = () => {
         setWorkouts(validatedWorkouts);
         console.log("Loaded workouts from localStorage:", validatedWorkouts.length);
         console.log("Completed workouts found:", validatedWorkouts.filter((w: any) => w.completed === true).length);
+        console.log("Completed workout IDs:", validatedWorkouts.filter((w: any) => w.completed === true).map((w: any) => w.id));
       }
     } catch (error) {
       console.error('Error loading workouts from localStorage:', error);
@@ -50,6 +52,7 @@ export const useWorkouts = () => {
     }
   }, [toast]);
 
+  // Save workouts to localStorage
   useEffect(() => {
     if (workouts.length > 0) {
       try {
@@ -72,6 +75,7 @@ export const useWorkouts = () => {
 
         localStorage.setItem('workouts', JSON.stringify(prunedWorkouts));
         console.log('Saved workouts to localStorage:', prunedWorkouts.length);
+        console.log('Completed workouts in storage:', prunedWorkouts.filter(w => w.completed === true).length);
       } catch (error) {
         console.error('Error saving workouts to localStorage:', error);
         
@@ -138,12 +142,15 @@ export const useWorkouts = () => {
 
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
+      // Force ensure workout has completed status properly set
+      const completed = workout.completed === true;
+      
       // Ensure workout has all required fields and explicitly parse the completed status
       const updatedWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: workout.completed === true, // Ensure boolean conversion
+        completed: completed, // Ensure boolean conversion and preserve true status
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -153,7 +160,8 @@ export const useWorkouts = () => {
         })) : []
       };
       
-      console.log('Updating workout with completed status:', updatedWorkout.id, updatedWorkout.completed);
+      console.log('Updating workout with ID:', updatedWorkout.id);
+      console.log('Completed status before update:', completed);
       
       // Use a function to update state to ensure we have the latest state
       setWorkouts(prev => {

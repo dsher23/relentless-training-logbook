@@ -21,17 +21,17 @@ const WorkoutHistory: React.FC = () => {
   
   // Update completed workouts whenever workouts change
   useEffect(() => {
-    // Get completed workouts and sort by date (newest first)
+    // Strict check for completed === true
     const completed = workouts
       .filter(workout => workout.completed === true)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     setCompletedWorkouts(completed);
     
-    console.log('Total workouts in context:', workouts.length);
-    console.log('Completed workouts found:', completed.length);
-    console.log('Completed workout IDs:', completed.map(w => w.id));
-    console.log('All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed})));
+    console.log('WorkoutHistory - Total workouts in context:', workouts.length);
+    console.log('WorkoutHistory - Completed workouts found:', completed.length);
+    console.log('WorkoutHistory - Completed workout IDs:', completed.map(w => w.id));
+    console.log('WorkoutHistory - All workout completion statuses:', workouts.map(w => ({id: w.id, completed: w.completed})));
   }, [workouts]);
 
   const handleDeleteWorkout = () => {

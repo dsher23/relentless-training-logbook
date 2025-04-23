@@ -6,6 +6,8 @@ import { useAppContext } from "@/context/AppContext";
 
 const WeeklyProgress = () => {
   const { workouts } = useAppContext();
+  
+  // Use strict equality check for completed === true
   const completedWorkouts = workouts.filter(w => w.completed === true);
   
   // Add logging to help debug
@@ -13,6 +15,8 @@ const WeeklyProgress = () => {
     console.log("WeeklyProgress - Total workouts:", workouts.length);
     console.log("WeeklyProgress - Completed workouts:", completedWorkouts.length);
     console.log("WeeklyProgress - Completed workout IDs:", completedWorkouts.map(w => w.id));
+    console.log("WeeklyProgress - Sample workout completion status:", 
+      workouts.length > 0 ? workouts[0].completed : "no workouts");
   }, [workouts, completedWorkouts]);
   
   return (

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -17,9 +18,12 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
   const { workouts } = useAppContext();
   
   useEffect(() => {
+    // Strict equality check for completed === true
     const completedWorkouts = workouts.filter(w => w.completed === true);
     console.log("WeeklyLiftsGraph - Total workouts:", workouts.length);
     console.log("WeeklyLiftsGraph - Completed workouts:", completedWorkouts.length);
+    console.log("WeeklyLiftsGraph - First few workout completion statuses:", 
+      workouts.slice(0, 3).map(w => ({id: w.id, completed: w.completed})));
   }, [workouts]);
   
   const calculateDailyData = (date: Date): DayData[] => {
@@ -27,6 +31,7 @@ const WeeklyLiftsGraph: React.FC<{ currentDate: Date }> = ({ currentDate }) => {
     const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
     const lastWeekStart = subWeeks(weekStart, 1);
     
+    // Strict equality check for completed === true
     const completedWorkouts = workouts.filter(w => w.completed === true);
     
     console.log(`WeeklyLiftsGraph - Total workouts: ${workouts.length}, Completed workouts: ${completedWorkouts.length}`);

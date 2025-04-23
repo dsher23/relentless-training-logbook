@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight } from "lucide-react";
@@ -185,7 +186,7 @@ const LiveWorkout = () => {
         };
       });
       
-      const updatedWorkout: Workout = {
+      const updatedWorkout = {
         ...workout,
         exercises: updatedExercises,
         completed: true, // Explicitly set to true
@@ -193,11 +194,14 @@ const LiveWorkout = () => {
         notes: workout.notes || "", // Ensure notes exists
       };
       
-      console.log('About to save completed workout:', updatedWorkout);
-      console.log('Completed status:', updatedWorkout.completed);
+      console.log('About to save completed workout with ID:', updatedWorkout.id);
+      console.log('Completed status before save:', updatedWorkout.completed);
+      console.log('Full workout object to be saved:', JSON.stringify(updatedWorkout));
       
+      // Save the workout
       updateWorkout(updatedWorkout);
       
+      // Clear the in-progress workout data
       localStorage.removeItem('workout_in_progress');
       
       toast({
@@ -205,6 +209,7 @@ const LiveWorkout = () => {
         description: "Your workout has been saved successfully.",
       });
       
+      // Wait a moment before redirecting to ensure state updates
       setTimeout(() => {
         navigate("/workout-history");
       }, 500);
