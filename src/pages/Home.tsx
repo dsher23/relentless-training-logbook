@@ -7,6 +7,7 @@ const Home: React.FC = () => {
   
   useEffect(() => {
     // Redirect to dashboard on mount
+    console.log('Home component mounted, redirecting to dashboard');
     navigate('/dashboard');
   }, [navigate]);
 

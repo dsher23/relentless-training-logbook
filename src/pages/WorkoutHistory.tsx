@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Bug } from 'lucide-react';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,26 +16,36 @@ const WorkoutHistory: React.FC = () => {
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
   
   useEffect(() => {
-    // Debug the workouts state
+    // First, log the total number of workouts
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     
-    // Log each workout's completion status in detail for debugging
+    // Log detailed information about each workout for debugging
     workouts.forEach(workout => {
       console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed}, type=${typeof workout.completed}`);
     });
     
-    // Explicitly filter for workouts where completed is strictly true (boolean true)
-    const completed = workouts
-      .filter(workout => workout.completed === true) 
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Try multiple filtering approaches to identify the issue
+    const strictCompleted = workouts.filter(w => w.completed === true);
+    const looseCompleted = workouts.filter(w => w.completed);
+    const allWorkouts = [...workouts]; // Clone the array
+    
+    console.log('Strict completed filter found:', strictCompleted.length);
+    console.log('Loose completed filter found:', looseCompleted.length);
+    
+    // Use the strict comparison to ensure we only get truly completed workouts
+    const completed = strictCompleted.sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
     
     console.log('WorkoutHistory - Completed workouts found:', completed.length);
     if (completed.length > 0) {
       console.log('WorkoutHistory - First completed workout:', completed[0]);
     }
     
+    // Set the completed workouts state
     setCompletedWorkouts(completed);
   }, [workouts]);
 
@@ -56,19 +66,52 @@ const WorkoutHistory: React.FC = () => {
     setWorkoutToDelete(id);
   };
 
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+  };
+
   return (
     <div className="app-container animate-fade-in">
       <Header title="Workout History">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleDebugMode}
+            title="Debug Mode"
+          >
+            <Bug className="h-4 w-4" />
+          </Button>
+        </div>
       </Header>
       
       <div className="p-4">
+        {debugMode && (
+          <Card className="mb-4 bg-yellow-50 dark:bg-yellow-900/20">
+            <CardContent className="p-4 text-xs">
+              <h3 className="font-bold mb-1">Debug Info:</h3>
+              <p>Total workouts: {workouts.length}</p>
+              <p>Completed workouts: {completedWorkouts.length}</p>
+              <p>First few workout IDs:</p>
+              <ul className="list-disc pl-5">
+                {workouts.slice(0, 3).map(w => (
+                  <li key={w.id}>
+                    {w.id.substring(0, 8)}... - {w.name} - 
+                    completed: {String(w.completed)} ({typeof w.completed})
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+        
         {completedWorkouts.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">

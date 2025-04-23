@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle2, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext, Workout } from "@/context/AppContext";
@@ -35,6 +35,7 @@ const LiveWorkout = () => {
   const [confirmDeleteSetDialog, setConfirmDeleteSetDialog] = useState(false);
   const [deleteSetInfo, setDeleteSetInfo] = useState<{ exerciseId: string, setIndex: number } | null>(null);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
   
   const [exerciseData, setExerciseData] = useState<{
     [key: string]: {
@@ -188,39 +189,49 @@ const LiveWorkout = () => {
       const updatedWorkout = {
         ...workout,
         exercises: updatedExercises,
-        completed: true, // Explicitly set to true as a boolean
+        completed: true, // CRITICAL: Explicitly set to true as a boolean
         date: new Date(), // Ensure date is updated to completion time
         notes: workout.notes || "", // Ensure notes exists
       };
       
-      console.log('About to save completed workout with ID:', updatedWorkout.id);
-      console.log('Completed status before save:', updatedWorkout.completed);
-      console.log('Full workout object to be saved:', JSON.stringify(updatedWorkout));
+      console.log('CRITICAL - About to save completed workout with ID:', updatedWorkout.id);
+      console.log('CRITICAL - Completed status before save:', updatedWorkout.completed);
+      console.log('CRITICAL - Type of completed property:', typeof updatedWorkout.completed);
+      console.log('CRITICAL - Full workout object to be saved:', JSON.stringify(updatedWorkout));
       
-      // Save the workout
-      updateWorkout(updatedWorkout);
+      const savedWorkout = updateWorkout(updatedWorkout);
       
-      // Clear the in-progress workout data
+      console.log('CRITICAL - Result of updateWorkout operation:', savedWorkout);
+      
+      setTimeout(() => {
+        const allWorkouts = workouts || [];
+        const verifyWorkout = allWorkouts.find(w => w.id === updatedWorkout.id);
+        console.log('CRITICAL - Verification after save:', verifyWorkout ? {
+          id: verifyWorkout.id,
+          completed: verifyWorkout.completed,
+          completedType: typeof verifyWorkout.completed
+        } : 'Workout not found');
+      }, 100);
+      
       localStorage.removeItem('workout_in_progress');
       
       toast({
         title: "Workout Completed!",
-        description: "Your workout has been saved successfully.",
+        description: "Your workout has been saved successfully to history.",
       });
       
-      // Wait a moment before redirecting to ensure state updates
       setTimeout(() => {
         navigate("/workout-history");
-      }, 1000); // Increased delay to ensure state updates properly
+      }, 1500); // Increased delay to ensure state updates properly
     } catch (error) {
-      console.error("Error saving workout:", error);
+      console.error("CRITICAL - Error saving workout:", error);
       toast({
         title: "Save Error",
         description: "There was a problem saving your workout. Please try again.",
         variant: "destructive"
       });
     }
-  }, [workout, exerciseData, updateWorkout, toast, navigate]);
+  }, [workout, exerciseData, updateWorkout, toast, navigate, workouts]);
 
   useEffect(() => {
     const loadWorkout = async () => {
@@ -348,6 +359,10 @@ const LiveWorkout = () => {
     setIsTimerRunning(!isTimerRunning);
   };
 
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+  };
+
   const nextExercise = () => {
     if (!workout) return;
     
@@ -408,7 +423,14 @@ const LiveWorkout = () => {
         workoutTime={workoutTime}
         isTimerRunning={isTimerRunning}
         onToggleTimer={toggleTimer}
-      />
+      >
+        {debugMode && (
+          <div className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+            <p>Workout ID: {workout.id.substring(0, 8)}...</p>
+            <p>Completed: {String(workout.completed)}</p>
+          </div>
+        )}
+      </WorkoutHeader>
       
       <div className="px-4 pb-2">
         <div className="text-sm flex justify-between items-center">
@@ -429,6 +451,14 @@ const LiveWorkout = () => {
               disabled={safeCurrentExerciseIndex === workout.exercises.length - 1}
             >
               Next
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleDebugMode}
+              title="Debug Mode"
+            >
+              <Bug className="h-4 w-4" />
             </Button>
           </div>
         </div>
