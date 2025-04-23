@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { startOfWeek, addWeeks, format, isWithinInterval, subWeeks } from "date-fns";
@@ -52,7 +51,6 @@ const LiftProgressGraph: React.FC = () => {
   const [filter, setFilter] = useState<string>("all");
   const [numWeeks, setNumWeeks] = useState<number>(8);
   
-  // Get only completed workouts
   const completedWorkouts = workouts.filter(workout => workout.completed === true);
   
   const getExerciseCategory = (exerciseName: string): string => {
@@ -70,42 +68,35 @@ const LiftProgressGraph: React.FC = () => {
     const today = new Date();
     const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
     
-    // Sort workouts by date
     const sortedWorkouts = [...completedWorkouts].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     
-    // Determine earliest week
     const earliestWorkout = sortedWorkouts[0];
     const earliestDate = new Date(earliestWorkout?.date || today);
     const earliestWeekStart = startOfWeek(earliestDate, { weekStartsOn: 1 });
     
-    // Calculate number of weeks between earliest and current
     const totalWeeks = Math.max(
       Math.ceil((currentWeekStart.getTime() - earliestWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)),
       numWeeks
     );
     
-    // Generate data for each week
     const progressData: LiftProgressData[] = [];
     
     for (let i = 0; i < totalWeeks; i++) {
       const weekStart = subWeeks(currentWeekStart, i);
       const weekEnd = addWeeks(weekStart, 1);
       
-      // Filter workouts in this week
       const weekWorkouts = completedWorkouts.filter(workout => {
         const workoutDate = new Date(workout.date);
         return isWithinInterval(workoutDate, { start: weekStart, end: weekEnd });
       });
       
-      // Calculate metrics
       let totalWeight = 0;
       let totalExercises = 0;
       let totalSets = 0;
       let totalVolume = 0;
       
-      // Track categories
       const categories: Record<string, { count: number, volume: number, average: number }> = {
         "Push": { count: 0, volume: 0, average: 0 },
         "Pull": { count: 0, volume: 0, average: 0 },
@@ -125,7 +116,6 @@ const LiftProgressGraph: React.FC = () => {
               totalVolume += volume;
               totalSets++;
               
-              // Update category data
               categories[category].count++;
               categories[category].volume += volume;
               categories[category].average += set.weight;
@@ -136,7 +126,6 @@ const LiftProgressGraph: React.FC = () => {
         });
       });
       
-      // Calculate averages for categories
       Object.keys(categories).forEach(category => {
         if (categories[category].count > 0) {
           categories[category].average = categories[category].average / categories[category].count;
@@ -195,7 +184,6 @@ const LiftProgressGraph: React.FC = () => {
     displayData.length - weekOffset
   );
   
-  // Calculate growth trends
   const trendData = useMemo(() => {
     if (visibleData.length < 2) return { trend: 0, percentage: 0 };
     
@@ -266,7 +254,10 @@ const LiftProgressGraph: React.FC = () => {
       <CardContent className="pb-6">
         {trendData.trend !== 0 && displayData.length > 1 && (
           <div className="mb-2 flex justify-end">
-            <Badge variant={trendData.trend > 0 ? "success" : "destructive"} className="text-xs">
+            <Badge 
+              variant={trendData.trend > 0 ? "default" : "destructive"} 
+              className={`text-xs ${trendData.trend > 0 ? 'bg-green-500 hover:bg-green-600' : ''}`}
+            >
               {trendData.trend > 0 ? "+" : "-"}{trendData.percentage.toFixed(1)}% from start
             </Badge>
           </div>
