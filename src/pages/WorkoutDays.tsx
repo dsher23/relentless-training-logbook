@@ -10,26 +10,32 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { WorkoutTemplate } from "@/types";
+import type { WorkoutTemplate, Exercise } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 const WorkoutDays: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const {
     workoutPlans,
     updateWorkoutPlan,
     addWorkoutTemplate,
-    removeTemplateFromPlan
+    removeTemplateFromPlan,
+    updateWorkoutTemplate,
+    deleteWorkoutPlan // <-- In case you want to delete the whole plan
   } = useAppContext();
-  
+
   const [isCreateDayDialogOpen, setIsCreateDayDialogOpen] = useState(false);
   const [dayName, setDayName] = useState("");
-  
+  const [editingDay, setEditingDay] = useState<WorkoutTemplate | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [pendingDeleteDayId, setPendingDeleteDayId] = useState<string | null>(null);
+
   const plan = workoutPlans.find((p) => p.id === planId);
-  
+
   if (!plan) {
     return (
       <div className="app-container animate-fade-in">
@@ -42,7 +48,7 @@ const WorkoutDays: React.FC = () => {
       </div>
     );
   }
-  
+
   const handleCreateDay = () => {
     if (!dayName.trim()) {
       toast({
@@ -52,62 +58,120 @@ const WorkoutDays: React.FC = () => {
       });
       return;
     }
-    
+
     const newDay: WorkoutTemplate = {
       id: uuidv4(),
       name: dayName.trim(),
       dayName: dayName.trim(),
       exercises: [],
     };
-    
+
     addWorkoutTemplate(newDay);
-    
+
     const updatedPlan = {
       ...plan,
       workoutTemplates: [...plan.workoutTemplates, newDay]
     };
-    
+
     updateWorkoutPlan(updatedPlan);
-    
+
     setDayName("");
     setIsCreateDayDialogOpen(false);
-    
+
     toast({
       title: "Success",
       description: `Added "${newDay.name}" to plan`,
     });
   };
-  
+
   const handleDeleteDay = (dayId: string) => {
     removeTemplateFromPlan(plan.id, dayId);
-    
+
     toast({
       title: "Success",
       description: "Removed workout day from plan",
     });
   };
 
+  const handleEditDay = (day: WorkoutTemplate) => {
+    // Ensure fallback values for edit safety!
+    setEditingDay({
+      ...day,
+      name: day.name || "Untitled Workout",
+      exercises: day.exercises || [],
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditDay = () => {
+    if (!editingDay) return;
+    updateWorkoutTemplate(editingDay);
+
+    const updatedPlanTemplates = plan.workoutTemplates.map(t =>
+      t.id === editingDay.id ? editingDay : t
+    );
+    updateWorkoutPlan({
+      ...plan,
+      workoutTemplates: updatedPlanTemplates
+    });
+
+    setIsEditDialogOpen(false);
+    setEditingDay(null);
+    toast({
+      title: "Workout Updated",
+      description: "Your changes have been saved.",
+    });
+  };
+
+  // Delete button inside edit dialog
+  const handleEditDialogDelete = () => {
+    if (editingDay?.id) {
+      setIsEditDialogOpen(false);
+      setPendingDeleteDayId(editingDay.id);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  // Confirm delete from dialog (list or edit)
+  const handleConfirmDelete = () => {
+    if (pendingDeleteDayId) {
+      handleDeleteDay(pendingDeleteDayId);
+      setPendingDeleteDayId(null);
+      setIsDeleteDialogOpen(false);
+      setIsEditDialogOpen(false);
+      setEditingDay(null);
+    }
+  };
+
+  // Calculate total sets across all exercises (with safety)
+  const totalSets: number = (plan.workoutTemplates as WorkoutTemplate[]).reduce(
+    (acc: number, curr: WorkoutTemplate) =>
+      acc + (curr.exercises?.reduce((a: number, e: Exercise) => a + (e.sets?.length ?? 0), 0) ?? 0),
+    0
+  );
+
+  // --- Render
   return (
     <div className="app-container animate-fade-in">
       <Header title={`${plan.name} - Workout Days`} />
-      
+
       <div className="p-4 space-y-4">
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate(`/exercise-plans/${plan.id}`)}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to Plan
           </Button>
         </div>
-        
+
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Workout Days</h2>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={() => setIsCreateDayDialogOpen(true)}
           >
             <Plus className="h-4 w-4 mr-1" /> Add Workout Day
           </Button>
         </div>
-        
+
         {plan.workoutTemplates.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="pt-6 text-center">
@@ -130,36 +194,40 @@ const WorkoutDays: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {plan.workoutTemplates.map((day) => (
-              <Card 
+              <Card
                 key={day.id}
                 className="hover:border-primary cursor-pointer"
-                onClick={() => navigate(`/exercise-plans/${plan.id}/days/${day.id}`)}
+                // Edit now uses handleEditDay to open dialog with safe fallbacks!
+                onClick={() => handleEditDay(day)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">{day.name}</h3>
+                      <h3 className="font-medium">{day.name || "Untitled Workout"}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {day.exercises?.length || 0} {day.exercises?.length === 1 ? "exercise" : "exercises"}
+                        {(day.exercises?.length ?? 0)} {(day.exercises?.length === 1 ? "exercise" : "exercises")}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
-                          handleDeleteDay(day.id);
+                          setPendingDeleteDayId(day.id);
+                          setIsDeleteDialogOpen(true);
                         }}
+                        aria-label="Delete Workout"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      <Button 
+                      <Button
                         size="sm"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
-                          navigate(`/exercise-plans/${plan.id}/days/${day.id}`);
+                          handleEditDay(day);
                         }}
+                        aria-label="Edit Workout"
                       >
                         <Edit className="h-4 w-4 mr-1" /> Edit
                       </Button>
@@ -171,7 +239,8 @@ const WorkoutDays: React.FC = () => {
           </div>
         )}
       </div>
-      
+
+      {/* CREATE WORKOUT DAY DIALOG */}
       <Dialog open={isCreateDayDialogOpen} onOpenChange={setIsCreateDayDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -194,8 +263,120 @@ const WorkoutDays: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* EDIT WORKOUT DAY DIALOG */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] w-full max-w-full">
+          <DialogHeader>
+            <DialogTitle>Edit Workout Day</DialogTitle>
+          </DialogHeader>
+          {editingDay && (
+            <div className="space-y-3">
+              <Label htmlFor="edit-day-name">Name</Label>
+              <Input
+                id="edit-day-name"
+                value={editingDay.name}
+                onChange={(e) =>
+                  setEditingDay({ ...editingDay, name: e.target.value })
+                }
+              />
+              <Label>Exercises</Label>
+              {(editingDay.exercises ?? []).length === 0 && (
+                <div className="text-muted-foreground text-sm">No exercises yet.</div>
+              )}
+              <div className="space-y-2">
+                {(editingDay.exercises ?? []).map((ex, idx) => (
+                  <div key={ex.id || idx} className="flex items-center gap-2">
+                    <Input
+                      value={ex.name || ""}
+                      className="flex-1"
+                      onChange={(e) => {
+                        const newExercises = [...editingDay.exercises];
+                        newExercises[idx] = { ...ex, name: e.target.value || "Exercise" };
+                        setEditingDay({ ...editingDay, exercises: newExercises });
+                      }}
+                      aria-label="Exercise Name"
+                    />
+                    <Input
+                      type="number"
+                      value={ex.sets?.[0]?.reps ?? 0}
+                      min={0}
+                      className="w-16"
+                      onChange={e => {
+                        const newExercises = [...editingDay.exercises];
+                        if (!newExercises[idx].sets) newExercises[idx].sets = [{}];
+                        if (!newExercises[idx].sets[0]) newExercises[idx].sets[0] = { reps: 0, weight: 0 };
+                        newExercises[idx].sets[0] = {
+                          ...newExercises[idx].sets[0],
+                          reps: parseInt(e.target.value) || 0,
+                        };
+                        setEditingDay({ ...editingDay, exercises: newExercises });
+                      }}
+                      aria-label="Sets Reps"
+                    />
+                    <Input
+                      type="number"
+                      value={ex.sets?.[0]?.weight ?? 0}
+                      min={0}
+                      className="w-20"
+                      onChange={e => {
+                        const newExercises = [...editingDay.exercises];
+                        if (!newExercises[idx].sets) newExercises[idx].sets = [{}];
+                        if (!newExercises[idx].sets[0]) newExercises[idx].sets[0] = { reps: 0, weight: 0 };
+                        newExercises[idx].sets[0] = {
+                          ...newExercises[idx].sets[0],
+                          weight: parseFloat(e.target.value) || 0,
+                        };
+                        setEditingDay({ ...editingDay, exercises: newExercises });
+                      }}
+                      aria-label="Sets Weight"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between gap-2 pt-4">
+                <Button
+                  variant="destructive"
+                  onClick={handleEditDialogDelete}
+                  aria-label="Delete Workout"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete Workout
+                </Button>
+                <Button onClick={handleSaveEditDay} className="flex-1" aria-label="Save Changes">
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* DELETE CONFIRMATION DIALOG */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="mb-4">
+            Are you sure you want to delete this workout day? This cannot be undone.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              aria-label="Confirm Delete"
+            >
+              Yes, Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default WorkoutDays;
+
