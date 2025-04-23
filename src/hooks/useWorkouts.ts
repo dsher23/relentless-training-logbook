@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Workout, Exercise } from '@/types';
@@ -15,21 +14,27 @@ export const useWorkouts = () => {
       if (storedWorkouts) {
         const parsedWorkouts = JSON.parse(storedWorkouts);
         
-        // Ensure all workouts have proper date objects and required fields
-        // CRITICAL FIX: Normalize completed status to boolean
-        const validatedWorkouts = parsedWorkouts.map((w: any) => ({
-          ...w,
-          id: w.id || uuidv4(),
-          date: w.date ? new Date(w.date) : new Date(),  // Ensure dates are properly parsed
-          completed: w.completed === true,  // Explicitly normalize to boolean
-          notes: w.notes || '',
-          exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
-            ...ex,
-            id: ex.id || uuidv4(),
-            sets: Array.isArray(ex.sets) ? ex.sets : [],
-            notes: ex.notes || ''
-          })) : []
-        }));
+        // CRITICAL FIX: Ensure all workouts have proper boolean completed status
+        const validatedWorkouts = parsedWorkouts.map((w: any) => {
+          // Explicitly check if completed is true and enforce boolean type
+          const isCompleted = w.completed === true;
+          
+          console.log(`Loading workout ${w.id?.substring(0, 8) || 'unknown'}: name=${w.name || 'unnamed'}, completed=${w.completed} -> normalized to ${isCompleted}`);
+          
+          return {
+            ...w,
+            id: w.id || uuidv4(),
+            date: w.date ? new Date(w.date) : new Date(),
+            completed: isCompleted,  // Always normalize to boolean
+            notes: w.notes || '',
+            exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
+              ...ex,
+              id: ex.id || uuidv4(),
+              sets: Array.isArray(ex.sets) ? ex.sets : [],
+              notes: ex.notes || ''
+            })) : []
+          };
+        });
         
         setWorkouts(validatedWorkouts);
         console.log("Loaded workouts from localStorage:", validatedWorkouts.length);
@@ -57,11 +62,18 @@ export const useWorkouts = () => {
   useEffect(() => {
     if (workouts.length > 0) {
       try {
-        // CRITICAL FIX: Ensure completed status is correctly serialized
-        const workoutsToStore = workouts.map(w => ({
-          ...w,
-          completed: w.completed === true  // Normalize to boolean
-        }));
+        // CRITICAL FIX: Ensure completed status is correctly preserved before saving
+        const workoutsToStore = workouts.map(w => {
+          // Explicitly normalize the completed status to ensure it's saved correctly
+          const isCompleted = w.completed === true;
+          
+          console.log(`Saving workout ${w.id.substring(0, 8)}: name=${w.name}, completed=${w.completed} -> saved as ${isCompleted}`);
+          
+          return {
+            ...w,
+            completed: isCompleted  // Always normalize to boolean
+          };
+        });
         
         // Preserve completed status during sorting and storing
         const sortedWorkouts = [...workoutsToStore].sort(
@@ -159,10 +171,11 @@ export const useWorkouts = () => {
     }
   }, [toast]);
 
+  // Update workout function with critical fixes
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // CRITICAL FIX: Force ensure workout has completed status properly set
-      // Check for true explicitly to maintain the completed status
+      // CRITICAL FIX: Explicitly set completed status to true if it's true
+      // This must be done clearly and without any potentially overriding logic
       const isCompleted = workout.completed === true;
       
       // Create a new workout object with completed status explicitly set
@@ -170,7 +183,7 @@ export const useWorkouts = () => {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: isCompleted, // Preserve true status
+        completed: isCompleted, // CRITICAL: Use the explicitly checked value
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -180,7 +193,7 @@ export const useWorkouts = () => {
         })) : []
       };
       
-      console.log('updateWorkout - Updating workout:', {
+      console.log('CRITICAL - updateWorkout - Updating workout:', {
         id: updatedWorkout.id,
         name: updatedWorkout.name,
         completed: updatedWorkout.completed,

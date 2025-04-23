@@ -16,14 +16,14 @@ const WorkoutHistory: React.FC = () => {
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
-  const [debugMode, setDebugMode] = useState<boolean>(false);
+  const [debugMode, setDebugMode] = useState<boolean>(true); // Default to true for debugging
   
   useEffect(() => {
-    // Log all workouts for debugging
+    // Critical debugging logs
     console.log('WorkoutHistory - All workouts:', workouts);
     console.log('WorkoutHistory - Total workouts in context:', workouts.length);
     
-    // Log detailed information about each workout for debugging
+    // Log detailed information about each workout
     workouts.forEach(workout => {
       console.log(`Workout ${workout.id}: name=${workout.name}, completed=${workout.completed}, type=${typeof workout.completed}`);
     });
@@ -84,7 +84,7 @@ const WorkoutHistory: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleDebugMode}
+            onClick={() => setDebugMode(!debugMode)}
             title="Debug Mode"
           >
             <Bug className="h-4 w-4" />
@@ -96,12 +96,12 @@ const WorkoutHistory: React.FC = () => {
         {debugMode && (
           <Card className="mb-4 bg-yellow-50 dark:bg-yellow-900/20">
             <CardContent className="p-4 text-xs">
-              <h3 className="font-bold mb-1">Debug Info:</h3>
+              <h3 className="font-bold mb-1">Critical Debug Info:</h3>
               <p>Total workouts: {workouts.length}</p>
               <p>Completed workouts: {completedWorkouts.length}</p>
               <p className="font-bold mt-2">All Workouts:</p>
               <ul className="list-disc pl-5">
-                {workouts.slice(0, 10).map(w => (
+                {workouts.slice(0, 20).map(w => (
                   <li key={w.id}>
                     {w.id.substring(0, 8)}... - {w.name} - 
                     completed: <span className={w.completed === true ? "text-green-600 font-bold" : "text-red-600"}>

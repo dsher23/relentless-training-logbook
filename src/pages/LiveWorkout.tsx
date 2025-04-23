@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -174,6 +175,7 @@ const LiveWorkout = () => {
     try {
       setHasAttemptedSave(true);
       
+      // Collect updated exercise data
       const updatedExercises = workout.exercises.map(exercise => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
@@ -186,25 +188,27 @@ const LiveWorkout = () => {
         };
       });
 
-      const completedWorkout: Workout = {
+      // Create a new workout object with completed explicitly set to true
+      const completedWorkout = {
         id: workout.id,
         name: workout.name,
         exercises: updatedExercises,
-        completed: true,
+        completed: true, // CRITICAL FIX: Always set to true explicitly
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      console.log("SAVING WORKOUT - BEFORE UPDATE:", {
+      console.log("CRITICAL DEBUGGING - WORKOUT OBJECT BEFORE SAVE:", {
         id: completedWorkout.id,
         name: completedWorkout.name,
         completed: completedWorkout.completed,
         completedType: typeof completedWorkout.completed
       });
       
+      // Save the workout with completed: true
       updateWorkout(completedWorkout);
       
-      console.log("SAVING WORKOUT - FULL OBJECT:", JSON.stringify(completedWorkout));
+      console.log("CRITICAL DEBUGGING - FULL WORKOUT OBJECT:", JSON.stringify(completedWorkout));
       
       localStorage.removeItem('workout_in_progress');
       
