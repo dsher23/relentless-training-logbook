@@ -31,6 +31,7 @@ export const useWorkouts = () => {
         
         setWorkouts(validatedWorkouts);
         console.log("Loaded workouts from localStorage:", validatedWorkouts.length);
+        console.log("Completed workouts:", validatedWorkouts.filter((w: any) => w.completed === true).length);
       }
     } catch (error) {
       console.error('Error loading workouts from localStorage:', error);
@@ -150,6 +151,8 @@ export const useWorkouts = () => {
           notes: ex.notes || ''
         })) : []
       };
+      
+      console.log('Updating workout with completed status:', updatedWorkout.id, updatedWorkout.completed);
       
       setWorkouts(prev => {
         const exists = prev.some(w => w.id === updatedWorkout.id);

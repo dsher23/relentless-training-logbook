@@ -20,8 +20,12 @@ const WorkoutHistory: React.FC = () => {
   
   // Get completed workouts and sort by date (newest first)
   const completedWorkouts = workouts
-    .filter(workout => workout.completed === true) // Explicit equality check
+    .filter(workout => workout.completed === true) // Ensure strict equality check
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  console.log('Total workouts:', workouts.length);
+  console.log('Completed workouts:', completedWorkouts.length);
+  console.log('Completed workout IDs:', completedWorkouts.map(w => w.id));
 
   const handleDeleteWorkout = () => {
     if (!workoutToDelete) return;

@@ -190,12 +190,13 @@ const LiveWorkout = () => {
       const updatedWorkout: Workout = {
         ...workout,
         exercises: updatedExercises,
-        completed: true,
+        completed: true, // Explicitly set to true
         date: new Date(), // Ensure date is updated to completion time
         notes: workout.notes || "", // Ensure notes exists
       };
       
       // Save the completed workout
+      console.log('Saving completed workout:', updatedWorkout.id, updatedWorkout.completed);
       updateWorkout(updatedWorkout);
       
       // Clear in-progress data
