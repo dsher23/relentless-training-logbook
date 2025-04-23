@@ -70,18 +70,18 @@ export const useWorkouts = () => {
         const trueCompletedBefore = workouts.filter(w => w.completed === true);
         console.log("TRUE completed workouts before saving:", trueCompletedBefore.length);
         
-        // Process workouts for storage with specific boolean handling
+        // CRITICAL: Map through workouts preserving the completed status exactly
         const workoutsToStore = workouts.map(w => {
-          // CRITICAL: Preserve boolean true values exactly
-          const completed = w.completed === true;
+          // Force completed to be a boolean true if it was true, false otherwise
+          const isCompleted = w.completed === true;
           
           // Debug each workout being saved
-          console.log(`Saving workout ${w.id.substring(0, 8)}: name=${w.name}, completed=${String(completed)} (${typeof completed})`);
+          console.log(`Saving workout ${w.id.substring(0, 8)}: name=${w.name}, completed=${String(isCompleted)} (${typeof isCompleted})`);
           
-          // Return a clean workout object with completed properly set
+          // Return the workout with completed properly set
           return {
             ...w,
-            completed // This will be exactly true or false
+            completed: isCompleted,
           };
         });
         
@@ -193,23 +193,25 @@ export const useWorkouts = () => {
     }
   }, [toast]);
 
-  // Update workout - CRITICAL function for completion status
+  // CRITICAL: Update workout function - ensures completed status is preserved
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
-      // CRITICAL: Log the exact workout being received for update
-      console.log("updateWorkout - Received workout:", {
-        id: workout.id,
-        name: workout.name, 
+      // CRITICAL: Log the workout being updated
+      console.log("CRITICAL - updateWorkout received:", {
+        id: workout.id?.substring(0, 8),
+        name: workout.name,
         completed: workout.completed,
         type: typeof workout.completed
       });
       
-      // CRITICAL: Make absolutely sure we preserve completed=true
-      // Create a clean workout object with the completion flag explicitly set
+      // Force completed to be a boolean if true was passed
+      const isCompleted = workout.completed === true;
+      
+      // Create a new clean workout with completed preserved
       const updatedWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
-        completed: workout.completed === true, // This ensures it's properly set as boolean
+        completed: isCompleted, // Explicitly set as boolean
         date: workout.date || new Date(),
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
@@ -220,31 +222,33 @@ export const useWorkouts = () => {
         })) : []
       };
       
-      console.log("updateWorkout - Final processed workout:", {
-        id: updatedWorkout.id,
+      // CRITICAL: Verify the processed workout
+      console.log("CRITICAL - updateWorkout processed:", {
+        id: updatedWorkout.id.substring(0, 8),
         name: updatedWorkout.name,
-        completed: updatedWorkout.completed, 
+        completed: updatedWorkout.completed,
         type: typeof updatedWorkout.completed
       });
       
-      // Use a function to update state to ensure we have the latest state
       setWorkouts(prev => {
         const exists = prev.some(w => w.id === updatedWorkout.id);
         
         let newWorkouts;
         if (exists) {
+          // Replace the existing workout
           newWorkouts = prev.map(w => 
             w.id === updatedWorkout.id ? updatedWorkout : w
           );
-          console.log(`updateWorkout - Updated existing workout ${updatedWorkout.id.substring(0, 8)}`);
+          console.log(`CRITICAL - Updated existing workout ${updatedWorkout.id.substring(0, 8)} completed=${updatedWorkout.completed}`);
         } else {
+          // Add as new workout
           newWorkouts = [...prev, updatedWorkout];
-          console.log('updateWorkout - Added new workout (id not found in previous workouts)');
+          console.log('CRITICAL - Added new workout, completed=', updatedWorkout.completed);
         }
         
-        // Verify the update by checking updated workouts
+        // Verify the updated workouts
         const completedCount = newWorkouts.filter(w => w.completed === true).length;
-        console.log(`updateWorkout - Updated workouts array: total=${newWorkouts.length}, completed=${completedCount}`);
+        console.log(`CRITICAL - After update: total=${newWorkouts.length}, completed=${completedCount}`);
         
         return newWorkouts;
       });
@@ -252,7 +256,7 @@ export const useWorkouts = () => {
       // Return the updated workout
       return updatedWorkout;
     } catch (error) {
-      console.error('Error updating workout:', error);
+      console.error('CRITICAL - Error updating workout:', error);
       toast({
         title: "Error",
         description: "Failed to update workout. Please try again.",

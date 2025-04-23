@@ -16,25 +16,26 @@ const WorkoutHistory: React.FC = () => {
   const { toast } = useToast();
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [completedWorkouts, setCompletedWorkouts] = useState<any[]>([]);
-  const [debugMode, setDebugMode] = useState<boolean>(false); // Set debug off by default
+  const [debugMode, setDebugMode] = useState<boolean>(true); // Set debug on initially to diagnose
   
   useEffect(() => {
-    // Find completed workouts with strict boolean check (completed === true)
+    // CRITICAL FIX: Use strict === true comparison for completed workouts
     const strictCompletedWorkouts = workouts.filter(workout => workout.completed === true);
     
-    console.log("WorkoutHistory - All workouts:", workouts.length);
-    console.log("WorkoutHistory - Strict completed workouts:", strictCompletedWorkouts.length);
+    console.log("CRITICAL - WorkoutHistory - All workouts:", workouts.length);
+    console.log("CRITICAL - WorkoutHistory - Strict completed workouts:", strictCompletedWorkouts.length);
     
-    // Log the first few completed workouts for verification
-    strictCompletedWorkouts.slice(0, 3).forEach((workout, index) => {
-      console.log(`Completed workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed}`);
+    // Log info about ALL workouts to diagnose the issue
+    console.log("CRITICAL - All workouts completion status:");
+    workouts.slice(0, 10).forEach((workout, index) => {
+      console.log(`Workout ${index}: id=${workout.id?.substring(0, 8)}, name=${workout.name}, completed=${workout.completed} (${typeof workout.completed})`);
     });
     
     // Sort completed workouts by date, newest first
     const sortedWorkouts = [...strictCompletedWorkouts]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    console.log("WorkoutHistory - Final sorted completed workouts:", sortedWorkouts.length);
+    console.log("CRITICAL - WorkoutHistory - Final sorted completed workouts:", sortedWorkouts.length);
     
     // Set the state with properly filtered and sorted completed workouts
     setCompletedWorkouts(sortedWorkouts);
@@ -90,6 +91,7 @@ const WorkoutHistory: React.FC = () => {
               <h3 className="font-bold mb-1">Debug Info:</h3>
               <p>Total workouts: {workouts.length}</p>
               <p>TRUE completed workouts: {workouts.filter(w => w.completed === true).length}</p>
+              <p>Boolean completed: {workouts.filter(w => Boolean(w.completed)).length}</p>
               <p>Displayed completed: {completedWorkouts.length}</p>
               
               <div className="mt-3">

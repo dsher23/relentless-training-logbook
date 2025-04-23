@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -187,27 +188,25 @@ const LiveWorkout = () => {
         };
       });
 
-      // Create a completed workout object ensuring all fields are fully populated and complete
+      // CRITICAL FIX: Create an entirely new object with completed explicitly true
       const completedWorkout = {
         id: workout.id,
-        name: workout.name,
+        name: workout.name, 
         exercises: updatedExercises,
-        completed: true, // CRITICAL: Set explicitly to Boolean true
+        completed: true, // Explicitly set as true primitive boolean
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      // Debug logging BEFORE saving
-      console.log("SAVING WORKOUT:", JSON.stringify(completedWorkout));
-      console.log("COMPLETED FLAG TYPE:", typeof completedWorkout.completed);
-      console.log("COMPLETED FLAG VALUE:", completedWorkout.completed);
+      // Verify the workout data in console
+      console.log("CRITICAL - SAVING COMPLETED WORKOUT:", JSON.stringify(completedWorkout));
+      console.log("CRITICAL - completed type:", typeof completedWorkout.completed);
+      console.log("CRITICAL - completed value:", completedWorkout.completed);
       
-      // Save the workout
+      // Directly update workout in context, ensuring true value is preserved
       updateWorkout(completedWorkout);
       
-      // Additional verification after save
-      console.log("VERIFICATION - Workout after update:", completedWorkout);
-      
+      // Clean up any in-progress data
       localStorage.removeItem('workout_in_progress');
       
       toast({
@@ -215,6 +214,7 @@ const LiveWorkout = () => {
         description: "Your workout has been saved successfully to history.",
       });
       
+      // Navigate to workout history to see the saved workout
       setTimeout(() => {
         navigate("/workout-history");
       }, 1500);
