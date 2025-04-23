@@ -32,9 +32,15 @@ const Workouts: React.FC = () => {
   
   // Navigation handler for workout edit
   const handleEditWorkoutDay = (templateId: string) => {
-    // Ensure we have a properly formed URL with no double slashes
+    // Get plan ID if available, otherwise use empty string
     const planId = activePlan?.id || '';
-    navigate(`/exercise-plans/${planId}/days/${templateId}`);
+    
+    // Use the proper routing based on whether we have a plan ID
+    if (planId) {
+      navigate(`/exercise-plans/${planId}/days/${templateId}`);
+    } else {
+      navigate(`/exercise-plans/days/${templateId}`);
+    }
   };
   
   return (

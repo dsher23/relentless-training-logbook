@@ -22,9 +22,11 @@ const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (workout.isTemplate) {
+    if ('isTemplate' in workout && workout.isTemplate) {
       // For template workouts, use the plan ID if available, otherwise use a direct path
-      const planId = activePlan?.id;
+      const planId = activePlan?.id || '';
+      
+      // Ensure we don't have double slashes by conditionally constructing the URL
       if (planId) {
         navigate(`/exercise-plans/${planId}/days/${workout.id}`);
       } else {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
@@ -44,9 +43,10 @@ const WorkoutDetail: React.FC = () => {
       setIsErrorShown(true);
       toast({
         title: "Workout Not Found",
-        description: "Could not load this workout. Please try again.",
+        description: "This workout couldn't be loaded. Please check the link or try again.",
         variant: "destructive"
       });
+      console.error(`Failed to load workout with ID: ${id}`);
     }
   }, [isLoading, rawWorkout, id, toast, isErrorShown]);
 
@@ -147,15 +147,14 @@ const WorkoutDetail: React.FC = () => {
 
   const handleEditWorkout = () => {
     if (isTemplate) {
-      // For template workouts, use the plan ID if available, otherwise use a direct path
-      const planId = activePlan?.id;
+      const planId = activePlan?.id || '';
+      
       if (planId) {
         navigate(`/exercise-plans/${planId}/days/${workout.id}`);
       } else {
         navigate(`/exercise-plans/days/${workout.id}`);
       }
     } else {
-      // For regular workouts, use the workout builder path
       navigate(`/workouts/builder/${workout.id}`);
     }
   };

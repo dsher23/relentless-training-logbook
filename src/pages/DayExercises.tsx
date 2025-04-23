@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -13,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DayExercises: React.FC = () => {
-  const { planId, dayId } = useParams<{ planId: string, dayId: string }>();
+  const { planId = '', dayId = '' } = useParams<{ planId: string, dayId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { workoutPlans, workoutTemplates, updateWorkoutPlan, updateWorkoutTemplate } = useAppContext();
@@ -39,13 +38,14 @@ const DayExercises: React.FC = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       
-      if (!day) {
+      if (!day && dayId) {
         setError("Could not load this workout. Please try again.");
+        console.error(`Workout day not found. ID: ${dayId}, PlanID: ${planId}`);
       }
     }, 300);
     
     return () => clearTimeout(timer);
-  }, [day]);
+  }, [day, dayId, planId]);
   
   if (isLoading) {
     return (
@@ -153,7 +153,7 @@ const DayExercises: React.FC = () => {
 
   return (
     <div className="app-container animate-fade-in">
-      <Header title={day.name || "Edit Workout"} />
+      <Header title={day ? (day.name || "Edit Workout") : "Workout Not Found"} />
       
       <div className="p-4 space-y-6">
         <Button 
@@ -163,36 +163,44 @@ const DayExercises: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
         
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold">{day.name || "Workout Day"}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {(day.exercises || []).length} exercises • {totalSets} total sets
-                </p>
-              </div>
-              <Button 
-                onClick={() => {
-                  setEditingExerciseId(null);
-                  setShowExerciseForm(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add Exercise
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {day ? (
+          <>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-lg font-semibold">{day.name || "Workout Day"}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {(day.exercises || []).length} exercises • {totalSets} total sets
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      setEditingExerciseId(null);
+                      setShowExerciseForm(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Exercise
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-        <ExercisesList 
-          exercises={day.exercises || []}
-          onAddExercise={() => setShowExerciseForm(true)}
-          onEditExercise={(id) => {
-            setEditingExerciseId(id);
-            setShowExerciseForm(true);
-          }}
-          onDeleteExercise={handleDeleteExercise}
-        />
+            <ExercisesList 
+              exercises={day.exercises || []}
+              onAddExercise={() => setShowExerciseForm(true)}
+              onEditExercise={(id) => {
+                setEditingExerciseId(id);
+                setShowExerciseForm(true);
+              }}
+              onDeleteExercise={handleDeleteExercise}
+            />
+          </>
+        ) : !isLoading && (
+          <div className="text-center p-6 bg-muted/30 rounded-md">
+            <p className="text-muted-foreground">This workout couldn't be loaded. Please check the link or try again.</p>
+          </div>
+        )}
       </div>
 
       <AddExerciseForm 
@@ -202,7 +210,7 @@ const DayExercises: React.FC = () => {
           setEditingExerciseId(null);
         }}
         onSave={handleSaveExercise}
-        exercise={editingExerciseId ? day.exercises.find(ex => ex.id === editingExerciseId) : undefined}
+        exercise={editingExerciseId ? day?.exercises.find(ex => ex.id === editingExerciseId) : undefined}
       />
     </div>
   );
