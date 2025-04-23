@@ -18,6 +18,7 @@ export interface Exercise {
   lastProgressDate: Date;
   isWeakPoint?: boolean;
   restTime?: number;
+  previousStats?: { reps: number; weight: number }[];
 }
 
 export interface BodyMeasurement {

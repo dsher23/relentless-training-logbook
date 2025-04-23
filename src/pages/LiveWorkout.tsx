@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bug } from "lucide-react";
@@ -194,9 +193,7 @@ const LiveWorkout = () => {
     );
   }
   
-  // Ensure we have data for the current exercise
   if (!exerciseData[currentExercise.id]) {
-    // Initialize the exercise data if it's not present
     setExerciseData(prev => ({
       ...prev,
       [currentExercise.id]: {
