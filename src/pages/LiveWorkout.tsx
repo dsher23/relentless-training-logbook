@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Bug } from "lucide-react";
@@ -203,13 +202,12 @@ const LiveWorkout = () => {
       console.log("Saving workout:", updatedWorkout); // Added debugging log
       
       // CRITICAL FIX: Force the completed flag to true when saving
-      const savedWorkout = updateWorkout({
+      updateWorkout({
         ...updatedWorkout,
         completed: true // CRITICAL: Force this to be true
       });
       
-      console.log('CRITICAL - Result of updateWorkout operation:', savedWorkout);
-      console.log('CRITICAL - Updated workout completed status:', savedWorkout?.completed);
+      console.log('CRITICAL - Result after updateWorkout operation');
       
       setTimeout(() => {
         const allWorkouts = workouts || [];
@@ -538,4 +536,3 @@ const LiveWorkout = () => {
 };
 
 export default LiveWorkout;
-
