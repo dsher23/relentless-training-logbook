@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ export default function ExerciseProgressTracker() {
   const [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("weight");
 
-  /* ---------- 1. finished workouts ---------- */
+  /* finished workouts only */
   const finished = useMemo(
     () =>
       (workouts ?? []).filter(
@@ -22,9 +22,9 @@ export default function ExerciseProgressTracker() {
     [workouts]
   );
 
-  /* ---------- 2. distinct exercise list ---------- */
+  /* list of unique exercise names (case-insensitive) */
   const names = useMemo(() => {
-    const map = new Map<string, string>(); // canonical -> display
+    const map = new Map<string, string>();
     finished.forEach((w) =>
       w.exercises.forEach((ex) => {
         if (!ex?.name) return;
@@ -37,36 +37,35 @@ export default function ExerciseProgressTracker() {
     );
   }, [finished]);
 
-  /* ---------- 3. build chart rows ---------- */
+  /* build rows for the chart */
   const rows = useMemo(() => {
     if (!selected) return [];
-
     const canonSel = selected.trim().toLowerCase();
+
     const out: { date: string; weight: number; volume: number }[] = [];
 
     finished.forEach((w) => {
-      let sessionVol = 0;
-      let sessionMax = 0;
+      let vol = 0;
+      let maxWt = 0;
 
       w.exercises.forEach((ex) => {
         if (ex?.name?.trim().toLowerCase() !== canonSel) return;
-
         ex.sets?.forEach((s) => {
           const wt = Number(s.weight) || 0;
           const reps = Number(s.reps) || 0;
-          sessionVol += wt * reps;
-          if (wt > sessionMax) sessionMax = wt;
+          vol += wt * reps;
+          if (wt > maxWt) maxWt = wt;
         });
       });
 
-      if (sessionVol || sessionMax) {
+      if (vol || maxWt) {
         out.push({
           date: new Date(w.date).toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "short",
           }),
-          weight: sessionMax,
-          volume: sessionVol,
+          weight: maxWt,
+          volume: vol,
         });
       }
     });
@@ -76,12 +75,10 @@ export default function ExerciseProgressTracker() {
     );
   }, [finished, selected]);
 
-  /* ---------- helpers ---------- */
   const yLabel = mode === "weight" ? "Weight (kg)" : "Volume (kg)";
   const maxVal =
     rows.length > 0 ? Math.max(...rows.map((r) => r[mode])) : 100;
 
-  /* ---------- render ---------- */
   return (
     <Card>
       <CardHeader>
@@ -89,36 +86,7 @@ export default function ExerciseProgressTracker() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* ===== DEBUG PANEL – remove when satisfied ===== */}
-        <div className="rounded-md border p-2 text-xs bg-muted/30">
-          <p className="font-medium">
-            Finished workouts stored: {finished.length}
-          </p>
-          {selected && (
-            <>
-              <p>
-                Matching “{selected}”:{" "}
-                {
-                  finished.filter((w) =>
-                    w.exercises.some(
-                      (ex) =>
-                        ex?.name?.trim().toLowerCase() ===
-                        selected.trim().toLowerCase()
-                    )
-                  ).length
-                }
-              </p>
-              {rows.length > 0 && (
-                <pre className="overflow-auto max-h-24 mt-2">
-                  {JSON.stringify(rows[0], null, 2)}
-                </pre>
-              )}
-            </>
-          )}
-        </div>
-        {/* ===== END DEBUG PANEL ===== */}
-
-        {/* exercise selector */}
+        {/* exercise buttons */}
         <div className="flex flex-wrap gap-2">
           {names.map((name) => (
             <Button
@@ -132,7 +100,7 @@ export default function ExerciseProgressTracker() {
           ))}
         </div>
 
-        {/* weight / volume tabs */}
+        {/* mode tabs */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Progress Graph</h3>
           <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
