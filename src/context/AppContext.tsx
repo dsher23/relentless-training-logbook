@@ -151,7 +151,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   } = useWorkouts();
 
   const addWorkout = (workout: Workout) => {
-    hookAddWorkout(workout);
+    hookAddWorkout(workout as any);
   };
 
   const {
@@ -374,7 +374,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return csvData;
   };
 
-  // Helper function to safely save to localStorage
   const safeLocalStorage = {
     setItem: (key: string, value: string): boolean => {
       try {
@@ -392,10 +391,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Load data from localStorage
   useEffect(() => {
-    // The workouts are now loaded in the useWorkouts hook
-    
     try {
       const storedWorkoutTemplates = localStorage.getItem('workoutTemplates');
       if (storedWorkoutTemplates) {
@@ -520,10 +516,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProgressPhotos
   ]);
 
-  // Save data to localStorage with error handling
   useEffect(() => {
-    // Workouts are now saved in the useWorkouts hook
-    
     if (workoutTemplates.length > 0) {
       safeLocalStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
     }

@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
+import { Workout, Exercise } from "@/types";
 
 /* ----------  Type defs ---------- */
 
@@ -9,21 +10,8 @@ export interface SetEntry {
   reps: number;
 }
 
-export interface Exercise {
-  id: string;
-  name: string;
-  sets: SetEntry[];
-  notes?: string;
-}
-
-export interface Workout {
-  id: string;
-  name: string;
-  date: string;          // ISO string
-  completed: boolean;    // ← ALWAYS boolean!
-  exercises: Exercise[];
-  isDeload?: boolean;    // Added for deload mode
-}
+// Ensure this matches the Workout type from types/index.ts
+export type { Workout, Exercise };
 
 /* ----------  Hook ---------- */
 
@@ -59,10 +47,15 @@ export function useWorkouts() {
   /** Create a workout from provided workout object */
   const addWorkout = useCallback(
     (workout: Workout) => {
+      // Ensure date is an ISO string before storing
+      const dateValue = workout.date instanceof Date 
+        ? workout.date.toISOString() 
+        : workout.date || new Date().toISOString();
+        
       const newWorkout: Workout = {
         id: workout.id || uuid(),
         name: workout.name,
-        date: workout.date || new Date().toISOString(),
+        date: dateValue,
         completed: workout.completed === true,
         exercises: workout.exercises || [],
         isDeload: workout.isDeload
@@ -91,8 +84,16 @@ export function useWorkouts() {
 
   /** Replace an existing workout (ensure boolean) */
   const updateWorkout = useCallback((updated: Workout) => {
+    // Ensure date is an ISO string
+    const dateValue = updated.date instanceof Date 
+      ? updated.date.toISOString() 
+      : updated.date;
+      
     updated.completed = updated.completed === true;
-    setWorkouts((prev) => prev.map((w) => (w.id === updated.id ? updated : w)));
+    
+    setWorkouts((prev) => prev.map((w) => 
+      (w.id === updated.id ? {...updated, date: dateValue} : w)
+    ));
   }, []);
 
   /** Mark a workout finished */
