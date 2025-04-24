@@ -12,16 +12,16 @@ const ExerciseProgressTracker: React.FC = () => {
   const [displayMode, setDisplayMode] = useState<"weight" | "volume">("weight");
 
   const completedWorkouts = useMemo(() => {
-    return workouts?.filter((w) => w?.completed === true) || [];
+    return (workouts || []).filter((w) => w?.completed === true && Array.isArray(w.exercises));
   }, [workouts]);
 
   const allExerciseNames = useMemo(() => {
     const names = new Set<string>();
-    completedWorkouts.forEach((w) =>
+    completedWorkouts.forEach((w) => {
       w.exercises.forEach((ex) => {
-        if (ex.name) names.add(ex.name);
-      })
-    );
+        if (ex?.name) names.add(ex.name);
+      });
+    });
     return Array.from(names).sort();
   }, [completedWorkouts]);
 
@@ -30,20 +30,21 @@ const ExerciseProgressTracker: React.FC = () => {
 
     return completedWorkouts
       .map((workout) => {
-        const exercise = workout.exercises.find((ex) => ex.name === selectedExercise);
-        if (!exercise || !exercise.sets?.length) return null;
+        const match = workout.exercises.find((ex) => ex.name === selectedExercise);
+        if (!match || !Array.isArray(match.sets) || match.sets.length === 0) return null;
 
-        const topSet = exercise.sets.reduce(
-          (best, set) => (set.weight * set.reps > best ? set.weight * set.reps : best),
-          0
-        );
-        const totalVolume = exercise.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+        const totalVolume = match.sets.reduce((sum, s) => {
+          const reps = Number(s.reps) || 0;
+          const weight = Number(s.weight) || 0;
+          return sum + (reps * weight);
+        }, 0);
+
+        const maxWeight = Math.max(...match.sets.map((s) => Number(s.weight) || 0));
 
         return {
-          date: new Date(workout.date).toLocaleDateString(),
-          weight: Math.max(...exercise.sets.map((s) => s.weight)),
+          date: new Date(workout.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+          weight: maxWeight,
           volume: totalVolume,
-          topSetVolume: topSet,
         };
       })
       .filter(Boolean);
@@ -80,11 +81,9 @@ const ExerciseProgressTracker: React.FC = () => {
 
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Progress Graph</h3>
-          <Tabs value={displayMode} onValueChange={(v) => setDisplayMode(v as any)}>
+          <Tabs value={displayMode} onValueChange={(v) => setDisplayMode(v as "weight" | "volume")}>
             <TabsList className="h-8">
-              <TabsTrigger value="weight" className="text-xs px-2">
-                Weight
-              </TabsTrigger>
+              <TabsTrigger value="weight" className="text-xs px-2">Weight</TabsTrigger>
               <TabsTrigger value="volume" className="text-xs px-2">
                 <BarChart className="h-3 w-3 mr-1" />
                 Volume
@@ -96,10 +95,7 @@ const ExerciseProgressTracker: React.FC = () => {
         {selectedExercise && chartData.length > 0 ? (
           <div className="h-64">
             <ProgressChart
-              data={chartData.map((d) => ({
-                date: d.date,
-                value: d[displayMode],
-              }))}
+              data={chartData.map((d) => ({ date: d.date, value: d[displayMode] }))}
               title={`${selectedExercise} Progress`}
               yAxisLabel={getYAxisLabel()}
               maxValue={getMaxValue()}
