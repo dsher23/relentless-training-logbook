@@ -28,18 +28,18 @@ interface ExerciseSelectProps {
 }
 
 export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
-  selectedExercise,
-  exerciseNames = [], // Provide default empty array
-  favorites = [], // Provide default empty array
-  searchTerm = "", // Provide default empty string
-  onSearchChange,
-  onSelectExercise,
-  onToggleFavorite,
-  open,
-  setOpen,
+  selectedExercise = "",
+  exerciseNames = [],
+  favorites = [],
+  searchTerm = "",
+  onSearchChange = () => {},
+  onSelectExercise = () => {},
+  onToggleFavorite = () => {},
+  open = false,
+  setOpen = () => {},
 }) => {
   const isExerciseFavorite = (name: string) => {
-    return favorites.some(fav => fav.name === name);
+    return favorites?.some(fav => fav?.name === name) || false;
   };
 
   const safeExerciseNames = Array.isArray(exerciseNames) ? exerciseNames : [];
@@ -64,18 +64,18 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
           <CommandInput 
             placeholder="Search exercises..." 
             className="h-9"
-            value={searchTerm}
-            onValueChange={onSearchChange}
+            value={searchTerm || ""}
+            onValueChange={onSearchChange || (() => {})}
           />
           <CommandEmpty>No exercise found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
             {safeExerciseNames.map((exercise) => (
               <CommandItem
                 key={exercise}
-                value={exercise}
+                value={exercise || ""}
                 onSelect={() => {
-                  onSelectExercise(exercise);
-                  setOpen(false);
+                  if (onSelectExercise) onSelectExercise(exercise);
+                  if (setOpen) setOpen(false);
                 }}
                 className="flex justify-between items-center"
               >
@@ -86,7 +86,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                   className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleFavorite(exercise);
+                    if (onToggleFavorite) onToggleFavorite(exercise);
                   }}
                 >
                   {isExerciseFavorite(exercise) ? (
