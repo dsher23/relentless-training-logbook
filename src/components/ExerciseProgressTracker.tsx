@@ -35,52 +35,70 @@ const ExerciseProgressTracker: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<"topSet" | "volume" | "reps">("topSet");
   const [favorites, setFavorites] = useState<FavoriteExercise[]>(() => {
-    const savedFavorites = localStorage.getItem("favoriteExercises");
-    return savedFavorites ? JSON.parse(savedFavorites) : [];
+    try {
+      const savedFavorites = localStorage.getItem("favoriteExercises");
+      return savedFavorites ? JSON.parse(savedFavorites) : [];
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+      return [];
+    }
   });
 
-  const completedWorkouts = workouts.filter(workout => workout.completed === true);
+  const completedWorkouts = workouts?.filter(workout => workout?.completed === true) || [];
 
   const exerciseNames = useMemo(() => {
     const namesSet = new Set<string>();
     
+    if (!completedWorkouts || !Array.isArray(completedWorkouts)) return [];
+    
     completedWorkouts.forEach(workout => {
-      workout.exercises.forEach(exercise => {
-        namesSet.add(exercise.name);
-      });
+      if (workout?.exercises && Array.isArray(workout.exercises)) {
+        workout.exercises.forEach(exercise => {
+          if (exercise?.name) {
+            namesSet.add(exercise.name);
+          }
+        });
+      }
     });
     
     return Array.from(namesSet).sort();
   }, [completedWorkouts]);
 
   const filteredExerciseNames = useMemo(() => {
-    if (!searchTerm) {
-      return exerciseNames;
+    if (!searchTerm || !exerciseNames || !Array.isArray(exerciseNames)) {
+      return exerciseNames || [];
     }
     
     return exerciseNames.filter(name => 
-      name.toLowerCase().includes(searchTerm.toLowerCase())
+      name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [exerciseNames, searchTerm]);
 
   const isExerciseFavorite = (name: string) => {
-    return favorites.some(fav => fav.name === name);
+    if (!favorites || !Array.isArray(favorites) || !name) return false;
+    return favorites.some(fav => fav?.name === name);
   };
 
   const toggleFavorite = (name: string) => {
+    if (!name) return;
+    
     let newFavorites: FavoriteExercise[];
     
     if (isExerciseFavorite(name)) {
-      newFavorites = favorites.filter(fav => fav.name !== name);
+      newFavorites = (favorites || []).filter(fav => fav?.name !== name);
     } else {
       newFavorites = [
-        ...favorites, 
+        ...(favorites || []), 
         { name, lastUsed: new Date() }
       ];
     }
     
     setFavorites(newFavorites);
-    localStorage.setItem("favoriteExercises", JSON.stringify(newFavorites));
+    try {
+      localStorage.setItem("favoriteExercises", JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error("Error saving favorites:", error);
+    }
   };
 
   const exerciseData = useMemo(() => {
@@ -222,7 +240,7 @@ const ExerciseProgressTracker: React.FC = () => {
     return [Math.max(0, min - padding), max + padding];
   };
 
-  if (completedWorkouts.length === 0) {
+  if (!completedWorkouts || completedWorkouts.length === 0) {
     return (
       <Card className="shadow-md">
         <CardContent className="p-6 text-center">
@@ -265,10 +283,10 @@ const ExerciseProgressTracker: React.FC = () => {
       <CardContent className="pt-2 pb-6">
         <div className="mb-4">
           <ExerciseSelect
-            selectedExercise={selectedExercise}
-            exerciseNames={filteredExerciseNames}
-            favorites={favorites}
-            searchTerm={searchTerm}
+            selectedExercise={selectedExercise || ""}
+            exerciseNames={filteredExerciseNames || []}
+            favorites={favorites || []}
+            searchTerm={searchTerm || ""}
             onSearchChange={setSearchTerm}
             onSelectExercise={setSelectedExercise}
             onToggleFavorite={toggleFavorite}
@@ -328,20 +346,20 @@ const ExerciseProgressTracker: React.FC = () => {
             <Search className="h-8 w-8 mb-2 opacity-50" />
             <p>Select an exercise to view progress</p>
             
-            {favorites.length > 0 && (
+            {favorites && favorites.length > 0 && (
               <div className="mt-6 w-full">
                 <h4 className="text-sm font-medium mb-2">Favorite Exercises</h4>
                 <div className="flex flex-wrap gap-2">
                   {favorites.map((fav) => (
                     <Button
-                      key={fav.name}
+                      key={fav?.name || "unknown"}
                       variant="outline"
                       size="sm"
                       className="flex items-center"
-                      onClick={() => setSelectedExercise(fav.name)}
+                      onClick={() => setSelectedExercise(fav?.name || "")}
                     >
                       <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
-                      {fav.name}
+                      {fav?.name || ""}
                     </Button>
                   ))}
                 </div>

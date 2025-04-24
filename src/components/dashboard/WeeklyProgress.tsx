@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LiftProgressGraph from "@/components/LiftProgressGraph";
@@ -8,11 +8,11 @@ import CorePRTracker from "@/components/CorePRTracker";
 import { useAppContext } from "@/context/AppContext";
 
 const WeeklyProgress = () => {
-  const { workouts } = useAppContext();
+  const { workouts = [] } = useAppContext();
   const [activeTab, setActiveTab] = useState<string>("pr"); // Set "pr" as the default tab
   
   // Use strict equality check for completed === true
-  const completedWorkouts = workouts.filter(w => w.completed === true);
+  const completedWorkouts = Array.isArray(workouts) ? workouts.filter(w => w?.completed === true) : [];
   
   return (
     <div className="space-y-4">
