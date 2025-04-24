@@ -29,9 +29,9 @@ interface ExerciseSelectProps {
 
 export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
   selectedExercise,
-  exerciseNames,
-  favorites,
-  searchTerm,
+  exerciseNames = [], // Provide default empty array
+  favorites = [], // Provide default empty array
+  searchTerm = "", // Provide default empty string
   onSearchChange,
   onSelectExercise,
   onToggleFavorite,
@@ -41,6 +41,8 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
   const isExerciseFavorite = (name: string) => {
     return favorites.some(fav => fav.name === name);
   };
+
+  const safeExerciseNames = Array.isArray(exerciseNames) ? exerciseNames : [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -67,7 +69,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
           />
           <CommandEmpty>No exercise found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
-            {exerciseNames.map((exercise) => (
+            {safeExerciseNames.map((exercise) => (
               <CommandItem
                 key={exercise}
                 value={exercise}
