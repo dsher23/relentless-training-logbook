@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Plus, Calendar, ClipboardList, Star, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,13 @@ import StartWorkoutButton from "@/components/StartWorkoutButton";
 import { useAppContext } from "@/context/AppContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WeeklyPlanView from "@/components/WeeklyPlanView";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 
 const Workouts: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts, workoutTemplates, workoutPlans } = useAppContext();
+  const { workouts, workoutTemplates, workoutPlans, deleteWorkoutTemplate } = useAppContext();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   
   // Sort templates to show favorites first
   const sortedTemplates = [...workoutTemplates].sort((a, b) => {
@@ -30,12 +33,24 @@ const Workouts: React.FC = () => {
   // Get active workout plan
   const activePlan = workoutPlans.find(p => p.isActive);
   
+  // Handle delete confirmation
+  const handleDeleteClick = (templateId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTemplateToDelete(templateId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (templateToDelete) {
+      deleteWorkoutTemplate(templateToDelete);
+      setDeleteDialogOpen(false);
+      setTemplateToDelete(null);
+    }
+  };
+
   // Navigation handler for workout edit
   const handleEditWorkoutDay = (templateId: string) => {
-    // Get plan ID if available, otherwise use empty string
     const planId = activePlan?.id || '';
-    
-    // Use the proper routing based on whether we have a plan ID
     if (planId) {
       navigate(`/exercise-plans/${planId}/days/${templateId}`);
     } else {
@@ -175,6 +190,13 @@ const Workouts: React.FC = () => {
                           >
                             Edit
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => handleDeleteClick(template.id, e)}
+                          >
+                            Delete
+                          </Button>
                           <StartWorkoutButton 
                             workoutId={template.id} 
                             className="bg-gym-blue hover:bg-blue-700"
@@ -218,6 +240,15 @@ const Workouts: React.FC = () => {
           </div>
         </section>
       )}
+      
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteDialogOpen(false)}
+        title="Delete Workout Day"
+        message="Are you sure you want to delete this workout day? This action cannot be undone."
+      />
     </div>
   );
 };
