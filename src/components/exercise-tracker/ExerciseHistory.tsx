@@ -36,9 +36,9 @@ export const ExerciseHistory: React.FC<ExerciseHistoryProps> = ({
             {exerciseData.slice(-3).reverse().map((entry, idx) => (
               <tr key={idx} className="border-b border-gray-100">
                 <td className="py-2 text-left">{entry.dateFormatted}</td>
-                <td className="py-2 text-right">{entry.weight} kg</td>
-                <td className="py-2 text-right">{entry.reps}</td>
-                <td className="py-2 text-right">{entry.volume} kg</td>
+                <td className="py-2 text-right">{Number(entry.weight)} kg</td>
+                <td className="py-2 text-right">{Number(entry.reps)}</td>
+                <td className="py-2 text-right">{Number(entry.volume)} kg</td>
                 <td className="py-2 text-right">
                   {calculateOneRepMax(Number(entry.weight), Number(entry.reps)).toFixed(1)} kg
                 </td>

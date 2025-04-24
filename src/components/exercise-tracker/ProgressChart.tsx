@@ -39,11 +39,15 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   const getYAxisDomain = () => {
     if (data.length === 0) return [0, 10];
     
-    const values = data.map(d => 
-      displayMode === "topSet" ? Number(d["Top Set"] || 0) : 
-      displayMode === "volume" ? Number(d["Volume"] || 0) : 
-      Number(d["Reps"] || 0)
-    );
+    const values = data.map(d => {
+      if (displayMode === "topSet") {
+        return Number(d["Top Set"] || 0);
+      } else if (displayMode === "volume") {
+        return Number(d["Volume"] || 0);
+      } else {
+        return Number(d["Reps"] || 0);
+      }
+    });
     
     const max = Math.max(...values);
     const min = Math.min(...values);

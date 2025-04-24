@@ -15,16 +15,17 @@ export const useWorkouts = () => {
       if (storedWorkouts) {
         const parsedWorkouts = JSON.parse(storedWorkouts);
         
+        // Ensure all workouts have proper boolean completed flag
         const validatedWorkouts = parsedWorkouts.map((w: any) => {
-          // Ensure completed is strictly a boolean true/false
+          // Force completed to be a boolean (true or false)
           const isCompleted = w.completed === true;
-          console.log(`Loading workout ${w.id}, completed:`, isCompleted, "type:", typeof w.completed);
+          console.log(`Loading workout ${w.id}, completed:`, isCompleted, "type:", typeof isCompleted);
           
           return {
             ...w,
             id: w.id || uuidv4(),
             date: w.date ? new Date(w.date) : new Date(),
-            completed: isCompleted, // Strictly boolean
+            completed: isCompleted, // Strict boolean value
             notes: w.notes || '',
             exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
               ...ex,
@@ -57,14 +58,14 @@ export const useWorkouts = () => {
   useEffect(() => {
     if (workouts.length > 0) {
       try {
+        // Ensure all workouts have proper boolean completed flag before saving
         const workoutsToStore = workouts.map(w => {
-          // Ensure completed is strictly a boolean true/false
+          // Force completed to be a boolean (true or false)
           const isCompleted = w.completed === true;
-          console.log(`Saving workout ${w.id}, completed:`, isCompleted, "type:", typeof w.completed);
           
           return {
             ...w,
-            completed: isCompleted, // Strictly boolean
+            completed: isCompleted, // Strict boolean value
           };
         });
         

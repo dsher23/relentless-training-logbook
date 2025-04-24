@@ -50,17 +50,25 @@ export const useLiveWorkout = () => {
         };
       });
 
+      // Create a completed workout with explicitly set boolean completed flag
       const completedWorkout = {
+        ...workout,
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true, // Explicitly set to true
+        completed: true, // Explicitly set to boolean true
         date: new Date(),
         notes: workout.notes || ""
       };
       
-      // Ensure we're updating with the correct completed flag
-      console.log("Saving completed workout with completed flag:", completedWorkout.completed);
+      // Log the workout we're about to save to verify it's correct
+      console.log("Saving completed workout:", {
+        id: completedWorkout.id,
+        name: completedWorkout.name,
+        completed: completedWorkout.completed,
+        completedType: typeof completedWorkout.completed
+      });
+      
       updateWorkout(completedWorkout);
       
       localStorage.removeItem('workout_in_progress');
@@ -104,8 +112,13 @@ export const useLiveWorkout = () => {
           const convertedWorkout = convertTemplateToWorkout(template);
           
           if (convertedWorkout) {
-            addWorkout(convertedWorkout);
-            foundWorkout = convertedWorkout;
+            // Ensure converted workouts have completed flag set to false
+            const workoutWithCompletedFlag = {
+              ...convertedWorkout,
+              completed: false
+            };
+            addWorkout(workoutWithCompletedFlag);
+            foundWorkout = workoutWithCompletedFlag;
           }
         }
       } else {

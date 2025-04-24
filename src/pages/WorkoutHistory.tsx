@@ -23,16 +23,12 @@ const WorkoutHistory: React.FC = () => {
       return;
     }
     
-    // Make sure we're strictly checking completed === true
-    console.log("Filtering workouts, total count:", workouts.length);
-    const strictCompletedWorkouts = workouts.filter(workout => {
-      const isCompleted = workout.completed === true;
-      console.log(`Workout ${workout.id} completed:`, isCompleted, "type:", typeof workout.completed);
-      return isCompleted;
-    });
-    console.log("Completed workouts count:", strictCompletedWorkouts.length);
+    // Strictly filter for completed workouts
+    const actuallyCompletedWorkouts = workouts.filter(workout => workout.completed === true);
+    console.log("Filtered completed workouts count:", actuallyCompletedWorkouts.length);
     
-    const sortedWorkouts = [...strictCompletedWorkouts]
+    // Sort by date (newest first)
+    const sortedWorkouts = [...actuallyCompletedWorkouts]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     setCompletedWorkouts(sortedWorkouts);
