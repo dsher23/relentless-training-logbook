@@ -18,7 +18,10 @@ const ExercisesList: React.FC<ExercisesListProps> = ({
   onEditExercise,
   onDeleteExercise,
 }) => {
-  if (exercises.length === 0) {
+  // Ensure exercises is always an array
+  const safeExercises = exercises || [];
+
+  if (safeExercises.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="p-6 text-center">
@@ -33,7 +36,7 @@ const ExercisesList: React.FC<ExercisesListProps> = ({
 
   return (
     <div className="space-y-3">
-      {exercises.map((exercise) => (
+      {safeExercises.map((exercise) => (
         <Card key={exercise.id}>
           <CardContent className="p-4">
             <div className="flex justify-between items-start">
