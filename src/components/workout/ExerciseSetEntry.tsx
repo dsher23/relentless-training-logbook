@@ -21,13 +21,18 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   onRemoveSet,
   isMobile = false,
 }) => {
-  const [weightInput, setWeightInput] = useState(set.weight?.toString() || "0");
-  const [repsInput, setRepsInput] = useState(set.reps?.toString() || "0");
+  const [weightInput, setWeightInput] = useState<string>("0");
+  const [repsInput, setRepsInput] = useState<string>("0");
+
+  // Explicitly reset inputs when set changes
+  useEffect(() => {
+    setWeightInput((set.weight ?? 0).toString());
+    setRepsInput((set.reps ?? 0).toString());
+  }, [set.weight, set.reps]);
 
   const renderProgressIndicator = () => {
     if (!previousSet) return null;
     
-    // Handle potential undefined or NaN values safely
     const prevWeight = previousSet.weight || 0;
     const prevReps = previousSet.reps || 0;
     const currWeight = set.weight || 0;
@@ -37,9 +42,19 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     const currentVolume = currReps * currWeight;
     
     if (currentVolume > prevVolume) {
-      return <ArrowUp className="h-4 w-4 text-green-500" />;
+      return (
+        <div className="flex items-center text-green-500">
+          <ArrowUp className="h-4 w-4 mr-1" />
+          <span className="text-xs">Progress</span>
+        </div>
+      );
     } else if (currentVolume < prevVolume) {
-      return <ArrowDown className="h-4 w-4 text-red-500" />;
+      return (
+        <div className="flex items-center text-red-500">
+          <ArrowDown className="h-4 w-4 mr-1" />
+          <span className="text-xs">Regress</span>
+        </div>
+      );
     }
     return null;
   };
@@ -60,11 +75,11 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
       if (!isNaN(value)) {
         onUpdateSet('weight', value);
       } else {
-        setWeightInput((set.weight || 0).toString());
+        setWeightInput((set.weight ?? 0).toString());
       }
     } catch (error) {
       console.error("Error updating weight:", error);
-      setWeightInput((set.weight || 0).toString());
+      setWeightInput((set.weight ?? 0).toString());
     }
   };
 
@@ -74,19 +89,13 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
       if (!isNaN(value)) {
         onUpdateSet('reps', value);
       } else {
-        setRepsInput((set.reps || 0).toString());
+        setRepsInput((set.reps ?? 0).toString());
       }
     } catch (error) {
       console.error("Error updating reps:", error);
-      setRepsInput((set.reps || 0).toString());
+      setRepsInput((set.reps ?? 0).toString());
     }
   };
-
-  // Update local input state when props change
-  useEffect(() => {
-    setWeightInput((set.weight || 0).toString());
-    setRepsInput((set.reps || 0).toString());
-  }, [set.weight, set.reps]);
 
   return (
     <div className={`grid ${isMobile ? 'grid-cols-10' : 'grid-cols-12'} gap-2 items-center`}>
