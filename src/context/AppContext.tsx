@@ -4,28 +4,15 @@ import {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, SteroidCycle, Reminder, SteroidCompound,
   MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, 
-  WorkoutTemplate, WorkoutPlan, CycleCompound, ProgressPhoto,
-  UnitSystem, WeightUnit, MeasurementUnit
+  WorkoutTemplate, WorkoutPlan, CycleCompound, ProgressPhoto
 } from '@/types';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
-import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
-import { useSupplements } from '@/hooks/useSupplements';
-import { useCompounds } from '@/hooks/useCompounds';
-import { useReminders } from '@/hooks/useReminders';
-import { useBodyMeasurements } from '@/hooks/useBodyMeasurements';
-import { useMoodLogs } from '@/hooks/useMoodLogs';
-import { useWeakPoints } from '@/hooks/useWeakPoints';
-import { useWeeklyRoutines } from '@/hooks/useWeeklyRoutines';
-import { useTrainingBlocks } from '@/hooks/useTrainingBlocks';
-import { useToast } from '@/hooks/use-toast';
+import { UnitSystem, WeightUnit, MeasurementUnit } from '@/types/pr';
 
 export type { 
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
   WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
-  SteroidCompound, WorkoutPlan, CycleCompound, ProgressPhoto,
-  UnitSystem, WeightUnit, MeasurementUnit
+  SteroidCompound, WorkoutPlan, CycleCompound, ProgressPhoto
 } from '@/types';
 
 export const convertWeight = (value: number, fromUnit: WeightUnit, toUnit: WeightUnit): number => {

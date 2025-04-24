@@ -1,4 +1,7 @@
 
+export type WeightUnit = 'kg' | 'lbs' | 'stone';
+export type MeasurementUnit = 'cm' | 'in';
+
 export interface PR {
   exerciseId: string;
   weight: number;
@@ -7,9 +10,6 @@ export interface PR {
   workoutId?: string;
   isDirectEntry?: boolean;
 }
-
-export type WeightUnit = 'kg' | 'lbs' | 'stone';
-export type MeasurementUnit = 'cm' | 'in';
 
 export interface UnitSystem {
   bodyWeightUnit: WeightUnit;
