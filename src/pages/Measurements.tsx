@@ -13,15 +13,15 @@ import { ProgressChart } from "@/components/ProgressChart";   // Updated to name
 import NavigationHeader from "@/components/NavigationHeader";
 
 export default function Measurements() {
-  const { measurements = [] } = useAppContext(); // [{ date, weight, waist, … }]
+  const { bodyMeasurements = [] } = useAppContext(); // Use bodyMeasurements instead of measurements
 
   /* order by date ascending */
   const sorted = useMemo(
     () =>
-      [...measurements].sort(
+      [...bodyMeasurements].sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       ),
-    [measurements]
+    [bodyMeasurements]
   );
 
   /* example: chart body-weight if it exists */
@@ -57,7 +57,7 @@ export default function Measurements() {
               <span>{new Date(latest.date).toLocaleDateString()}</span>
               {Object.entries(latest).map(
                 ([k, v]) =>
-                  k !== "date" && (
+                  k !== "date" && v !== undefined && (
                     <React.Fragment key={k}>
                       <span className="text-muted-foreground capitalize">
                         {k}

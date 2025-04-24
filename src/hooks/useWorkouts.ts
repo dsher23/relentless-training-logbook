@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 
@@ -21,6 +22,7 @@ export interface Workout {
   date: string;          // ISO string
   completed: boolean;    // ← ALWAYS boolean!
   exercises: Exercise[];
+  isDeload?: boolean;    // Added for deload mode
 }
 
 /* ----------  Hook ---------- */
@@ -87,6 +89,41 @@ export function useWorkouts() {
   const deleteWorkout = useCallback((id: string) => {
     setWorkouts((prev) => prev.filter((w) => w.id !== id));
   }, []);
+  
+  /** Get workout by id */
+  const getWorkoutById = useCallback((id: string) => {
+    return workouts.find(w => w.id === id) || { 
+      id: '', 
+      name: '', 
+      date: '', 
+      completed: false, 
+      exercises: [] 
+    };
+  }, [workouts]);
+  
+  /** Duplicate a workout */
+  const duplicateWorkout = useCallback((id: string) => {
+    const workoutToDuplicate = workouts.find(w => w.id === id);
+    if (workoutToDuplicate) {
+      const newWorkout = {
+        ...workoutToDuplicate,
+        id: uuid(),
+        name: `${workoutToDuplicate.name} (Copy)`,
+        completed: false,
+        date: new Date().toISOString()
+      };
+      setWorkouts(prev => [...prev, newWorkout]);
+      return newWorkout.id;
+    }
+    return null;
+  }, [workouts]);
+  
+  /** Toggle deload mode for a workout */
+  const toggleDeloadMode = useCallback((id: string, isDeload: boolean) => {
+    setWorkouts(prev => 
+      prev.map(w => w.id === id ? { ...w, isDeload } : w)
+    );
+  }, []);
 
   /* ----------  Expose API ---------- */
   return {
@@ -95,6 +132,9 @@ export function useWorkouts() {
     updateWorkout,
     markWorkoutCompleted,
     deleteWorkout,
+    getWorkoutById,
+    duplicateWorkout,
+    toggleDeloadMode,
     /* expose setter in case higher-level components need it */
     setWorkouts,
   };

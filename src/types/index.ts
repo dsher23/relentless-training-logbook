@@ -1,7 +1,7 @@
 export interface Workout {
   id: string;
   name: string;
-  date: Date;
+  date: string;
   exercises: Exercise[];
   notes?: string;
   completed: boolean;
@@ -15,7 +15,7 @@ export interface Exercise {
   name: string;
   sets: { reps: number; weight: number }[];
   notes?: string;
-  lastProgressDate?: Date;
+  lastProgressDate?: Date | string;
   previousStats?: { reps: number; weight: number }[];
   isWeakPoint?: boolean;
   restTime?: number;
@@ -24,7 +24,7 @@ export interface Exercise {
 
 export interface BodyMeasurement {
   id: string;
-  date: Date;
+  date: Date | string;
   weight: number;
   bodyFat?: number;
   muscleMass?: number;
@@ -51,8 +51,8 @@ export interface Supplement {
 export interface SupplementLog {
   id: string;
   supplementId: string;
-  date: Date;
-  time?: Date;
+  date: Date | string;
+  time?: Date | string;
   dosageTaken: string;
   taken: boolean;
   notes?: string;
@@ -60,7 +60,7 @@ export interface SupplementLog {
 
 export interface MoodLog {
   id: string;
-  date: Date;
+  date: Date | string;
   mood: number;
   energyLevel: number;
   sleepQuality: number;
@@ -105,7 +105,7 @@ export interface WeeklyRoutineEntry {
 export interface TrainingBlock {
   id: string;
   name: string;
-  startDate: Date;
+  startDate: Date | string;
   durationWeeks: number;
   goal: string;
   notes?: string;
@@ -116,12 +116,12 @@ export interface Reminder {
   id: string;
   title: string;
   description?: string;
-  dueDate: Date;
+  dueDate: Date | string;
   seen: boolean;
   dismissed: boolean;
   type?: string;
   message?: string;
-  dateTime?: Date;
+  dateTime?: Date | string;
   supplementId?: string;
   referenceId?: string;
 }
@@ -129,8 +129,8 @@ export interface Reminder {
 export interface SteroidCycle {
   id: string;
   name: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | string;
+  endDate: Date | string;
   notes?: string;
   compounds: CycleCompound[];
   isPrivate?: boolean;
@@ -169,7 +169,7 @@ export interface WorkoutPlan {
 
 export interface ProgressPhoto {
   id: string;
-  date: Date;
+  date: Date | string;
   url: string;
   notes?: string;
   weight?: number;
