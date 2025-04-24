@@ -1,6 +1,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
+import { useAppContext } from "@/context/AppContext";
 import NavigationHeader from "@/components/NavigationHeader";
 import {
   Card,
@@ -31,11 +32,21 @@ interface Draft {
 
 export default function Measurements() {
   const { bodyMeasurements, addBodyMeasurement } = useBodyMeasurements();
+  const { 
+    unitSystem, 
+    convertWeight, 
+    convertMeasurement,
+    getWeightUnitDisplay, 
+    getMeasurementUnitDisplay 
+  } = useAppContext();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>({
     date: new Date().toISOString().slice(0, 10),
   });
   const [error, setError] = useState<string>("");
+
+  const weightUnit = getWeightUnitDisplay(unitSystem.bodyWeightUnit);
+  const measureUnit = getMeasurementUnitDisplay(unitSystem.bodyMeasurementUnit);
 
   const handleSave = () => {
     // Reset error
@@ -43,13 +54,13 @@ export default function Measurements() {
 
     // Validate inputs
     const numericFields = [
-      { key: "weight", label: "Weight", unit: "lbs" },
-      { key: "chest", label: "Chest", unit: "in" },
-      { key: "waist", label: "Waist", unit: "in" },
-      { key: "arms", label: "Arms", unit: "in" },
-      { key: "forearms", label: "Forearms", unit: "in" },
-      { key: "thighs", label: "Thighs", unit: "in" },
-      { key: "calves", label: "Calves", unit: "in" },
+      { key: "weight", label: "Weight", unit: weightUnit },
+      { key: "chest", label: "Chest", unit: measureUnit },
+      { key: "waist", label: "Waist", unit: measureUnit },
+      { key: "arms", label: "Arms", unit: measureUnit },
+      { key: "forearms", label: "Forearms", unit: measureUnit },
+      { key: "thighs", label: "Thighs", unit: measureUnit },
+      { key: "calves", label: "Calves", unit: measureUnit },
     ];
 
     for (const field of numericFields) {
@@ -60,17 +71,31 @@ export default function Measurements() {
       }
     }
 
-    // Convert successful measurements to numbers
+    // Convert measurements to base units (kg, cm) for storage
     const measurement = {
       id: uuid(),
       date: new Date(draft.date),
-      weight: draft.weight ? Number(draft.weight) : undefined,
-      chest: draft.chest ? Number(draft.chest) : undefined,
-      waist: draft.waist ? Number(draft.waist) : undefined,
-      arms: draft.arms ? Number(draft.arms) : undefined,
-      forearms: draft.forearms ? Number(draft.forearms) : undefined,
-      thighs: draft.thighs ? Number(draft.thighs) : undefined,
-      calves: draft.calves ? Number(draft.calves) : undefined,
+      weight: draft.weight ? 
+        convertWeight(Number(draft.weight), unitSystem.bodyWeightUnit, "kg") : 
+        undefined,
+      chest: draft.chest ? 
+        convertMeasurement(Number(draft.chest), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
+      waist: draft.waist ? 
+        convertMeasurement(Number(draft.waist), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
+      arms: draft.arms ? 
+        convertMeasurement(Number(draft.arms), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
+      forearms: draft.forearms ? 
+        convertMeasurement(Number(draft.forearms), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
+      thighs: draft.thighs ? 
+        convertMeasurement(Number(draft.thighs), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
+      calves: draft.calves ? 
+        convertMeasurement(Number(draft.calves), unitSystem.bodyMeasurementUnit, "cm") : 
+        undefined,
       notes: draft.notes,
       photoData: draft.photoData,
     };
@@ -82,10 +107,40 @@ export default function Measurements() {
     setError("");
   };
 
+  // Convert stored measurements (in base units) to display units
+  const convertedMeasurements = useMemo(() => {
+    if (!bodyMeasurements) return [];
+    
+    return bodyMeasurements.map(m => ({
+      ...m,
+      displayWeight: m.weight !== undefined ? 
+        convertWeight(m.weight, "kg", unitSystem.bodyWeightUnit) : 
+        undefined,
+      displayChest: m.chest !== undefined ? 
+        convertMeasurement(m.chest, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayWaist: m.waist !== undefined ? 
+        convertMeasurement(m.waist, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayArms: m.arms !== undefined ? 
+        convertMeasurement(m.arms, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayForearms: m.forearms !== undefined ? 
+        convertMeasurement(m.forearms, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayThighs: m.thighs !== undefined ? 
+        convertMeasurement(m.thighs, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayCalves: m.calves !== undefined ? 
+        convertMeasurement(m.calves, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined
+    }));
+  }, [bodyMeasurements, unitSystem, convertWeight, convertMeasurement]);
+
   const weightRows = useMemo(
     () =>
-      bodyMeasurements
-        ?.filter((m) => m.weight !== undefined)
+      convertedMeasurements
+        ?.filter((m) => m.displayWeight !== undefined)
         .sort((a, b) => {
           const dateA = new Date(a.date);
           const dateB = new Date(b.date);
@@ -96,10 +151,27 @@ export default function Measurements() {
             day: "2-digit",
             month: "short",
           }),
-          value: m.weight!,
+          value: m.displayWeight!,
         })) ?? [],
-    [bodyMeasurements]
+    [convertedMeasurements]
   );
+
+  // Function to display measurement with unit
+  const formatMeasurement = (key: string, value: any): string => {
+    if (key === "date") {
+      return new Date(value as Date | string).toLocaleDateString();
+    }
+    if (key === "notes" || key === "id" || key === "photoData" || value === undefined) {
+      return value?.toString() || "";
+    }
+    if (key === "weight" || key === "displayWeight") {
+      return `${value} ${weightUnit}`;
+    }
+    if (key.startsWith("display")) {
+      return `${value} ${measureUnit}`;
+    }
+    return value?.toString() || "";
+  };
 
   return (
     <div className="app-container pb-8">
@@ -107,25 +179,86 @@ export default function Measurements() {
 
       <div className="p-4 space-y-4">
         {/* Latest entry card */}
-        {bodyMeasurements && bodyMeasurements.length > 0 ? (
+        {convertedMeasurements && convertedMeasurements.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Latest Entry</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(bodyMeasurements[bodyMeasurements.length - 1])
-                .filter(([k]) => k !== "id" && k !== "photoData")
-                .map(([k, v]) => (
-                  <React.Fragment key={k}>
-                    <span className="text-muted-foreground capitalize">{k}</span>
-                    <span>
-                      {k === "date"
-                        ? new Date(v as Date | string).toLocaleDateString()
-                        : v}
-                      {k === "weight" ? " lbs" : k !== "date" && k !== "notes" ? " in" : ""}
-                    </span>
-                  </React.Fragment>
-                ))}
+              <span className="text-muted-foreground capitalize">Date</span>
+              <span>
+                {formatMeasurement('date', convertedMeasurements[convertedMeasurements.length - 1].date)}
+              </span>
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayWeight !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Weight</span>
+                  <span>
+                    {formatMeasurement('displayWeight', convertedMeasurements[convertedMeasurements.length - 1].displayWeight)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayChest !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Chest</span>
+                  <span>
+                    {formatMeasurement('displayChest', convertedMeasurements[convertedMeasurements.length - 1].displayChest)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayWaist !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Waist</span>
+                  <span>
+                    {formatMeasurement('displayWaist', convertedMeasurements[convertedMeasurements.length - 1].displayWaist)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayArms !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Arms</span>
+                  <span>
+                    {formatMeasurement('displayArms', convertedMeasurements[convertedMeasurements.length - 1].displayArms)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayForearms !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Forearms</span>
+                  <span>
+                    {formatMeasurement('displayForearms', convertedMeasurements[convertedMeasurements.length - 1].displayForearms)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayThighs !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Thighs</span>
+                  <span>
+                    {formatMeasurement('displayThighs', convertedMeasurements[convertedMeasurements.length - 1].displayThighs)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].displayCalves !== undefined && (
+                <>
+                  <span className="text-muted-foreground capitalize">Calves</span>
+                  <span>
+                    {formatMeasurement('displayCalves', convertedMeasurements[convertedMeasurements.length - 1].displayCalves)}
+                  </span>
+                </>
+              )}
+              
+              {convertedMeasurements[convertedMeasurements.length - 1].notes && (
+                <>
+                  <span className="text-muted-foreground capitalize">Notes</span>
+                  <span>{convertedMeasurements[convertedMeasurements.length - 1].notes}</span>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -138,12 +271,12 @@ export default function Measurements() {
         {weightRows.length > 1 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Weight Progress</CardTitle>
+              <CardTitle className="text-lg">Weight Progress ({weightUnit})</CardTitle>
             </CardHeader>
             <CardContent className="h-64">
               <ProgressChart
                 data={weightRows}
-                yAxisLabel="Weight (lbs)"
+                yAxisLabel={`Weight (${weightUnit})`}
                 maxValue={Math.max(...weightRows.map((r) => r.value))}
               />
             </CardContent>
@@ -171,37 +304,37 @@ export default function Measurements() {
 
             <div className="grid grid-cols-2 gap-2">
               <Input
-                placeholder="Weight (lbs)"
+                placeholder={`Weight (${weightUnit})`}
                 value={draft.weight ?? ""}
                 onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
               />
               <Input
-                placeholder="Chest (in)"
+                placeholder={`Chest (${measureUnit})`}
                 value={draft.chest ?? ""}
                 onChange={(e) => setDraft({ ...draft, chest: e.target.value })}
               />
               <Input
-                placeholder="Waist (in)"
+                placeholder={`Waist (${measureUnit})`}
                 value={draft.waist ?? ""}
                 onChange={(e) => setDraft({ ...draft, waist: e.target.value })}
               />
               <Input
-                placeholder="Arms (in)"
+                placeholder={`Arms (${measureUnit})`}
                 value={draft.arms ?? ""}
                 onChange={(e) => setDraft({ ...draft, arms: e.target.value })}
               />
               <Input
-                placeholder="Forearms (in)"
+                placeholder={`Forearms (${measureUnit})`}
                 value={draft.forearms ?? ""}
                 onChange={(e) => setDraft({ ...draft, forearms: e.target.value })}
               />
               <Input
-                placeholder="Thighs (in)"
+                placeholder={`Thighs (${measureUnit})`}
                 value={draft.thighs ?? ""}
                 onChange={(e) => setDraft({ ...draft, thighs: e.target.value })}
               />
               <Input
-                placeholder="Calves (in)"
+                placeholder={`Calves (${measureUnit})`}
                 value={draft.calves ?? ""}
                 onChange={(e) => setDraft({ ...draft, calves: e.target.value })}
               />

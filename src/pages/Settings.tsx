@@ -1,8 +1,16 @@
+
 import React from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Sun, 
   Moon, 
@@ -11,12 +19,16 @@ import {
   Lock, 
   Info, 
   LogOut,
-  Mail
+  Mail,
+  Ruler,
+  Scale,
+  Dumbbell
 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import NavigationHeader from '@/components/NavigationHeader';
 
 const Settings = () => {
-  const { exportData } = useAppContext();
+  const { exportData, unitSystem, updateUnitSystem } = useAppContext();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
@@ -31,15 +43,71 @@ const Settings = () => {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    toast({
-      title: "Export Complete",
-      description: `Your ${type} data has been exported successfully.`,
-    });
+    toast.success(`Your ${type} data has been exported successfully.`);
   };
 
   return (
     <div className="container max-w-2xl mx-auto p-4 pb-24">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      <NavigationHeader title="Settings" showBack showHome />
+      
+      {/* Unit System Section */}
+      <div className="mb-6 mt-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Ruler className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">Unit System</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Body Weight Unit</label>
+            <Select 
+              value={unitSystem.bodyWeightUnit}
+              onValueChange={(value) => updateUnitSystem({ bodyWeightUnit: value as 'kg' | 'lbs' | 'stone' })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                <SelectItem value="lbs">Pounds (lbs)</SelectItem>
+                <SelectItem value="stone">Stone (st)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Body Measurement Unit</label>
+            <Select 
+              value={unitSystem.bodyMeasurementUnit}
+              onValueChange={(value) => updateUnitSystem({ bodyMeasurementUnit: value as 'cm' | 'in' })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cm">Centimeters (cm)</SelectItem>
+                <SelectItem value="in">Inches (in)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Lifting Weight Unit</label>
+            <Select 
+              value={unitSystem.liftingWeightUnit}
+              onValueChange={(value) => updateUnitSystem({ liftingWeightUnit: value as 'kg' | 'lbs' })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                <SelectItem value="lbs">Pounds (lbs)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <Separator className="my-4" />
+      </div>
 
       {/* Theme Section */}
       <div className="mb-6">

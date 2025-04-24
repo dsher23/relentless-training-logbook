@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity } from "lucide-react";
+import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderExtended from "@/components/HeaderExtended";
 import ActivityStats from "@/components/dashboard/ActivityStats";
@@ -89,14 +89,14 @@ const Dashboard: React.FC = () => {
         )}
         
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Button 
             variant="outline"
             className="flex flex-col h-20 gap-1"
             onClick={() => navigate("/workout-history")}
           >
             <Clock className="h-5 w-5" />
-            <span>Workout History</span>
+            <span>History</span>
           </Button>
           <Button 
             variant="outline"
@@ -105,6 +105,14 @@ const Dashboard: React.FC = () => {
           >
             <Activity className="h-5 w-5" />
             <span>Measurements</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/settings")}
+          >
+            <Settings className="h-5 w-5" />
+            <span>Settings</span>
           </Button>
           <Button 
             variant="outline"
@@ -120,7 +128,7 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate("/training")}
           >
             <Dumbbell className="h-5 w-5" />
-            <span>Training Hub</span>
+            <span>Training</span>
           </Button>
         </div>
 

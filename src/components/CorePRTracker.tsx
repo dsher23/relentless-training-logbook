@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +30,7 @@ const STORAGE_KEY = "ironlog_direct_prs";
 
 const CorePRTracker: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts } = useAppContext();
+  const { workouts, unitSystem, convertWeight, getWeightUnitDisplay } = useAppContext();
   const { customExercises, CORE_LIFTS } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,6 +45,8 @@ const CorePRTracker: React.FC = () => {
     workoutId: string;
   } | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
+
+  const weightUnit = getWeightUnitDisplay(unitSystem.liftingWeightUnit);
 
   const prExerciseOptions = [
     { id: "bench-press", name: "Bench Press" },
@@ -80,9 +83,12 @@ const CorePRTracker: React.FC = () => {
       return;
     }
 
+    // Convert weight to kg for storage (our standard unit)
+    const weightInKg = convertWeight(weight, unitSystem.liftingWeightUnit, "kg");
+
     const newPR: PR = {
       exerciseId: selectedLift,
-      weight,
+      weight: weightInKg, // Store in kg
       date: new Date().toISOString(),
       reps: 1,
       isDirectEntry: true
@@ -91,7 +97,7 @@ const CorePRTracker: React.FC = () => {
     setDirectPRs(prev => [...prev, newPR]);
     setNewWeight("");
     setIsDialogOpen(false);
-    toast.success("PR logged successfully!");
+    toast.success(`PR logged successfully (${weight} ${weightUnit})!`);
   };
 
   useEffect(() => {
@@ -105,12 +111,16 @@ const CorePRTracker: React.FC = () => {
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
+    // Process direct PRs
     directPRs.forEach(pr => {
       if (pr.exerciseId === selectedLift) {
-        const oneRM = calculateOneRepMax(pr.weight, pr.reps);
+        // Convert stored weight (kg) to display unit
+        const displayWeight = convertWeight(pr.weight, "kg", unitSystem.liftingWeightUnit);
+        
+        const oneRM = calculateOneRepMax(displayWeight, pr.reps);
         if (oneRM > bestOneRM) {
           bestOneRM = oneRM;
-          bestSet = { weight: pr.weight, reps: pr.reps };
+          bestSet = { weight: displayWeight, reps: pr.reps };
           bestWorkoutDate = pr.date;
           bestWorkoutId = undefined;
         }
@@ -118,19 +128,20 @@ const CorePRTracker: React.FC = () => {
         historyData.push({
           date: format(new Date(pr.date), "MM/dd/yy"),
           fullData: {
-            weight: pr.weight,
+            weight: displayWeight,
             reps: pr.reps,
-            volume: pr.weight * pr.reps,
+            volume: displayWeight * pr.reps,
             notes: "Direct PR Entry"
           },
-          "Top Set": pr.weight,
+          "Top Set": displayWeight,
           "Reps": pr.reps,
-          "Volume": pr.weight * pr.reps,
+          "Volume": displayWeight * pr.reps,
           estimatedOneRM: oneRM
         });
       }
     });
 
+    // Process workout PRs
     (completedWorkouts || []).forEach(workout => {
       if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
       
@@ -152,13 +163,14 @@ const CorePRTracker: React.FC = () => {
           if (!exercise?.sets || !Array.isArray(exercise.sets)) return;
           
           exercise.sets.forEach(set => {
-            const weight = Number(set?.weight);
+            // Convert weights to display unit
+            const weight = set?.weight ? convertWeight(Number(set.weight), "kg", unitSystem.liftingWeightUnit) : 0;
             const reps = Number(set?.reps);
             const oneRM = calculateOneRepMax(weight, reps);
             
             if (oneRM > bestOneRMInExercise) {
               bestOneRMInExercise = oneRM;
-              bestSetInExercise = set;
+              bestSetInExercise = { ...set, weight };
             }
           });
           
@@ -207,7 +219,7 @@ const CorePRTracker: React.FC = () => {
     } else {
       setPrData(null);
     }
-  }, [workouts, selectedLift, directPRs]);
+  }, [workouts, selectedLift, directPRs, unitSystem, convertWeight]);
 
   return (
     <Card className="overflow-hidden">
@@ -251,7 +263,7 @@ const CorePRTracker: React.FC = () => {
                   <div>
                     <Input
                       type="number"
-                      placeholder="Weight (lbs)"
+                      placeholder={`Weight (${weightUnit})`}
                       value={newWeight}
                       onChange={(e) => setNewWeight(e.target.value)}
                     />
@@ -304,23 +316,25 @@ const CorePRTracker: React.FC = () => {
                     Achieved on {prData.date}
                   </p>
                 </div>
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/workouts/${prData.workoutId}`)}
-                >
-                  <ExternalLink className="h-4 w-4 mr-1" /> View Workout
-                </Button>
+                {prData.workoutId && (
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(`/workouts/${prData.workoutId}`)}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" /> View Workout
+                  </Button>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <div className="bg-secondary/30 p-3 rounded-md text-center">
                   <p className="text-xs text-muted-foreground">Top Set</p>
-                  <p className="font-medium text-lg">{prData.weight}kg × {prData.reps}</p>
+                  <p className="font-medium text-lg">{prData.weight}{weightUnit} × {prData.reps}</p>
                 </div>
                 <div className="bg-secondary/30 p-3 rounded-md text-center">
                   <p className="text-xs text-muted-foreground">Est. 1RM</p>
-                  <p className="font-medium text-lg">{prData.oneRM.toFixed(1)}kg</p>
+                  <p className="font-medium text-lg">{prData.oneRM.toFixed(1)}{weightUnit}</p>
                 </div>
               </div>
               
@@ -332,7 +346,7 @@ const CorePRTracker: React.FC = () => {
                       value: item.estimatedOneRM || item.fullData.weight
                     }))}
                     maxValue={prData.weight * 1.2}
-                    yAxisLabel="Weight (kg)"
+                    yAxisLabel={`Weight (${weightUnit})`}
                     displayMode="topSet"
                   />
                 )}

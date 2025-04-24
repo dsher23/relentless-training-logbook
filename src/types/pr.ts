@@ -7,3 +7,12 @@ export interface PR {
   workoutId?: string;
   isDirectEntry?: boolean;
 }
+
+export type WeightUnit = 'kg' | 'lbs' | 'stone';
+export type MeasurementUnit = 'cm' | 'in';
+
+export interface UnitSystem {
+  bodyWeightUnit: WeightUnit;
+  bodyMeasurementUnit: MeasurementUnit;
+  liftingWeightUnit: WeightUnit;
+}

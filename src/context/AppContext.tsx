@@ -4,7 +4,8 @@ import {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, SteroidCycle, Reminder, SteroidCompound,
   MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, 
-  WorkoutTemplate, WorkoutPlan, CycleCompound, ProgressPhoto
+  WorkoutTemplate, WorkoutPlan, CycleCompound, ProgressPhoto,
+  UnitSystem, WeightUnit, MeasurementUnit
 } from '@/types';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
@@ -23,8 +24,27 @@ export type {
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, MoodLog, WeakPoint, WorkoutTemplate,
   WeeklyRoutine, TrainingBlock, Reminder, SteroidCycle,
-  SteroidCompound, WorkoutPlan, CycleCompound, ProgressPhoto
+  SteroidCompound, WorkoutPlan, CycleCompound, ProgressPhoto,
+  UnitSystem, WeightUnit, MeasurementUnit
 } from '@/types';
+
+export const convertWeight = (value: number, fromUnit: WeightUnit, toUnit: WeightUnit): number => {
+  let inKg = value;
+  if (fromUnit === 'lbs') inKg = value / 2.20462;
+  if (fromUnit === 'stone') inKg = (value * 14) / 2.20462;
+
+  if (toUnit === 'kg') return Math.round(inKg * 10) / 10;
+  if (toUnit === 'lbs') return Math.round(inKg * 2.20462 * 10) / 10;
+  if (toUnit === 'stone') return Math.round((inKg * 2.20462) / 14 * 10) / 10;
+  return value;
+};
+
+export const convertMeasurement = (value: number, fromUnit: MeasurementUnit, toUnit: MeasurementUnit): number => {
+  if (fromUnit === toUnit) return value;
+  if (fromUnit === 'in' && toUnit === 'cm') return Math.round(value * 2.54 * 10) / 10;
+  if (fromUnit === 'cm' && toUnit === 'in') return Math.round(value / 2.54 * 10) / 10;
+  return value;
+};
 
 export interface AppContextType {
   workouts: Workout[];
@@ -130,6 +150,14 @@ export interface AppContextType {
   updateProgressPhoto: (photo: ProgressPhoto) => void;
   deleteProgressPhoto: (id: string) => void;
 
+  unitSystem: UnitSystem;
+  setUnitSystem: React.Dispatch<React.SetStateAction<UnitSystem>>;
+  updateUnitSystem: (update: Partial<UnitSystem>) => void;
+  convertWeight: (value: number, fromUnit: WeightUnit, toUnit: WeightUnit) => number;
+  convertMeasurement: (value: number, fromUnit: MeasurementUnit, toUnit: MeasurementUnit) => number;
+  getWeightUnitDisplay: (unit: WeightUnit) => string;
+  getMeasurementUnitDisplay: (unit: MeasurementUnit) => string;
+  
   exportData?: (type: string) => string;
 }
 
@@ -391,6 +419,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
+    const storedSystem = localStorage.getItem('ironlog_unit_system');
+    if (storedSystem) {
+      try {
+        return JSON.parse(storedSystem);
+      } catch (error) {
+        console.error("Failed to parse unit system from localStorage", error);
+      }
+    }
+    return {
+      bodyWeightUnit: 'lbs',
+      bodyMeasurementUnit: 'in',
+      liftingWeightUnit: 'kg'
+    };
+  });
+
+  const updateUnitSystem = (update: Partial<UnitSystem>) => {
+    setUnitSystem((prev) => {
+      const newSystem = { ...prev, ...update };
+      localStorage.setItem('ironlog_unit_system', JSON.stringify(newSystem));
+      return newSystem;
+    });
+  };
+
+  const getWeightUnitDisplay = (unit: WeightUnit): string => {
+    switch (unit) {
+      case 'kg': return 'kg';
+      case 'lbs': return 'lbs';
+      case 'stone': return 'st';
+      default: return 'kg';
+    }
+  };
+
+  const getMeasurementUnitDisplay = (unit: MeasurementUnit): string => {
+    switch (unit) {
+      case 'cm': return 'cm';
+      case 'in': return 'in';
+      default: return 'cm';
+    }
+  };
+
   useEffect(() => {
     try {
       const storedWorkoutTemplates = localStorage.getItem('workoutTemplates');
@@ -576,6 +645,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     progressPhotos
   ]);
 
+  useEffect(() => {
+    localStorage.setItem('ironlog_unit_system', JSON.stringify(unitSystem));
+  }, [unitSystem]);
+
   const value = {
     workouts,
     setWorkouts,
@@ -679,6 +752,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addProgressPhoto,
     updateProgressPhoto,
     deleteProgressPhoto,
+    
+    unitSystem,
+    setUnitSystem,
+    updateUnitSystem,
+    convertWeight,
+    convertMeasurement,
+    getWeightUnitDisplay,
+    getMeasurementUnitDisplay,
     
     exportData
   };

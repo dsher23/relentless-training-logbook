@@ -25,6 +25,7 @@ import Measurements from './pages/Measurements';
 import Supplements from './pages/Supplements';
 import Recovery from './pages/Recovery';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -68,7 +69,7 @@ function App() {
             
             <Route path="/home" element={<Index />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </Router>
