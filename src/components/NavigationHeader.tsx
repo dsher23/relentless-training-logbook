@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
+import { cn } from '@/lib/utils';
 
 interface NavigationHeaderProps {
   title: string;
@@ -11,6 +12,7 @@ interface NavigationHeaderProps {
   showHome?: boolean;
   showProfile?: boolean;
   children?: React.ReactNode;
+  className?: string;
 }
 
 const NavigationHeader: React.FC<NavigationHeaderProps> = ({
@@ -18,12 +20,13 @@ const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   showBack = true,
   showHome = true,
   showProfile = true,
-  children
+  children,
+  className
 }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-10 bg-background border-b border-border py-3 px-4">
+    <div className={cn("sticky top-0 z-10 bg-background border-b border-border py-3 px-4", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {showBack && (
