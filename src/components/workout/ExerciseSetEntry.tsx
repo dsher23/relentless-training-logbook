@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,151 +20,65 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   onRemoveSet,
   isMobile = false,
 }) => {
-  // Initialize with actual values from the set prop
-  const [weightInput, setWeightInput] = useState<string>(
-    set && set.weight !== undefined ? set.weight.toString() : "0"
-  );
-  const [repsInput, setRepsInput] = useState<string>(
-    set && set.reps !== undefined ? set.reps.toString() : "0"
-  );
+  const [localWeight, setLocalWeight] = useState(set.weight.toString());
+  const [localReps, setLocalReps] = useState(set.reps.toString());
 
-  // Only update local state when the set prop changes completely (new exercise)
-  // This prevents resetting while typing
   useEffect(() => {
-    if (set && set.weight !== undefined && set.reps !== undefined) {
-      setWeightInput(set.weight.toString());
-      setRepsInput(set.reps.toString());
-    }
-  }, [set]);
+    setLocalWeight(set.weight.toString());
+    setLocalReps(set.reps.toString());
+  }, [set.weight, set.reps]);
 
-  const renderProgressIndicator = () => {
+  const handleBlur = (field: 'weight' | 'reps') => {
+    const value = field === 'weight' ? parseFloat(localWeight) : parseInt(localReps);
+    const fallback = 0;
+
+    if (!isNaN(value)) {
+      onUpdateSet(field, value);
+    } else {
+      onUpdateSet(field, fallback);
+      field === 'weight' ? setLocalWeight(fallback.toString()) : setLocalReps(fallback.toString());
+    }
+  };
+
+  const progress = () => {
     if (!previousSet) return null;
-    
-    const prevWeight = previousSet.weight || 0;
-    const prevReps = previousSet.reps || 0;
-    const currWeight = set?.weight || 0;
-    const currReps = set?.reps || 0;
-    
-    const prevVolume = prevReps * prevWeight;
-    const currentVolume = currReps * currWeight;
-    
-    if (currentVolume > prevVolume) {
-      return (
-        <div className="flex items-center text-green-500">
-          <ArrowUp className="h-4 w-4 mr-1" />
-          <span className="text-xs">Progress</span>
-        </div>
-      );
-    } else if (currentVolume < prevVolume) {
-      return (
-        <div className="flex items-center text-red-500">
-          <ArrowDown className="h-4 w-4 mr-1" />
-          <span className="text-xs">Regress</span>
-        </div>
-      );
-    }
+
+    const prev = previousSet.weight * previousSet.reps;
+    const curr = set.weight * set.reps;
+
+    if (curr > prev) return <ArrowUp className="h-4 w-4 text-green-500" />;
+    if (curr < prev) return <ArrowDown className="h-4 w-4 text-red-500" />;
     return null;
-  };
-
-  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    
-    // Update the local state with the input value
-    setWeightInput(inputValue);
-    
-    // Only update the actual set value if the input is a valid number
-    if (inputValue === '' || inputValue === null) {
-      // Don't update the parent state while typing an empty value
-      // This allows users to clear the field and type a new number
-    } else {
-      const numValue = parseFloat(inputValue);
-      if (!isNaN(numValue)) {
-        onUpdateSet('weight', numValue);
-      }
-    }
-  };
-
-  const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    
-    // Update the local state with the input value
-    setRepsInput(inputValue);
-    
-    // Only update the actual set value if the input is a valid number
-    if (inputValue === '' || inputValue === null) {
-      // Don't update the parent state while typing an empty value
-    } else {
-      const numValue = parseInt(inputValue, 10);
-      if (!isNaN(numValue)) {
-        onUpdateSet('reps', numValue);
-      }
-    }
-  };
-
-  // Validation on blur
-  const handleWeightBlur = () => {
-    // If the input isn't a valid number, reset to 0
-    const value = parseFloat(weightInput);
-    if (isNaN(value)) {
-      setWeightInput("0");
-      onUpdateSet('weight', 0);
-    } else {
-      // Ensure we update the parent with the final value
-      onUpdateSet('weight', value);
-    }
-  };
-
-  const handleRepsBlur = () => {
-    // If the input isn't a valid number, reset to 0
-    const value = parseInt(repsInput, 10);
-    if (isNaN(value)) {
-      setRepsInput("0");
-      onUpdateSet('reps', 0);
-    } else {
-      // Ensure we update the parent with the final value
-      onUpdateSet('reps', value);
-    }
   };
 
   return (
     <div className={`grid ${isMobile ? 'grid-cols-10' : 'grid-cols-12'} gap-2 items-center`}>
       <div className={`${isMobile ? 'col-span-1' : 'col-span-1'} text-sm`}>{setIndex + 1}</div>
       <div className={`${isMobile ? 'col-span-3' : 'col-span-4'}`}>
-        <Input 
+        <Input
           type="number"
-          value={weightInput}
-          onChange={handleWeightChange}
-          onBlur={handleWeightBlur}
+          value={localWeight}
+          onChange={(e) => setLocalWeight(e.target.value)}
+          onBlur={() => handleBlur('weight')}
           className="h-9"
-          min="0"
-          step="0.5"
           inputMode="decimal"
-          aria-label="Weight"
         />
       </div>
       <div className={`${isMobile ? 'col-span-3' : 'col-span-4'}`}>
-        <Input 
+        <Input
           type="number"
-          value={repsInput}
-          onChange={handleRepsChange}
-          onBlur={handleRepsBlur}
+          value={localReps}
+          onChange={(e) => setLocalReps(e.target.value)}
+          onBlur={() => handleBlur('reps')}
           className="h-9"
-          min="0"
-          step="1"
           inputMode="numeric"
-          aria-label="Reps"
         />
       </div>
       <div className={`${isMobile ? 'col-span-2' : 'col-span-2'} flex items-center`}>
-        {renderProgressIndicator()}
+        {progress()}
       </div>
       <div className={`${isMobile ? 'col-span-1' : 'col-span-1'}`}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-7 w-7"
-          onClick={onRemoveSet}
-        >
+        <Button variant="ghost" size="icon" onClick={onRemoveSet}>
           <XCircle className="h-4 w-4" />
         </Button>
       </div>
