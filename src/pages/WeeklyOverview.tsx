@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format, addWeeks, subWeeks } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar, Plus, Edit, Trash2 } from "lucide-react";
@@ -156,6 +157,9 @@ const WeeklyOverview: React.FC = () => {
     return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayIndex];
   };
   
+  // Fix: Create a constant for the "rest day" option that doesn't use an empty string
+  const REST_DAY_OPTION = "rest_day";
+  
   return (
     <div className="app-container animate-fade-in">
       <Header title="Weekly Overview" />
@@ -289,14 +293,15 @@ const WeeklyOverview: React.FC = () => {
               Select a workout to assign:
             </label>
             <Select 
-              value={selectedWorkoutId || ""} 
-              onValueChange={(value) => setSelectedWorkoutId(value || null)}
+              value={selectedWorkoutId || REST_DAY_OPTION} 
+              onValueChange={(value) => setSelectedWorkoutId(value === REST_DAY_OPTION ? null : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Choose a workout" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Rest Day (No Workout)</SelectItem>
+                {/* Fix: Replace empty string with REST_DAY_OPTION constant */}
+                <SelectItem value={REST_DAY_OPTION}>Rest Day (No Workout)</SelectItem>
                 {workoutTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name} ({template.exercises.length} exercises)
