@@ -1,3 +1,4 @@
+
 /* ───────────────────────────────────────────
    src/pages/Measurements.tsx
    Shows latest body-measurement entries and a simple progress line-chart
@@ -8,7 +9,7 @@ import React, { useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import ProgressChart from "@/components/ProgressChart";         // ✅ unified path
+import { ProgressChart } from "@/components/ProgressChart";   // Updated to named import
 import NavigationHeader from "@/components/NavigationHeader";
 
 export default function Measurements() {

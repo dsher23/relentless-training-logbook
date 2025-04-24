@@ -1,10 +1,11 @@
+
 import React, { useMemo, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart } from "lucide-react";
-import ProgressChart from "@/components/ProgressChart";   // ✅ unified path
+import { ProgressChart } from "@/components/ProgressChart";   // Updated import path
 
 type Mode = "weight" | "volume";
 

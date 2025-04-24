@@ -21,7 +21,7 @@ import { useAppContext } from "@/context/AppContext";
 import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, Trophy } from "lucide-react";
-import { ProgressChart } from "@/components/ProgressChart";  // Updated import path
+import { ProgressChart } from "@/components/ProgressChart";
 import { useExercises } from "@/hooks/useExercises";
 
 const CorePRTracker: React.FC = () => {
@@ -210,10 +210,13 @@ const CorePRTracker: React.FC = () => {
               <div className="h-64">
                 {chartData.length > 0 && (
                   <ProgressChart 
-                    data={chartData}
-                    displayMode="topSet"
-                    maxValue={prData.weight}
+                    data={chartData.map(item => ({
+                      date: item.date,
+                      value: item.estimatedOneRM || item.fullData.weight
+                    }))}
+                    maxValue={prData.weight * 1.2}
                     yAxisLabel="Weight (kg)"
+                    displayMode="topSet"
                   />
                 )}
               </div>

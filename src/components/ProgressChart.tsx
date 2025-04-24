@@ -9,9 +9,11 @@ interface Props {
   data: { date: string; value: number }[];
   yAxisLabel?: string;
   maxValue?: number;
+  title?: string;
+  displayMode?: string;
 }
 
-const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue }) => {
+const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue, title, displayMode }) => {
   const [min, max] = React.useMemo(() => {
     if (!data.length) return [0, 10];
     const vals = data.map(v => v.value);
@@ -39,6 +41,7 @@ const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue }) => {
           }
         />
         <Tooltip/>
+        {title && <text x={10} y={20} fontSize="12" textAnchor="start">{title}</text>}
         <Line
           type="monotone"
           dataKey="value"
@@ -51,5 +54,5 @@ const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue }) => {
   );
 };
 
-export { ProgressChart };      // named
-export default ProgressChart;  // default
+export { ProgressChart };      // named export
+export default ProgressChart;  // default export
