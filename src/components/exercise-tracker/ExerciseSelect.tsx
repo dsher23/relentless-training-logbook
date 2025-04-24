@@ -61,7 +61,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Search exercises..." 
             className="h-9"
@@ -73,35 +73,37 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
           <CommandEmpty>No exercise found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
             {safeExerciseNames.map((exercise) => (
-              <CommandItem
-                key={exercise}
-                value={exercise || ""}
-                onSelect={(currentValue) => {
-                  if (onSelectExercise) onSelectExercise(currentValue);
-                  if (setOpen) setOpen(false);
-                }}
-                className="flex justify-between items-center"
-              >
-                <span>{exercise}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onToggleFavorite) onToggleFavorite(exercise);
+              exercise ? (
+                <CommandItem
+                  key={exercise}
+                  value={exercise}
+                  onSelect={(currentValue) => {
+                    if (onSelectExercise) onSelectExercise(currentValue);
+                    if (setOpen) setOpen(false);
                   }}
+                  className="flex justify-between items-center"
                 >
-                  {isExerciseFavorite(exercise) ? (
-                    <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  ) : (
-                    <StarOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className="sr-only">
-                    {isExerciseFavorite(exercise) ? "Remove from favorites" : "Add to favorites"}
-                  </span>
-                </Button>
-              </CommandItem>
+                  <span>{exercise}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onToggleFavorite) onToggleFavorite(exercise);
+                    }}
+                  >
+                    {isExerciseFavorite(exercise) ? (
+                      <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                    ) : (
+                      <StarOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {isExerciseFavorite(exercise) ? "Remove from favorites" : "Add to favorites"}
+                    </span>
+                  </Button>
+                </CommandItem>
+              ) : null
             ))}
           </CommandGroup>
         </Command>
