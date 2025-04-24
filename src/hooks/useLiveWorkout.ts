@@ -172,9 +172,10 @@ export const useLiveWorkout = () => {
       const nextExerciseId = nextExercise.id;
       
       // Initialize the next exercise data if it doesn't already exist
+      // This ensures it resets properly when switching exercises
       setExerciseData(prev => {
-        if (prev[nextExerciseId]) return prev;
-        
+        // Always create a fresh initialized exercise data when switching
+        // This ensures we reset values properly
         return {
           ...prev,
           [nextExerciseId]: initializeExerciseData(nextExercise)

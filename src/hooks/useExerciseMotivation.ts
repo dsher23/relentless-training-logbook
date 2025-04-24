@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { useAppContext } from '@/context/AppContext';
 
 const MOTIVATIONAL_MESSAGES = [
-  "Smash it today! 💪",
-  "Beat that last set! 🔥",
-  "Time to level up! ⬆️",
-  "Make it count! 🎯",
-  "Push your limits! 🚀"
+  "Smash your last lift 💪",
+  "Push for progress!",
+  "Beat your record today! 🔥",
+  "One more rep than last time!",
+  "Make every rep count! 💯",
+  "You're stronger than yesterday!"
 ];
 
 export const useExerciseMotivation = (exerciseName: string) => {

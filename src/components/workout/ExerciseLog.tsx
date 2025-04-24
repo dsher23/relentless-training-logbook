@@ -39,12 +39,14 @@ export const ExerciseLog: React.FC<ExerciseLogProps> = ({
       <h2 className="text-xl font-bold">{exercise.name}</h2>
       
       {lastWorkoutData && (
-        <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-          <p className="text-sm">
-            Last time: {lastWorkoutData.weight}kg × {lastWorkoutData.reps} reps
-          </p>
+        <div className="mt-1 mb-3">
+          <div className="text-sm text-muted-foreground">
+            Last time: {lastWorkoutData.weight}kg × {lastWorkoutData.reps}
+          </div>
           {motivationalMessage && (
-            <p className="text-sm font-medium text-primary">{motivationalMessage}</p>
+            <div className="text-sm font-medium text-primary mt-1">
+              {motivationalMessage}
+            </div>
           )}
         </div>
       )}

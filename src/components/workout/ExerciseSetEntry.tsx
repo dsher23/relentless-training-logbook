@@ -21,7 +21,7 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   onRemoveSet,
   isMobile = false,
 }) => {
-  // Initialize with actual values from the set, ensuring we have valid starting values
+  // Initialize with actual values from the set prop
   const [weightInput, setWeightInput] = useState<string>(
     set && set.weight !== undefined ? set.weight.toString() : "0"
   );
@@ -29,22 +29,14 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     set && set.reps !== undefined ? set.reps.toString() : "0"
   );
 
-  // Update local state when the set prop changes (e.g., when moving to a new exercise)
+  // Only update local state when the set prop changes completely (new exercise)
+  // This prevents resetting while typing
   useEffect(() => {
-    if (set) {
-      const weightVal = set.weight !== undefined ? set.weight.toString() : "0";
-      const repsVal = set.reps !== undefined ? set.reps.toString() : "0";
-      
-      setWeightInput(weightVal);
-      setRepsInput(repsVal);
-      
-      console.log(`Set ${setIndex} updated:`, {
-        set,
-        weightVal,
-        repsVal
-      });
+    if (set && set.weight !== undefined && set.reps !== undefined) {
+      setWeightInput(set.weight.toString());
+      setRepsInput(set.reps.toString());
     }
-  }, [set, setIndex]);
+  }, [set]);
 
   const renderProgressIndicator = () => {
     if (!previousSet) return null;
@@ -83,7 +75,8 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     
     // Only update the actual set value if the input is a valid number
     if (inputValue === '' || inputValue === null) {
-      onUpdateSet('weight', 0);
+      // Don't update the parent state while typing an empty value
+      // This allows users to clear the field and type a new number
     } else {
       const numValue = parseFloat(inputValue);
       if (!isNaN(numValue)) {
@@ -100,7 +93,7 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     
     // Only update the actual set value if the input is a valid number
     if (inputValue === '' || inputValue === null) {
-      onUpdateSet('reps', 0);
+      // Don't update the parent state while typing an empty value
     } else {
       const numValue = parseInt(inputValue, 10);
       if (!isNaN(numValue)) {
@@ -116,6 +109,9 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     if (isNaN(value)) {
       setWeightInput("0");
       onUpdateSet('weight', 0);
+    } else {
+      // Ensure we update the parent with the final value
+      onUpdateSet('weight', value);
     }
   };
 
@@ -125,6 +121,9 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
     if (isNaN(value)) {
       setRepsInput("0");
       onUpdateSet('reps', 0);
+    } else {
+      // Ensure we update the parent with the final value
+      onUpdateSet('reps', value);
     }
   };
 
