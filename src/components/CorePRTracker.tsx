@@ -44,9 +44,10 @@ const CorePRTracker: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
+    // Ensure workouts is an array
     if (!workouts || !Array.isArray(workouts)) return;
 
-    const completedWorkouts = workouts.filter(w => w.completed === true);
+    const completedWorkouts = workouts.filter(w => w?.completed === true);
     
     let bestOneRM = 0;
     let bestSet = null;
@@ -54,22 +55,24 @@ const CorePRTracker: React.FC = () => {
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
-    completedWorkouts.forEach(workout => {
-      workout.exercises.forEach(exercise => {
+    (completedWorkouts || []).forEach(workout => {
+      // Ensure exercises is an array
+      (workout.exercises || []).forEach(exercise => {
         // Match by PR exercise type first, or by name if type not available
         const isPRMatch = exercise.prExerciseType === selectedLift || 
           (!exercise.prExerciseType && 
            exercise.name.toLowerCase().includes(
-             CORE_LIFTS.find(l => l.id === selectedLift)?.name.toLowerCase() || ""
+             (CORE_LIFTS.find(l => l.id === selectedLift)?.name || "").toLowerCase()
            ));
         
         if (isPRMatch) {
           let bestSetInExercise = null;
           let bestOneRMInExercise = 0;
           
-          exercise.sets?.forEach(set => {
-            const weight = Number(set.weight);
-            const reps = Number(set.reps);
+          // Ensure sets is an array
+          (exercise.sets || []).forEach(set => {
+            const weight = Number(set?.weight);
+            const reps = Number(set?.reps);
             const oneRM = calculateOneRepMax(weight, reps);
             
             if (oneRM > bestOneRMInExercise) {

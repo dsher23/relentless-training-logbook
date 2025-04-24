@@ -44,7 +44,7 @@ const ExerciseProgressTracker: React.FC = () => {
     }
   });
 
-  const completedWorkouts = workouts?.filter(workout => workout?.completed === true) || [];
+  const completedWorkouts = (workouts || [])?.filter(workout => workout?.completed === true) || [];
 
   const exerciseNames = useMemo(() => {
     const namesSet = new Set<string>();
