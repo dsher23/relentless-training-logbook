@@ -1,4 +1,4 @@
-import React from "react";
+  import React from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -22,7 +22,7 @@ export interface ProgressChartProps {
 }
 
 /* ---------- component ---------- */
-export const ProgressChart: React.FC<ProgressChartProps> = ({
+const ProgressChart: React.FC<ProgressChartProps> = ({
   data,
   yAxisLabel,
   maxValue,
@@ -77,5 +77,4 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   );
 };
 
-/* ---------- default export for legacy imports ---------- */
 export default ProgressChart;
