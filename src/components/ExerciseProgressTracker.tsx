@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+
+import React, { useState, useMemo, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
 import { Star, Search, BarChart } from "lucide-react";
@@ -6,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { calculateOneRepMax } from "@/utils/numberUtils";
-import { ExerciseSelect } from "./exercise-tracker/ExerciseSelect";
+import { ExerciseSelect } from "@/components/ExerciseSelect";
 import { ExerciseStats } from "./exercise-tracker/ExerciseStats";
 import { ExerciseHistory } from "./exercise-tracker/ExerciseHistory";
 import { ProgressChart } from "./exercise-tracker/ProgressChart";
+import { useExercises } from "@/hooks/useExercises";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExerciseSetData {
   date: Date;
@@ -30,6 +33,8 @@ interface FavoriteExercise {
 
 const ExerciseProgressTracker: React.FC = () => {
   const { workouts } = useAppContext();
+  const { toast } = useToast();
+  const { getAllExerciseNames } = useExercises();
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [open, setOpen] = useState(false);
@@ -43,36 +48,16 @@ const ExerciseProgressTracker: React.FC = () => {
       return [];
     }
   });
-
+  
+  // Force refresh when exercises change
+  const [refreshKey, setRefreshKey] = useState(0);
+  
   const completedWorkouts = (workouts || [])?.filter(workout => workout?.completed === true) || [];
 
+  // Get exercise names from our custom hook instead of parsing workouts
   const exerciseNames = useMemo(() => {
-    const namesSet = new Set<string>();
-    
-    if (!completedWorkouts || !Array.isArray(completedWorkouts)) return [];
-    
-    completedWorkouts.forEach(workout => {
-      if (workout?.exercises && Array.isArray(workout.exercises)) {
-        workout.exercises.forEach(exercise => {
-          if (exercise?.name) {
-            namesSet.add(exercise.name);
-          }
-        });
-      }
-    });
-    
-    return Array.from(namesSet).sort();
-  }, [completedWorkouts]);
-
-  const filteredExerciseNames = useMemo(() => {
-    if (!searchTerm || !exerciseNames || !Array.isArray(exerciseNames)) {
-      return exerciseNames || [];
-    }
-    
-    return exerciseNames.filter(name => 
-      name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [exerciseNames, searchTerm]);
+    return getAllExerciseNames();
+  }, [getAllExerciseNames, refreshKey]);
 
   const isExerciseFavorite = (name: string) => {
     if (!favorites || !Array.isArray(favorites) || !name) return false;
@@ -102,16 +87,18 @@ const ExerciseProgressTracker: React.FC = () => {
   };
 
   const exerciseData = useMemo(() => {
-    if (!selectedExercise) return [];
+    if (!selectedExercise || !completedWorkouts || !Array.isArray(completedWorkouts)) return [];
     
     const data: ExerciseSetData[] = [];
     
     completedWorkouts.forEach(workout => {
+      if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
+      
       const matchingExercise = workout.exercises.find(
-        exercise => exercise.name === selectedExercise
+        exercise => exercise?.name === selectedExercise
       );
       
-      if (matchingExercise && matchingExercise.sets.length > 0) {
+      if (matchingExercise && Array.isArray(matchingExercise.sets) && matchingExercise.sets.length > 0) {
         let topSetValue = 0;
         let topSetWeight = 0;
         let topSetReps = 0;
@@ -223,21 +210,12 @@ const ExerciseProgressTracker: React.FC = () => {
     }
   };
 
-  const getYAxisDomain = () => {
-    if (chartData.length === 0) return [0, 10];
-    
-    const values = chartData.map(d => 
-      displayMode === "topSet" ? Number(d["Top Set"]) : 
-      displayMode === "volume" ? Number(d["Volume"]) : 
-      Number(d["Reps"])
-    );
-    
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    
-    const padding = (max - min) * 0.1;
-    
-    return [Math.max(0, min - padding), max + padding];
+  const handleExercisesUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+    toast({
+      title: "Exercises updated",
+      description: "The exercise list has been updated."
+    });
   };
 
   if (!completedWorkouts || completedWorkouts.length === 0) {
@@ -282,18 +260,18 @@ const ExerciseProgressTracker: React.FC = () => {
       
       <CardContent className="pt-2 pb-6">
         <div className="mb-4">
-     <ExerciseSelect
-  selectedExercise={selectedExercise || ""}
-  exerciseNames={filteredExerciseNames ?? []}
-  favorites={favorites ?? []}
-  searchTerm={searchTerm || ""}
-  onSearchChange={setSearchTerm}
-  onSelectExercise={setSelectedExercise}
-  onToggleFavorite={toggleFavorite}
-  open={!!open}
-  setOpen={setOpen}
-/>
-
+          <ExerciseSelect
+            selectedExercise={selectedExercise || ""}
+            exerciseNames={exerciseNames}
+            favorites={favorites}
+            searchTerm={searchTerm || ""}
+            onSearchChange={setSearchTerm}
+            onSelectExercise={setSelectedExercise}
+            onToggleFavorite={toggleFavorite}
+            onExercisesUpdate={handleExercisesUpdate}
+            open={open}
+            setOpen={setOpen}
+          />
         </div>
         
         {selectedExercise ? (

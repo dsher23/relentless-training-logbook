@@ -22,17 +22,12 @@ import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, Trophy } from "lucide-react";
 import { ProgressChart } from "@/components/exercise-tracker/ProgressChart";
-
-const CORE_LIFTS = [
-  { id: "bench-press", name: "Bench Press" },
-  { id: "deadlift", name: "Deadlift" },
-  { id: "squat", name: "Squat" },
-  { id: "shoulder-press", name: "Shoulder Press" },
-];
+import { useExercises } from "@/hooks/useExercises";
 
 const CorePRTracker: React.FC = () => {
   const navigate = useNavigate();
   const { workouts } = useAppContext();
+  const { customExercises, CORE_LIFTS } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [prData, setPrData] = useState<{
     weight: number;
@@ -42,6 +37,17 @@ const CorePRTracker: React.FC = () => {
     workoutId: string;
   } | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
+
+  const prExerciseOptions = [
+    { id: "bench-press", name: "Bench Press" },
+    { id: "deadlift", name: "Deadlift" },
+    { id: "squat", name: "Squat" },
+    { id: "shoulder-press", name: "Shoulder Press" },
+    // Add custom PR types dynamically
+    ...customExercises
+      .filter(ex => ex.isPrRelevant && ex.prExerciseType === "custom")
+      .map(ex => ({ id: `custom-${ex.name}`, name: ex.name }))
+  ];
 
   useEffect(() => {
     // Ensure workouts is an array
@@ -57,20 +63,29 @@ const CorePRTracker: React.FC = () => {
 
     (completedWorkouts || []).forEach(workout => {
       // Ensure exercises is an array
-      (workout.exercises || []).forEach(exercise => {
+      if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
+      
+      workout.exercises.forEach(exercise => {
+        // Handle custom PR types
+        const isCustomPR = selectedLift.startsWith('custom-');
+        const customExerciseName = isCustomPR ? selectedLift.replace('custom-', '') : '';
+        
         // Match by PR exercise type first, or by name if type not available
-        const isPRMatch = exercise.prExerciseType === selectedLift || 
+        const isPRMatch = (exercise.prExerciseType === selectedLift) || 
           (!exercise.prExerciseType && 
            exercise.name.toLowerCase().includes(
-             (CORE_LIFTS.find(l => l.id === selectedLift)?.name || "").toLowerCase()
-           ));
+             (prExerciseOptions.find(l => l.id === selectedLift)?.name || "").toLowerCase()
+           )) ||
+           (isCustomPR && exercise.name === customExerciseName);
         
         if (isPRMatch) {
           let bestSetInExercise = null;
           let bestOneRMInExercise = 0;
           
           // Ensure sets is an array
-          (exercise.sets || []).forEach(set => {
+          if (!exercise?.sets || !Array.isArray(exercise.sets)) return;
+          
+          exercise.sets.forEach(set => {
             const weight = Number(set?.weight);
             const reps = Number(set?.reps);
             const oneRM = calculateOneRepMax(weight, reps);
@@ -130,7 +145,7 @@ const CorePRTracker: React.FC = () => {
     } else {
       setPrData(null);
     }
-  }, [workouts, selectedLift]);
+  }, [workouts, selectedLift, prExerciseOptions]);
 
   return (
     <Card className="overflow-hidden">
@@ -140,12 +155,12 @@ const CorePRTracker: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8">
-                {CORE_LIFTS.find(l => l.id === selectedLift)?.name || "Select lift"}
+                {prExerciseOptions.find(l => l.id === selectedLift)?.name || "Select lift"}
                 <ChevronDown className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {CORE_LIFTS.map(lift => (
+              {prExerciseOptions.map(lift => (
                 <DropdownMenuItem 
                   key={lift.id}
                   onClick={() => setSelectedLift(lift.id)}
@@ -166,7 +181,7 @@ const CorePRTracker: React.FC = () => {
                 <div>
                   <h3 className="font-medium text-lg flex items-center">
                     <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                    {CORE_LIFTS.find(l => l.id === selectedLift)?.name} PR
+                    {prExerciseOptions.find(l => l.id === selectedLift)?.name} PR
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Achieved on {prData.date}
