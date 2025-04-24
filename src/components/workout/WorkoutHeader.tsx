@@ -2,13 +2,14 @@
 import React from 'react';
 import { formatDuration } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Bug } from 'lucide-react';
+import { Play, Pause, Bug, CheckCircle2 } from 'lucide-react';
 
 interface WorkoutHeaderProps {
   workoutName: string;
   workoutTime: number;
   isTimerRunning: boolean;
   onToggleTimer: () => void;
+  onFinishWorkout: () => void;
   debugMode?: boolean;
   debugInfo?: React.ReactNode;
 }
@@ -18,6 +19,7 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
   workoutTime,
   isTimerRunning,
   onToggleTimer,
+  onFinishWorkout,
   debugMode,
   debugInfo
 }) => {
@@ -43,6 +45,14 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
               seconds: workoutTime % 60
             }).replace(/,/g, '')}
           </div>
+          <Button 
+            variant="ghost"
+            size="sm"
+            onClick={onFinishWorkout}
+            className="ml-2 text-xs"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-1" /> Finish
+          </Button>
         </div>
       </div>
       

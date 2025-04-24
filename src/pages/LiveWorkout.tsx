@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bug } from "lucide-react";
@@ -210,9 +209,7 @@ const LiveWorkout = () => {
     );
   }
   
-  // Check if current exercise data exists in our state
   if (!exerciseData[currentExercise.id]) {
-    // Initialize exercise data if it doesn't exist
     setExerciseData(prev => ({
       ...prev,
       [currentExercise.id]: {
@@ -254,6 +251,7 @@ const LiveWorkout = () => {
         workoutTime={workoutTime}
         isTimerRunning={isTimerRunning}
         onToggleTimer={toggleTimer}
+        onFinishWorkout={finishWorkout}
         debugMode={debugMode}
         debugInfo={
           debugMode ? (
