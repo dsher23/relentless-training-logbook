@@ -54,11 +54,13 @@ export const useLiveWorkout = () => {
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true,
+        completed: true, // Explicitly set to true
         date: new Date(),
         notes: workout.notes || ""
       };
       
+      // Ensure we're updating with the correct completed flag
+      console.log("Saving completed workout with completed flag:", completedWorkout.completed);
       updateWorkout(completedWorkout);
       
       localStorage.removeItem('workout_in_progress');
@@ -112,6 +114,20 @@ export const useLiveWorkout = () => {
       
       if (foundWorkout) {
         setWorkout(foundWorkout);
+        
+        // Initialize exerciseData for each exercise if it doesn't exist
+        foundWorkout.exercises.forEach(exercise => {
+          if (!exerciseData[exercise.id]) {
+            setExerciseData(prev => ({
+              ...prev,
+              [exercise.id]: {
+                sets: exercise.sets || [],
+                notes: exercise.notes || "",
+                previousStats: exercise.previousStats
+              }
+            }));
+          }
+        });
       } else {
         throw new Error("Workout not found");
       }
@@ -124,7 +140,7 @@ export const useLiveWorkout = () => {
       });
       setTimeout(() => navigate("/workouts"), 500);
     }
-  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast]);
+  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, exerciseData]);
 
   return {
     workout,

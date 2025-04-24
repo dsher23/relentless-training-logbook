@@ -40,9 +40,9 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
     if (data.length === 0) return [0, 10];
     
     const values = data.map(d => 
-      displayMode === "topSet" ? Number(d["Top Set"]) : 
-      displayMode === "volume" ? Number(d["Volume"]) : 
-      Number(d["Reps"])
+      displayMode === "topSet" ? Number(d["Top Set"] || 0) : 
+      displayMode === "volume" ? Number(d["Volume"] || 0) : 
+      Number(d["Reps"] || 0)
     );
     
     const max = Math.max(...values);
@@ -140,7 +140,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
             dot={{ r: 4, strokeWidth: 2 }}
             activeDot={{ r: 6, strokeWidth: 2 }}
           />
-          {maxValue && (
+          {maxValue !== undefined && (
             <ReferenceLine 
               y={Number(maxValue)} 
               stroke="green" 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bug } from "lucide-react";
@@ -193,7 +194,9 @@ const LiveWorkout = () => {
     );
   }
   
+  // Check if current exercise data exists in our state
   if (!exerciseData[currentExercise.id]) {
+    // Initialize exercise data if it doesn't exist
     setExerciseData(prev => ({
       ...prev,
       [currentExercise.id]: {
@@ -275,7 +278,10 @@ const LiveWorkout = () => {
             }
             onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
             onUpdateNotes={(notes) => handleUpdateNotes(currentExercise.id, notes)}
-            onStartRest={startRest}
+            onStartRest={() => {
+              startRest();
+              setIsResting(true);
+            }}
           />
           
           <div className="flex justify-between p-4">

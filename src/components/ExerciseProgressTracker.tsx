@@ -209,16 +209,14 @@ const ExerciseProgressTracker: React.FC = () => {
     if (chartData.length === 0) return [0, 10];
     
     const values = chartData.map(d => 
-      displayMode === "topSet" ? d["Top Set"] : 
-      displayMode === "volume" ? d["Volume"] : 
-      d["Reps"]
+      displayMode === "topSet" ? Number(d["Top Set"]) : 
+      displayMode === "volume" ? Number(d["Volume"]) : 
+      Number(d["Reps"])
     );
     
-   const weightChange = Number(last.weight ?? 0) - Number(first.weight ?? 0);
-const weightPercentage = Number(first.weight ?? 0) > 0
-  ? (weightChange / Number(first.weight)) * 100
-  : 0;
-
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
     const padding = (max - min) * 0.1;
     
     return [Math.max(0, min - padding), max + padding];

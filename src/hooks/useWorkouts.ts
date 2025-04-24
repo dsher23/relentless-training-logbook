@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Workout, Exercise } from '@/types';
@@ -15,13 +16,15 @@ export const useWorkouts = () => {
         const parsedWorkouts = JSON.parse(storedWorkouts);
         
         const validatedWorkouts = parsedWorkouts.map((w: any) => {
+          // Ensure completed is strictly a boolean true/false
           const isCompleted = w.completed === true;
+          console.log(`Loading workout ${w.id}, completed:`, isCompleted, "type:", typeof w.completed);
           
           return {
             ...w,
             id: w.id || uuidv4(),
             date: w.date ? new Date(w.date) : new Date(),
-            completed: isCompleted,
+            completed: isCompleted, // Strictly boolean
             notes: w.notes || '',
             exercises: Array.isArray(w.exercises) ? w.exercises.map((ex: any) => ({
               ...ex,
@@ -55,11 +58,13 @@ export const useWorkouts = () => {
     if (workouts.length > 0) {
       try {
         const workoutsToStore = workouts.map(w => {
+          // Ensure completed is strictly a boolean true/false
           const isCompleted = w.completed === true;
+          console.log(`Saving workout ${w.id}, completed:`, isCompleted, "type:", typeof w.completed);
           
           return {
             ...w,
-            completed: isCompleted,
+            completed: isCompleted, // Strictly boolean
           };
         });
         
@@ -73,18 +78,20 @@ export const useWorkouts = () => {
   // Add workout
   const addWorkout = useCallback((workout: Workout): Workout => {
     try {
+      // Ensure completed is strictly a boolean
+      const isCompleted = workout.completed === true;
       console.log("Adding new workout:", {
         id: workout.id,
         name: workout.name,
-        completed: workout.completed,
-        type: typeof workout.completed
+        completed: isCompleted,
+        type: typeof isCompleted
       });
       
       const newWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
         date: workout.date || new Date(),
-        completed: workout.completed === true,
+        completed: isCompleted, // Strictly boolean
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({
           ...ex,
@@ -129,19 +136,20 @@ export const useWorkouts = () => {
   // Update workout function - critical for handling completed status
   const updateWorkout = useCallback((workout: Workout): Workout => {
     try {
+      // Ensure completed is strictly a boolean
+      const isCompleted = workout.completed === true;
+      
       console.log("CRITICAL - updateWorkout received:", {
         id: workout.id?.substring(0, 8),
         name: workout.name,
-        completed: workout.completed,
-        type: typeof workout.completed
+        completed: isCompleted,
+        type: typeof isCompleted
       });
-      
-      const isCompleted = workout.completed === true;
       
       const updatedWorkout = {
         ...workout,
         id: workout.id || uuidv4(),
-        completed: isCompleted,
+        completed: isCompleted, // Strictly boolean
         date: workout.date || new Date(),
         notes: workout.notes || '',
         exercises: Array.isArray(workout.exercises) ? workout.exercises.map(ex => ({

@@ -15,10 +15,10 @@ export interface Exercise {
   name: string;
   sets: { reps: number; weight: number }[];
   notes?: string;
-  lastProgressDate: Date;
+  lastProgressDate?: Date;
+  previousStats?: { reps: number; weight: number }[];
   isWeakPoint?: boolean;
   restTime?: number;
-  previousStats?: { reps: number; weight: number }[];
 }
 
 export interface BodyMeasurement {
