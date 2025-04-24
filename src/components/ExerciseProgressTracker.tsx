@@ -1,114 +1,95 @@
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BarChart } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { BarChart } from "lucide-react";
 import { ProgressChart } from "@/components/exercise-tracker/ProgressChart";
 
-const ExerciseProgressTracker: React.FC = () => {
+type Row = { date: string; weight: number; volume: number };
+
+export default function ExerciseProgressTracker() {
   const { workouts } = useAppContext();
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
-  const [displayMode, setDisplayMode] = useState<"weight" | "volume">("weight");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [mode, setMode] = useState<"weight" | "volume">("weight");
 
-  const completedWorkouts = useMemo(() => {
-    return (workouts || []).filter((w) => w?.completed === true && Array.isArray(w.exercises));
-  }, [workouts]);
+  const finished = useMemo(
+    () => (workouts ?? []).filter(w => w.completed === true && Array.isArray(w.exercises)),
+    [workouts]
+  );
 
-  const allExerciseNames = useMemo(() => {
-    const names = new Set<string>();
-    completedWorkouts.forEach((w) => {
-      w.exercises.forEach((ex) => {
-        if (ex?.name) names.add(ex.name);
+  /** distinct exercise list */
+  const names = useMemo(() => {
+    const set = new Set<string>();
+    finished.forEach(w => w.exercises.forEach(e => e?.name && set.add(e.name)));
+    return [...set].sort();
+  }, [finished]);
+
+  /** pull history rows */
+  const rows: Row[] = useMemo(() => {
+    if (!selected) return [];
+
+    const r: Row[] = [];
+    finished.forEach(w => {
+      let top = 0, vol = 0;
+      w.exercises.forEach(e => {
+        if (e.name?.toLowerCase() !== selected.toLowerCase()) return;
+        e.sets?.forEach(s => {
+          const wt = Number(s.weight ?? 0);
+          const reps = Number(s.reps ?? 0);
+          if (wt > top) top = wt;
+          vol += wt * reps;
+        });
       });
+      if (top || vol)
+        r.push({
+          date: new Date(w.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+          weight: top,
+          volume: vol,
+        });
     });
-    return Array.from(names).sort();
-  }, [completedWorkouts]);
-
-  const chartData = useMemo(() => {
-    if (!selectedExercise) return [];
-
-    return completedWorkouts
-      .map((workout) => {
-        const match = workout.exercises.find((ex) => ex.name === selectedExercise);
-        if (!match || !Array.isArray(match.sets) || match.sets.length === 0) return null;
-
-        const totalVolume = match.sets.reduce((sum, s) => {
-          const reps = Number(s.reps) || 0;
-          const weight = Number(s.weight) || 0;
-          return sum + (reps * weight);
-        }, 0);
-
-        const maxWeight = Math.max(...match.sets.map((s) => Number(s.weight) || 0));
-
-        return {
-          date: new Date(workout.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
-          weight: maxWeight,
-          volume: totalVolume,
-        };
-      })
-      .filter(Boolean);
-  }, [completedWorkouts, selectedExercise]);
-
-  const getYAxisLabel = () => {
-    return displayMode === "weight" ? "Weight (kg)" : "Volume (kg)";
-  };
-
-  const getMaxValue = () => {
-    if (!chartData.length) return 100;
-    return Math.max(...chartData.map((d) => d[displayMode]));
-  };
+    return r.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  }, [finished, selected]);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Exercise Progress</CardTitle>
-      </CardHeader>
-
+      <CardHeader><CardTitle>Exercise Progress</CardTitle></CardHeader>
       <CardContent className="space-y-4">
+        {/* selector buttons */}
         <div className="flex flex-wrap gap-2">
-          {allExerciseNames.map((name) => (
-            <Button
-              key={name}
-              size="sm"
-              variant={selectedExercise === name ? "default" : "outline"}
-              onClick={() => setSelectedExercise(name)}
-            >
-              {name}
+          {names.map(n => (
+            <Button key={n} size="sm" variant={selected===n?"default":"outline"} onClick={()=>setSelected(n)}>
+              {n}
             </Button>
           ))}
         </div>
 
+        {/* mode tabs */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Progress Graph</h3>
-          <Tabs value={displayMode} onValueChange={(v) => setDisplayMode(v as "weight" | "volume")}>
+          <Tabs value={mode} onValueChange={v=>setMode(v as any)}>
             <TabsList className="h-8">
               <TabsTrigger value="weight" className="text-xs px-2">Weight</TabsTrigger>
-              <TabsTrigger value="volume" className="text-xs px-2">
-                <BarChart className="h-3 w-3 mr-1" />
-                Volume
-              </TabsTrigger>
+              <TabsTrigger value="volume" className="text-xs px-2"><BarChart className="h-3 w-3 mr-1"/>Volume</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        {selectedExercise && chartData.length > 0 ? (
+        {selected && rows.length ? (
           <div className="h-64">
             <ProgressChart
-              data={chartData.map((d) => ({ date: d.date, value: d[displayMode] }))}
-              title={`${selectedExercise} Progress`}
-              yAxisLabel={getYAxisLabel()}
-              maxValue={getMaxValue()}
+              data={rows.map(r => ({ date: r.date, value: r[mode] }))}
+              yAxisLabel={mode==="weight"?"Weight (kg)":"Volume (kg)"}
+              maxValue={Math.max(...rows.map(r=>r[mode]))}
+              title={`${selected} – ${mode}`}
             />
           </div>
         ) : (
-          <div className="text-muted-foreground text-sm">
-            {selectedExercise ? "No data found for this exercise." : "Select an exercise to view progress."}
-          </div>
+          <p className="text-muted-foreground text-sm">
+            {selected ? "No history yet." : "Select an exercise to view progress."}
+          </p>
         )}
       </CardContent>
     </Card>
   );
-};
-
-export default ExerciseProgressTracker;
+}
