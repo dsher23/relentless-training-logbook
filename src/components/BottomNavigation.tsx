@@ -37,10 +37,11 @@ const BottomNavigation: React.FC = () => {
       isActive: isActive("/workout-history")
     },
     {
-      path: "/settings",
+      path: "/profile",
       icon: <User className="w-5 h-5" />,
       label: "Profile",
-      isActive: isActive("/settings") || 
+      isActive: isActive("/profile") || 
+               isActive("/settings") || 
                isActive("/measurements") || 
                isActive("/supplements") ||
                isActive("/recovery")
