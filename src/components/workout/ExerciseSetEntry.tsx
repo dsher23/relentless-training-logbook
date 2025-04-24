@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,15 +20,17 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   onRemoveSet,
   isMobile = false,
 }) => {
-  // Initialize inputs with "0" if no values are provided
-  const [weightInput, setWeightInput] = useState<string>((set?.weight ?? 0).toString());
-  const [repsInput, setRepsInput] = useState<string>((set?.reps ?? 0).toString());
+  // Initialize inputs with current values or "0" if no values are provided
+  const [weightInput, setWeightInput] = useState<string>(set?.weight?.toString() || "0");
+  const [repsInput, setRepsInput] = useState<string>(set?.reps?.toString() || "0");
 
   // Update local state whenever set prop changes
   useEffect(() => {
     console.log(`Set ${setIndex} updated:`, set);
-    setWeightInput((set?.weight ?? 0).toString());
-    setRepsInput((set?.reps ?? 0).toString());
+    if (set) {
+      setWeightInput(set.weight?.toString() || "0");
+      setRepsInput(set.reps?.toString() || "0");
+    }
   }, [set, setIndex]);
 
   const renderProgressIndicator = () => {
@@ -64,38 +65,51 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     setWeightInput(inputValue);
+    
+    // Update the actual value on change, not just on blur
+    const numValue = inputValue === '' ? 0 : parseFloat(inputValue);
+    if (!isNaN(numValue)) {
+      onUpdateSet('weight', numValue);
+    }
   };
 
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     setRepsInput(inputValue);
+    
+    // Update the actual value on change, not just on blur
+    const numValue = inputValue === '' ? 0 : parseInt(inputValue, 10);
+    if (!isNaN(numValue)) {
+      onUpdateSet('reps', numValue);
+    }
   };
 
+  // Keep blur handlers for validation but without re-setting values
   const handleWeightBlur = () => {
     try {
       const value = weightInput === '' ? 0 : parseFloat(weightInput);
-      if (!isNaN(value)) {
-        onUpdateSet('weight', value);
-      } else {
-        setWeightInput((set?.weight ?? 0).toString());
+      if (isNaN(value)) {
+        setWeightInput("0");
+        onUpdateSet('weight', 0);
       }
     } catch (error) {
-      console.error("Error updating weight:", error);
-      setWeightInput((set?.weight ?? 0).toString());
+      console.error("Error validating weight:", error);
+      setWeightInput("0");
+      onUpdateSet('weight', 0);
     }
   };
 
   const handleRepsBlur = () => {
     try {
       const value = repsInput === '' ? 0 : parseInt(repsInput, 10);
-      if (!isNaN(value)) {
-        onUpdateSet('reps', value);
-      } else {
-        setRepsInput((set?.reps ?? 0).toString());
+      if (isNaN(value)) {
+        setRepsInput("0");
+        onUpdateSet('reps', 0);
       }
     } catch (error) {
-      console.error("Error updating reps:", error);
-      setRepsInput((set?.reps ?? 0).toString());
+      console.error("Error validating reps:", error);
+      setRepsInput("0");
+      onUpdateSet('reps', 0);
     }
   };
 

@@ -129,7 +129,12 @@ export const useLiveWorkout = () => {
             setExerciseData(prev => ({
               ...prev,
               [exercise.id]: {
-                sets: exercise.sets || [],
+                sets: exercise.sets?.length ? 
+                  exercise.sets.map(set => ({ 
+                    reps: set.reps || 0, 
+                    weight: set.weight || 0 
+                  })) : 
+                  [{ reps: 0, weight: 0 }],
                 notes: exercise.notes || "",
                 previousStats: exercise.previousStats,
                 prExerciseType: exercise.prExerciseType
@@ -164,7 +169,12 @@ export const useLiveWorkout = () => {
         return {
           ...prev,
           [nextExerciseId]: {
-            sets: [],
+            sets: nextExercise.sets?.length ? 
+              nextExercise.sets.map(set => ({ 
+                reps: set.reps || 0, 
+                weight: set.weight || 0 
+              })) : 
+              [{ reps: 0, weight: 0 }],
             notes: "",
             previousStats: nextExercise.previousStats,
             prExerciseType: nextExercise.prExerciseType
@@ -205,6 +215,11 @@ export const useLiveWorkout = () => {
       if (!exercise) return prev;
       
       const updatedSets = [...exercise.sets];
+      
+      if (!updatedSets[setIndex]) {
+        updatedSets[setIndex] = { reps: 0, weight: 0 };
+      }
+      
       updatedSets[setIndex] = { 
         ...updatedSets[setIndex], 
         [field]: value 
