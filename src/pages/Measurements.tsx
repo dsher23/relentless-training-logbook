@@ -1,78 +1,114 @@
 
 /* ───────────────────────────────────────────
+ /* ─────────────────────────────────────────
    src/pages/Measurements.tsx
-   Shows latest body-measurement entries and a simple progress line-chart
-   Uses the unified ProgressChart in src/components/ProgressChart.tsx
-   ─────────────────────────────────────────── */
+   - log new body-measurements (+ photo)
+   - list previous entries
+   - show weight progress graph
+   ───────────────────────────────────────── */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ProgressChart } from "@/components/ProgressChart";   // Updated to named import
 import NavigationHeader from "@/components/NavigationHeader";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import ProgressChart from "@/components/ProgressChart";
+import { v4 as uuid } from "uuid";
+
+interface Draft {
+  date: string;
+  weight?: string;
+  chest?: string;
+  waist?: string;
+  arms?: string;
+  thighs?: string;
+  notes?: string;
+  photoData?: string;
+}
 
 export default function Measurements() {
-  const { bodyMeasurements = [] } = useAppContext(); // Use bodyMeasurements instead of measurements
+  const { measurements, addMeasurement } = useAppContext();
 
-  /* order by date ascending */
-  const sorted = useMemo(
-    () =>
-      [...bodyMeasurements].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      ),
-    [bodyMeasurements]
-  );
+  /* drawer (modal) for new entry */
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Draft>({
+    date: new Date().toISOString().slice(0, 10),
+  });
 
-  /* example: chart body-weight if it exists */
+  /* save handler */
+  const handleSave = () => {
+    addMeasurement({
+      id: uuid(),
+      date: new Date(draft.date),
+      weight: draft.weight ? Number(draft.weight) : undefined,
+      chest: draft.chest ? Number(draft.chest) : undefined,
+      waist: draft.waist ? Number(draft.waist) : undefined,
+      arms: draft.arms ? Number(draft.arms) : undefined,
+      thighs: draft.thighs ? Number(draft.thighs) : undefined,
+      notes: draft.notes,
+      photoData: draft.photoData,
+    });
+    setOpen(false);
+    setDraft({ date: new Date().toISOString().slice(0, 10) });
+  };
+
+  /* build rows for weight chart */
   const weightRows = useMemo(
     () =>
-      sorted
+      (measurements ?? [])
         .filter((m) => m.weight !== undefined)
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
         .map((m) => ({
-          date: new Date(m.date).toLocaleDateString("en-GB", {
+          date: m.date.toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "short",
           }),
-          value: Number(m.weight),
+          value: m.weight!,
         })),
-    [sorted]
+    [measurements]
   );
-
-  const latest = sorted[sorted.length - 1];
 
   return (
     <div className="app-container pb-8">
       <NavigationHeader title="Measurements" showBack showHome />
 
       <div className="p-4 space-y-4">
-        {/* current stats */}
-        {latest ? (
+        {/* latest entry card */}
+        {measurements.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Latest entry</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 text-sm">
-              <span className="text-muted-foreground">Date</span>
-              <span>{new Date(latest.date).toLocaleDateString()}</span>
-              {Object.entries(latest).map(
+              {Object.entries(measurements[measurements.length - 1]).map(
                 ([k, v]) =>
-                  k !== "date" && v !== undefined && (
+                  k !== "id" &&
+                  k !== "photoData" && (
                     <React.Fragment key={k}>
                       <span className="text-muted-foreground capitalize">
                         {k}
                       </span>
-                      <span>{v}</span>
+                      <span>
+                        {k === "date"
+                          ? (v as Date).toLocaleDateString()
+                          : v}
+                      </span>
                     </React.Fragment>
                   )
               )}
             </CardContent>
           </Card>
-        ) : (
-          <p>No measurements logged yet.</p>
         )}
 
-        {/* weight progress graph */}
+        {/* weight graph */}
         {weightRows.length > 1 && (
           <Card>
             <CardHeader>
@@ -88,16 +124,79 @@ export default function Measurements() {
           </Card>
         )}
 
-        {/* add-measurement button (placeholder) */}
-        <Button
-          className="w-full"
-          onClick={() => {
-            /* navigate to add-measurement form if you have one */
-          }}
-        >
+        {/* add / open drawer */}
+        <Button className="w-full" onClick={() => setOpen(true)}>
           Add measurement
         </Button>
+
+        {/* measurement drawer */}
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="p-4 space-y-3">
+            <h3 className="font-medium text-lg">New measurement</h3>
+
+            <Input
+              type="date"
+              value={draft.date}
+              onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+            />
+
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Weight (kg)"
+                value={draft.weight ?? ""}
+                onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
+              />
+              <Input
+                placeholder="Chest (cm)"
+                value={draft.chest ?? ""}
+                onChange={(e) => setDraft({ ...draft, chest: e.target.value })}
+              />
+              <Input
+                placeholder="Waist (cm)"
+                value={draft.waist ?? ""}
+                onChange={(e) => setDraft({ ...draft, waist: e.target.value })}
+              />
+              <Input
+                placeholder="Arms (cm)"
+                value={draft.arms ?? ""}
+                onChange={(e) => setDraft({ ...draft, arms: e.target.value })}
+              />
+              <Input
+                placeholder="Thighs (cm)"
+                value={draft.thighs ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, thighs: e.target.value })
+                }
+              />
+            </div>
+
+            <Textarea
+              placeholder="Notes"
+              value={draft.notes ?? ""}
+              onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+            />
+
+            <label className="block text-sm font-medium">Progress photo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) =>
+                  setDraft({ ...draft, photoData: ev.target?.result as string });
+                reader.readAsDataURL(file);
+              }}
+            />
+
+            <Button className="w-full" onClick={handleSave}>
+              Save
+            </Button>
+          </DrawerContent>
+        </Drawer>
       </div>
     </div>
   );
 }
+
