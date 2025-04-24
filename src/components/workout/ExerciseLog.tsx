@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Timer, Plus } from 'lucide-react';
 import { ExerciseSetEntry } from './ExerciseSetEntry';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useExerciseMotivation } from '@/hooks/useExerciseMotivation';
 
 interface ExerciseLogProps {
   exercise: {
@@ -32,10 +32,22 @@ export const ExerciseLog: React.FC<ExerciseLogProps> = ({
   onStartRest,
 }) => {
   const isMobile = useIsMobile();
+  const { lastWorkoutData, motivationalMessage } = useExerciseMotivation(exercise.name);
   
   return (
     <div className="p-4 space-y-6">
       <h2 className="text-xl font-bold">{exercise.name}</h2>
+      
+      {lastWorkoutData && (
+        <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+          <p className="text-sm">
+            Last time: {lastWorkoutData.weight}kg × {lastWorkoutData.reps} reps
+          </p>
+          {motivationalMessage && (
+            <p className="text-sm font-medium text-primary">{motivationalMessage}</p>
+          )}
+        </div>
+      )}
       
       {previousStats && previousStats.length > 0 && (
         <div className="bg-muted/50 p-3 rounded-lg mb-4">

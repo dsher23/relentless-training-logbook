@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -158,6 +157,99 @@ export const useLiveWorkout = () => {
     }
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, exerciseData]);
 
+  const nextExercise = useCallback(() => {
+    if (!workout) return;
+    if (currentExerciseIndex < workout.exercises.length - 1) {
+      // Reset exercise data for the new exercise
+      const nextExerciseId = workout.exercises[currentExerciseIndex + 1].id;
+      setExerciseData(prev => ({
+        ...prev,
+        [nextExerciseId]: {
+          sets: [],
+          notes: "",
+          previousStats: workout.exercises[currentExerciseIndex + 1].previousStats
+        }
+      }));
+      setCurrentExerciseIndex(prev => prev + 1);
+    }
+  }, [workout, currentExerciseIndex]);
+
+  const previousExercise = useCallback(() => {
+    if (currentExerciseIndex > 0) {
+      setCurrentExerciseIndex(prev => prev - 1);
+    }
+  }, []);
+
+  const handleUpdateNotes = useCallback((exerciseId: string, notes: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          notes
+        }
+      };
+    });
+  }, []);
+
+  const handleSetUpdate = useCallback((exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets[setIndex] = { 
+        ...updatedSets[setIndex], 
+        [field]: value 
+      };
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+  }, []);
+
+  const handleAddSet = useCallback((exerciseId: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      // Start with empty values for new sets
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: [...exercise.sets, { reps: 0, weight: 0 }]
+        }
+      };
+    });
+  }, []);
+
+  const handleRemoveSet = useCallback((exerciseId: string, setIndex: number) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) return prev;
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets.splice(setIndex, 1);
+      
+      return {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+    });
+  }, []);
+
   return {
     workout,
     currentExerciseIndex,
@@ -170,5 +262,11 @@ export const useLiveWorkout = () => {
     setExerciseData,
     finishWorkout,
     loadWorkout,
+    nextExercise,
+    previousExercise,
+    handleUpdateNotes,
+    handleSetUpdate,
+    handleAddSet,
+    handleRemoveSet
   };
 };

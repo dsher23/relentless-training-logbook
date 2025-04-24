@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -22,9 +21,11 @@ interface SettingsCardProps {
     darkMode: boolean;
     restTimer: boolean;
     units: "kg" | "lbs";
+    showLastLift: boolean;
+    showMotivation: boolean;
   };
   onSettingChange: (
-    setting: "darkMode" | "restTimer" | "units",
+    setting: "darkMode" | "restTimer" | "units" | "showLastLift" | "showMotivation",
     value: boolean | string
   ) => void;
   onResetData: () => void;
@@ -72,6 +73,28 @@ const SettingsCard: React.FC<SettingsCardProps> = ({
             <ToggleGroupItem value="kg">kg</ToggleGroupItem>
             <ToggleGroupItem value="lbs">lbs</ToggleGroupItem>
           </ToggleGroup>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium">Workout Experience</h3>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show-last-lift">Show Last Lift</Label>
+            <Switch
+              id="show-last-lift"
+              checked={settings.showLastLift}
+              onCheckedChange={(checked) => onSettingChange("showLastLift", checked)}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show-motivation">Show Motivation</Label>
+            <Switch
+              id="show-motivation"
+              checked={settings.showMotivation}
+              onCheckedChange={(checked) => onSettingChange("showMotivation", checked)}
+            />
+          </div>
         </div>
 
         <div className="pt-4">
