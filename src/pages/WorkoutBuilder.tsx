@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
 import { DndContext } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -24,7 +23,13 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
-import { Trophy } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ExerciseItem = ({
   exercise,
@@ -60,6 +65,7 @@ const ExerciseItem = ({
       { id: "deadlift", name: "Deadlift" },
       { id: "squat", name: "Squat" },
       { id: "shoulder-press", name: "Shoulder Press" },
+      { id: "custom", name: "Custom Exercise" },
     ];
     
     return CORE_LIFTS.find(lift => lift.id === prType)?.name || "Custom PR";
@@ -180,6 +186,14 @@ const WorkoutBuilder: React.FC = () => {
 
   const { startAfterCreation } = location.state || {};
 
+  const CORE_LIFTS = [
+    { id: "bench-press", name: "Bench Press" },
+    { id: "deadlift", name: "Deadlift" },
+    { id: "squat", name: "Squat" },
+    { id: "shoulder-press", name: "Shoulder Press" },
+    { id: "custom", name: "Custom Exercise" },
+  ];
+
   const openExerciseForm = (exercise?: Exercise) => {
     if (exercise) {
       setExerciseForm({
@@ -217,6 +231,7 @@ const WorkoutBuilder: React.FC = () => {
       }),
       restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined,
       lastProgressDate: new Date(),
+      prExerciseType: exerciseForm.prExerciseType !== "none" ? exerciseForm.prExerciseType : undefined,
     };
 
     setExercises([...exercises, newExercise]);
@@ -250,7 +265,8 @@ const WorkoutBuilder: React.FC = () => {
               reps: Number(exerciseForm.reps),
               weight: Number(exerciseForm.weight)
             }),
-            restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined
+            restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined,
+            prExerciseType: exerciseForm.prExerciseType !== "none" ? exerciseForm.prExerciseType : undefined
           }
         : exercise
     ));
@@ -540,6 +556,30 @@ const WorkoutBuilder: React.FC = () => {
                       }
                       placeholder="e.g., 90"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pr-exercise">Core PR Exercise</Label>
+                    <Select
+                      value={exerciseForm.prExerciseType}
+                      onValueChange={(value) =>
+                        setExerciseForm((f) => ({
+                          ...f,
+                          prExerciseType: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="pr-exercise">
+                        <SelectValue placeholder="Not tracked as PR" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not tracked as PR</SelectItem>
+                        {CORE_LIFTS.map((lift) => (
+                          <SelectItem key={lift.id} value={lift.id}>
+                            {lift.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
