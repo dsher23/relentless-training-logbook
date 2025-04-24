@@ -20,7 +20,9 @@ interface Draft {
   chest?: string;
   waist?: string;
   arms?: string;
+  forearms?: string;
   thighs?: string;
+  calves?: string;
   notes?: string;
   photoData?: string;
 }
@@ -32,7 +34,9 @@ interface Measurement {
   chest?: number;
   waist?: number;
   arms?: number;
+  forearms?: number;
   thighs?: number;
+  calves?: number;
   notes?: string;
   photoData?: string;
 }
@@ -54,7 +58,15 @@ export default function Measurements() {
 
   const handleSave = () => {
     // Validate inputs
-    const numericFields = ["weight", "chest", "waist", "arms", "thighs"];
+    const numericFields = [
+      "weight",
+      "chest",
+      "waist",
+      "arms",
+      "forearms",
+      "thighs",
+      "calves",
+    ];
     for (const field of numericFields) {
       const value = draft[field as keyof Draft];
       if (value && (isNaN(Number(value)) || Number(value) <= 0)) {
@@ -70,7 +82,9 @@ export default function Measurements() {
       chest: draft.chest ? Number(draft.chest) : undefined,
       waist: draft.waist ? Number(draft.waist) : undefined,
       arms: draft.arms ? Number(draft.arms) : undefined,
+      forearms: draft.forearms ? Number(draft.forearms) : undefined,
       thighs: draft.thighs ? Number(draft.thighs) : undefined,
+      calves: draft.calves ? Number(draft.calves) : undefined,
       notes: draft.notes,
       photoData: draft.photoData,
     });
@@ -85,7 +99,7 @@ export default function Measurements() {
         .filter((m) => m.weight !== undefined)
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .map((m) => ({
-          date: m.date.toLocaleDateString("en-GB", {
+          date: m.date.toLocaleDateString("en-US", {
             day: "2-digit",
             month: "short",
           }),
@@ -125,7 +139,9 @@ export default function Measurements() {
             </CardContent>
           </Card>
         ) : (
-          <p>No measurements recorded yet.</p>
+          <p className="text-center text-muted-foreground">
+            No measurements recorded yet.
+          </p>
         )}
 
         {/* Weight graph */}
@@ -137,7 +153,7 @@ export default function Measurements() {
             <CardContent className="h-64">
               <ProgressChart
                 data={weightRows}
-                yAxisLabel="Weight (kg)"
+                yAxisLabel="Weight (lbs)"
                 maxValue={Math.max(...weightRows.map((r) => r.value))}
               />
             </CardContent>
@@ -163,29 +179,45 @@ export default function Measurements() {
 
             <div className="grid grid-cols-2 gap-2">
               <Input
-                placeholder="Weight (kg)"
+                placeholder="Weight (lbs)"
                 value={draft.weight ?? ""}
                 onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
               />
               <Input
-                placeholder="Chest (cm)"
+                placeholder="Chest (in)"
                 value={draft.chest ?? ""}
                 onChange={(e) => setDraft({ ...draft, chest: e.target.value })}
               />
               <Input
-                placeholder="Waist (cm)"
+                placeholder="Waist (in)"
                 value={draft.waist ?? ""}
                 onChange={(e) => setDraft({ ...draft, waist: e.target.value })}
               />
               <Input
-                placeholder="Arms (cm)"
+                placeholder="Arms (in)"
                 value={draft.arms ?? ""}
                 onChange={(e) => setDraft({ ...draft, arms: e.target.value })}
               />
               <Input
-                placeholder="Thighs (cm)"
+                placeholder="Forearms (in)"
+                value={draft.forearms ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, forearms: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Thighs (in)"
                 value={draft.thighs ?? ""}
-                onChange={(e) => setDraft({ ...draft, thighs: e.target.value })}
+                onChange={(e) =>
+                  setDraft({ ...draft, thighs: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Calves (in)"
+                value={draft.calves ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, calves: e.target.value })
+                }
               />
             </div>
 
