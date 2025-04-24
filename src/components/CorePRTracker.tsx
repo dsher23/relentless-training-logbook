@@ -1,34 +1,41 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/context/AppContext";
 import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
-import { ChevronDown, ExternalLink, Trophy } from "lucide-react";
+import { ChevronDown, ExternalLink, Trophy, Plus } from "lucide-react";
 import { ProgressChart } from "@/components/ProgressChart";
 import { useExercises } from "@/hooks/useExercises";
+import { PR } from "@/types/pr";
+import { toast } from "sonner";
+
+const STORAGE_KEY = "ironlog_direct_prs";
 
 const CorePRTracker: React.FC = () => {
   const navigate = useNavigate();
   const { workouts } = useAppContext();
   const { customExercises, CORE_LIFTS } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newWeight, setNewWeight] = useState("");
+  const [error, setError] = useState("");
+  const [directPRs, setDirectPRs] = useState<PR[]>([]);
   const [prData, setPrData] = useState<{
     weight: number;
     reps: number;
@@ -50,7 +57,44 @@ const CorePRTracker: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Ensure workouts is an array
+    const storedPRs = localStorage.getItem(STORAGE_KEY);
+    if (storedPRs) {
+      try {
+        setDirectPRs(JSON.parse(storedPRs));
+      } catch (err) {
+        console.error("Failed to parse stored PRs", err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(directPRs));
+  }, [directPRs]);
+
+  const handleLogPR = () => {
+    setError("");
+    
+    const weight = Number(newWeight);
+    if (!weight || weight <= 0) {
+      setError("Please enter a valid weight");
+      return;
+    }
+
+    const newPR: PR = {
+      exerciseId: selectedLift,
+      weight,
+      date: new Date().toISOString(),
+      reps: 1,
+      isDirectEntry: true
+    };
+
+    setDirectPRs(prev => [...prev, newPR]);
+    setNewWeight("");
+    setIsDialogOpen(false);
+    toast.success("PR logged successfully!");
+  };
+
+  useEffect(() => {
     if (!workouts || !Array.isArray(workouts)) return;
 
     const completedWorkouts = workouts.filter(w => w?.completed === true);
@@ -61,16 +105,39 @@ const CorePRTracker: React.FC = () => {
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
+    directPRs.forEach(pr => {
+      if (pr.exerciseId === selectedLift) {
+        const oneRM = calculateOneRepMax(pr.weight, pr.reps);
+        if (oneRM > bestOneRM) {
+          bestOneRM = oneRM;
+          bestSet = { weight: pr.weight, reps: pr.reps };
+          bestWorkoutDate = pr.date;
+          bestWorkoutId = undefined;
+        }
+        
+        historyData.push({
+          date: format(new Date(pr.date), "MM/dd/yy"),
+          fullData: {
+            weight: pr.weight,
+            reps: pr.reps,
+            volume: pr.weight * pr.reps,
+            notes: "Direct PR Entry"
+          },
+          "Top Set": pr.weight,
+          "Reps": pr.reps,
+          "Volume": pr.weight * pr.reps,
+          estimatedOneRM: oneRM
+        });
+      }
+    });
+
     (completedWorkouts || []).forEach(workout => {
-      // Ensure exercises is an array
       if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
       
       workout.exercises.forEach(exercise => {
-        // Handle custom PR types
         const isCustomPR = selectedLift.startsWith('custom-');
         const customExerciseName = isCustomPR ? selectedLift.replace('custom-', '') : '';
         
-        // Match by PR exercise type first, or by name if type not available
         const isPRMatch = (exercise.prExerciseType === selectedLift) || 
           (!exercise.prExerciseType && 
            exercise.name.toLowerCase().includes(
@@ -82,7 +149,6 @@ const CorePRTracker: React.FC = () => {
           let bestSetInExercise = null;
           let bestOneRMInExercise = 0;
           
-          // Ensure sets is an array
           if (!exercise?.sets || !Array.isArray(exercise.sets)) return;
           
           exercise.sets.forEach(set => {
@@ -127,14 +193,10 @@ const CorePRTracker: React.FC = () => {
       });
     });
 
-    // Sort history data by date
-    historyData.sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-    
+    historyData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setChartData(historyData);
 
-    if (bestSet && bestWorkoutDate && bestWorkoutId) {
+    if (bestSet && bestWorkoutDate) {
       setPrData({
         weight: Number(bestSet.weight),
         reps: Number(bestSet.reps),
@@ -145,31 +207,86 @@ const CorePRTracker: React.FC = () => {
     } else {
       setPrData(null);
     }
-  }, [workouts, selectedLift, prExerciseOptions]);
+  }, [workouts, selectedLift, directPRs]);
 
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="flex justify-between items-center text-base">
           <span>Core Lift PR Tracker</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8">
-                {prExerciseOptions.find(l => l.id === selectedLift)?.name || "Select lift"}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {prExerciseOptions.map(lift => (
-                <DropdownMenuItem 
-                  key={lift.id}
-                  onClick={() => setSelectedLift(lift.id)}
-                >
-                  {lift.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Log Lift
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Log New PR</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          {prExerciseOptions.find(l => l.id === selectedLift)?.name || "Select lift"}
+                          <ChevronDown className="h-4 w-4 ml-2" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        {prExerciseOptions.map(lift => (
+                          <DropdownMenuItem 
+                            key={lift.id}
+                            onClick={() => setSelectedLift(lift.id)}
+                          >
+                            {lift.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  
+                  <div>
+                    <Input
+                      type="number"
+                      placeholder="Weight (lbs)"
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(e.target.value)}
+                    />
+                    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                  </div>
+                  
+                  <Button 
+                    className="w-full" 
+                    onClick={handleLogPR}
+                  >
+                    Save PR
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8">
+                  {prExerciseOptions.find(l => l.id === selectedLift)?.name || "Select lift"}
+                  <ChevronDown className="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {prExerciseOptions.map(lift => (
+                  <DropdownMenuItem 
+                    key={lift.id}
+                    onClick={() => setSelectedLift(lift.id)}
+                  >
+                    {lift.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardTitle>
       </CardHeader>
 
