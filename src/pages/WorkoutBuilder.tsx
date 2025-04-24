@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
 import { DndContext } from "@dnd-kit/core";
@@ -7,12 +7,11 @@ import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } 
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
 import { WorkoutTemplate, Exercise, Workout } from "@/types";
+import AddExerciseForm from "@/components/AddExerciseForm";
 import {
   Dialog,
   DialogContent,
@@ -22,14 +21,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
 
 const ExerciseItem = ({
   exercise,
@@ -128,15 +120,6 @@ const ExerciseItem = ({
   );
 };
 
-const defaultExerciseFormState = {
-  name: "",
-  sets: 3,
-  reps: 10,
-  weight: 0,
-  restTime: "",
-  prExerciseType: "none",
-};
-
 const WorkoutBuilder: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
@@ -146,8 +129,7 @@ const WorkoutBuilder: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
   const [showExerciseForm, setShowExerciseForm] = useState(false);
-  const [exerciseForm, setExerciseForm] = useState({ ...defaultExerciseFormState });
-  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [editingExercise, setEditingExercise] = useState<Exercise | undefined>(undefined);
   const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
   const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -186,94 +168,29 @@ const WorkoutBuilder: React.FC = () => {
 
   const { startAfterCreation } = location.state || {};
 
-  const CORE_LIFTS = [
-    { id: "bench-press", name: "Bench Press" },
-    { id: "deadlift", name: "Deadlift" },
-    { id: "squat", name: "Squat" },
-    { id: "shoulder-press", name: "Shoulder Press" },
-    { id: "custom", name: "Custom Exercise" },
-  ];
-
-  const openExerciseForm = (exercise?: Exercise) => {
-    if (exercise) {
-      setExerciseForm({
-        name: exercise.name,
-        sets: exercise.sets.length,
-        reps: exercise.sets[0]?.reps ?? 10,
-        weight: exercise.sets[0]?.weight ?? 0,
-        restTime: exercise.restTime ? exercise.restTime.toString() : "",
-        prExerciseType: exercise.prExerciseType || "none",
-      });
-      setEditingExerciseId(exercise.id);
-    } else {
-      setExerciseForm({ ...defaultExerciseFormState });
-      setEditingExerciseId(null);
-    }
+  const handleAddExerciseClick = () => {
+    setEditingExercise(undefined);
     setShowExerciseForm(true);
   };
 
-  const handleAddExercise = () => {
-    if (!exerciseForm.name.trim()) {
-      toast({
-        title: "Exercise name required",
-        description: "Please provide a name for the exercise.",
-        variant: "destructive",
-      });
-      return;
+  const handleSaveExercise = (exercise: Exercise) => {
+    if (editingExercise) {
+      setExercises(exercises.map(ex => 
+        ex.id === exercise.id ? exercise : ex
+      ));
+    } else {
+      setExercises([...exercises, exercise]);
     }
-
-    const newExercise: Exercise = {
-      id: uuidv4(),
-      name: exerciseForm.name.trim(),
-      sets: Array(Number(exerciseForm.sets)).fill({
-        reps: Number(exerciseForm.reps),
-        weight: Number(exerciseForm.weight)
-      }),
-      restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined,
-      lastProgressDate: new Date(),
-      prExerciseType: exerciseForm.prExerciseType !== "none" ? exerciseForm.prExerciseType : undefined,
-    };
-
-    setExercises([...exercises, newExercise]);
-    setExerciseForm({ ...defaultExerciseFormState });
     setShowExerciseForm(false);
+    setEditingExercise(undefined);
   };
 
   const handleEditExercise = (id: string) => {
-    const exerciseToEdit = exercises.find((exercise) => exercise.id === id);
-    if (exerciseToEdit) {
-      openExerciseForm(exerciseToEdit);
+    const exercise = exercises.find(ex => ex.id === id);
+    if (exercise) {
+      setEditingExercise(exercise);
+      setShowExerciseForm(true);
     }
-  };
-
-  const handleUpdateExercise = () => {
-    if (!exerciseForm.name.trim()) {
-      toast({
-        title: "Exercise name required",
-        description: "Please provide a name for the exercise.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setExercises(exercises.map((exercise) =>
-      exercise.id === editingExerciseId
-        ? {
-            ...exercise,
-            name: exerciseForm.name.trim(),
-            sets: Array(Number(exerciseForm.sets)).fill({
-              reps: Number(exerciseForm.reps),
-              weight: Number(exerciseForm.weight)
-            }),
-            restTime: exerciseForm.restTime ? parseInt(exerciseForm.restTime) : undefined,
-            prExerciseType: exerciseForm.prExerciseType !== "none" ? exerciseForm.prExerciseType : undefined
-          }
-        : exercise
-    ));
-
-    setExerciseForm({ ...defaultExerciseFormState });
-    setEditingExerciseId(null);
-    setShowExerciseForm(false);
   };
 
   const promptDeleteExercise = (id: string) => {
@@ -457,19 +374,19 @@ const WorkoutBuilder: React.FC = () => {
         </Header>
 
         <div className="p-4">
-          <Input
+          <input
             type="text"
             placeholder="Workout Name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
-            className="mb-4"
+            className="w-full p-2 border rounded mb-4"
           />
 
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Exercises</h2>
-                <Button size="sm" onClick={() => openExerciseForm()}>
+                <Button size="sm" onClick={handleAddExerciseClick}>
                   <Plus className="h-4 w-4 mr-2" /> Add Exercise
                 </Button>
               </div>
@@ -477,130 +394,12 @@ const WorkoutBuilder: React.FC = () => {
           </Card>
 
           {showExerciseForm && (
-            <Card className="mb-4">
-              <CardContent className="p-4 space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="ex-name">Exercise Name *</Label>
-                    <Input
-                      id="ex-name"
-                      value={exerciseForm.name}
-                      onChange={(e) =>
-                        setExerciseForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                      placeholder="e.g., Bench Press"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ex-sets">Sets</Label>
-                    <Input
-                      id="ex-sets"
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={exerciseForm.sets}
-                      onChange={(e) =>
-                        setExerciseForm((f) => ({
-                          ...f,
-                          sets: Math.max(1, parseInt(e.target.value) || 1),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ex-reps">Reps per Set</Label>
-                    <Input
-                      id="ex-reps"
-                      type="number"
-                      min={1}
-                      max={200}
-                      value={exerciseForm.reps}
-                      onChange={(e) =>
-                        setExerciseForm((f) => ({
-                          ...f,
-                          reps: Math.max(1, parseInt(e.target.value) || 1),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ex-weight">Weight (kg/lb)</Label>
-                    <Input
-                      id="ex-weight"
-                      type="number"
-                      min={0}
-                      step={0.1}
-                      value={exerciseForm.weight}
-                      onChange={(e) =>
-                        setExerciseForm((f) => ({
-                          ...f,
-                          weight: Number(e.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ex-rest">Rest Time (seconds, optional)</Label>
-                    <Input
-                      id="ex-rest"
-                      type="number"
-                      min={0}
-                      step={5}
-                      value={exerciseForm.restTime}
-                      onChange={(e) =>
-                        setExerciseForm((f) => ({
-                          ...f,
-                          restTime: e.target.value,
-                        }))
-                      }
-                      placeholder="e.g., 90"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pr-exercise">Core PR Exercise</Label>
-                    <Select
-                      value={exerciseForm.prExerciseType}
-                      onValueChange={(value) =>
-                        setExerciseForm((f) => ({
-                          ...f,
-                          prExerciseType: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="pr-exercise">
-                        <SelectValue placeholder="Not tracked as PR" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Not tracked as PR</SelectItem>
-                        {CORE_LIFTS.map((lift) => (
-                          <SelectItem key={lift.id} value={lift.id}>
-                            {lift.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setShowExerciseForm(false);
-                      setExerciseForm({ ...defaultExerciseFormState });
-                      setEditingExerciseId(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={editingExerciseId ? handleUpdateExercise : handleAddExercise}
-                  >
-                    {editingExerciseId ? "Update Exercise" : "Add Exercise"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <AddExerciseForm
+              isOpen={showExerciseForm}
+              onClose={() => setShowExerciseForm(false)}
+              onSave={handleSaveExercise}
+              exercise={editingExercise}
+            />
           )}
 
           {exercises.length === 0 ? (

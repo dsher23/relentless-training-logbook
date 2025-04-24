@@ -16,33 +16,19 @@ interface ExerciseAdvancedInfoProps {
   restTime: string;
   notes: string;
   isWeakPoint: boolean;
-  isPrExercise?: boolean;
-  prExerciseType?: string;
   onRestTimeChange: (value: string) => void;
   onNotesChange: (value: string) => void;
   onWeakPointChange: (value: boolean) => void;
-  onPrExerciseChange?: (value: string) => void;
 }
 
 const ExerciseAdvancedInfo: React.FC<ExerciseAdvancedInfoProps> = ({
   restTime,
   notes,
   isWeakPoint,
-  isPrExercise = false,
-  prExerciseType = "",
   onRestTimeChange,
   onNotesChange,
   onWeakPointChange,
-  onPrExerciseChange,
 }) => {
-  const CORE_LIFTS = [
-    { id: "bench-press", name: "Bench Press" },
-    { id: "deadlift", name: "Deadlift" },
-    { id: "squat", name: "Squat" },
-    { id: "shoulder-press", name: "Shoulder Press" },
-    { id: "custom", name: "Custom Exercise" },
-  ];
-
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -73,26 +59,6 @@ const ExerciseAdvancedInfo: React.FC<ExerciseAdvancedInfoProps> = ({
             />
           )}
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="pr-exercise">Core PR Exercise</Label>
-        <Select
-          value={prExerciseType || "none"}
-          onValueChange={(value) => onPrExerciseChange && onPrExerciseChange(value)}
-        >
-          <SelectTrigger id="pr-exercise">
-            <SelectValue placeholder="Not tracked as PR" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Not tracked as PR</SelectItem>
-            {CORE_LIFTS.map((lift) => (
-              <SelectItem key={lift.id} value={lift.id}>
-                {lift.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-2">

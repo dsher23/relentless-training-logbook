@@ -81,21 +81,21 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
             sets={formData.sets}
             reps={formData.reps}
             weight={formData.weight}
+            prExerciseType={formData.prExerciseType}
             onNameChange={setters.setName}
             onSetsChange={setters.setSets}
             onRepsChange={setters.setReps}
             onWeightChange={setters.setWeight}
+            onPrExerciseChange={setters.setPrExerciseType}
           />
           
           <ExerciseAdvancedInfo
             restTime={formData.restTime}
             notes={formData.notes}
             isWeakPoint={formData.isWeakPoint}
-            prExerciseType={formData.prExerciseType}
             onRestTimeChange={setters.setRestTime}
             onNotesChange={setters.setNotes}
             onWeakPointChange={setters.setIsWeakPoint}
-            onPrExerciseChange={setters.setPrExerciseType}
           />
           
           <DialogFooter>
