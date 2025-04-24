@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { formatDistance } from "date-fns";
@@ -44,12 +45,17 @@ const ExerciseProgressTracker: React.FC = () => {
     }
   });
 
-  const completedWorkouts = workouts?.filter(workout => workout?.completed === true) || [];
+  // Ensure workouts is always an array and filter properly
+  const completedWorkouts = Array.isArray(workouts) 
+    ? workouts.filter(workout => 
+        workout?.completed === true && 
+        Array.isArray(workout?.exercises)
+      ) 
+    : [];
 
+  // Collect exercise names safely
   const exerciseNames = useMemo(() => {
     const namesSet = new Set<string>();
-    
-    if (!completedWorkouts || !Array.isArray(completedWorkouts)) return [];
     
     completedWorkouts.forEach(workout => {
       if (workout?.exercises && Array.isArray(workout.exercises)) {
@@ -64,15 +70,19 @@ const ExerciseProgressTracker: React.FC = () => {
     return Array.from(namesSet).sort();
   }, [completedWorkouts]);
 
+  // Create a safe exercise names array
+  const safeExerciseNames = Array.isArray(exerciseNames) ? exerciseNames : [];
+
+  // Filter exercises based on search term
   const filteredExerciseNames = useMemo(() => {
-    if (!searchTerm || !exerciseNames || !Array.isArray(exerciseNames)) {
-      return exerciseNames || [];
+    if (!searchTerm) {
+      return safeExerciseNames;
     }
     
-    return exerciseNames.filter(name => 
+    return safeExerciseNames.filter(name => 
       name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [exerciseNames, searchTerm]);
+  }, [safeExerciseNames, searchTerm]);
 
   const isExerciseFavorite = (name: string) => {
     if (!favorites || !Array.isArray(favorites) || !name) return false;
@@ -107,11 +117,13 @@ const ExerciseProgressTracker: React.FC = () => {
     const data: ExerciseSetData[] = [];
     
     completedWorkouts.forEach(workout => {
+      if (!Array.isArray(workout?.exercises)) return;
+      
       const matchingExercise = workout.exercises.find(
-        exercise => exercise.name === selectedExercise
+        exercise => exercise?.name === selectedExercise
       );
       
-      if (matchingExercise && matchingExercise.sets.length > 0) {
+      if (matchingExercise && Array.isArray(matchingExercise.sets) && matchingExercise.sets.length > 0) {
         let topSetValue = 0;
         let topSetWeight = 0;
         let topSetReps = 0;
@@ -346,7 +358,7 @@ const ExerciseProgressTracker: React.FC = () => {
             <Search className="h-8 w-8 mb-2 opacity-50" />
             <p>Select an exercise to view progress</p>
             
-            {favorites && favorites.length > 0 && (
+            {favorites && Array.isArray(favorites) && favorites.length > 0 && (
               <div className="mt-6 w-full">
                 <h4 className="text-sm font-medium mb-2">Favorite Exercises</h4>
                 <div className="flex flex-wrap gap-2">
