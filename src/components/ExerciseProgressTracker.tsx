@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,9 +13,7 @@ export default function ExerciseProgressTracker() {
   const [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("weight");
 
-  /* ---------------------------------
-     1.  Pull completed workouts
-  ----------------------------------*/
+  /* ---------- 1. finished workouts ---------- */
   const finished = useMemo(
     () =>
       (workouts ?? []).filter(
@@ -24,16 +22,7 @@ export default function ExerciseProgressTracker() {
     [workouts]
   );
 
-  /* ----------  TEMP DEBUG LOG  ---------- */
-  if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.log("DEBUG ▶ finished workouts", finished);
-  }
-  /* ----------  END TEMP LOG  ------------- */
-
-  /* ---------------------------------
-     2.  Build distinct exercise list
-  ----------------------------------*/
+  /* ---------- 2. distinct exercise list ---------- */
   const names = useMemo(() => {
     const map = new Map<string, string>(); // canonical -> display
     finished.forEach((w) =>
@@ -48,9 +37,7 @@ export default function ExerciseProgressTracker() {
     );
   }, [finished]);
 
-  /* ---------------------------------
-     3.  Build chart rows
-  ----------------------------------*/
+  /* ---------- 3. build chart rows ---------- */
   const rows = useMemo(() => {
     if (!selected) return [];
 
@@ -89,16 +76,12 @@ export default function ExerciseProgressTracker() {
     );
   }, [finished, selected]);
 
-  /* ---------------------------------
-     4.  Helpers
-  ----------------------------------*/
+  /* ---------- helpers ---------- */
   const yLabel = mode === "weight" ? "Weight (kg)" : "Volume (kg)";
   const maxVal =
     rows.length > 0 ? Math.max(...rows.map((r) => r[mode])) : 100;
 
-  /* ---------------------------------
-     5.  Render
-  ----------------------------------*/
+  /* ---------- render ---------- */
   return (
     <Card>
       <CardHeader>
@@ -106,7 +89,36 @@ export default function ExerciseProgressTracker() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* exercise selector buttons */}
+        {/* ===== DEBUG PANEL – remove when satisfied ===== */}
+        <div className="rounded-md border p-2 text-xs bg-muted/30">
+          <p className="font-medium">
+            Finished workouts stored: {finished.length}
+          </p>
+          {selected && (
+            <>
+              <p>
+                Matching “{selected}”:{" "}
+                {
+                  finished.filter((w) =>
+                    w.exercises.some(
+                      (ex) =>
+                        ex?.name?.trim().toLowerCase() ===
+                        selected.trim().toLowerCase()
+                    )
+                  ).length
+                }
+              </p>
+              {rows.length > 0 && (
+                <pre className="overflow-auto max-h-24 mt-2">
+                  {JSON.stringify(rows[0], null, 2)}
+                </pre>
+              )}
+            </>
+          )}
+        </div>
+        {/* ===== END DEBUG PANEL ===== */}
+
+        {/* exercise selector */}
         <div className="flex flex-wrap gap-2">
           {names.map((name) => (
             <Button
