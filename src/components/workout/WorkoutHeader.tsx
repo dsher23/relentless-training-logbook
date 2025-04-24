@@ -2,7 +2,7 @@
 import React from 'react';
 import { formatDuration } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Bug, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WorkoutHeaderProps {

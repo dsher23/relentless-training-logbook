@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -90,7 +91,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
   });
 
   return (
-    <div className="flex flex-col h-full max-h-full">
+    <div className="flex flex-col h-[100vh] overflow-hidden">
       <NavigationHeader 
         title="Add Measurements"
         showBack={true}
@@ -99,9 +100,9 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
       />
       
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="flex flex-col h-[calc(100%-64px)]">
-          <ScrollArea className="flex-1 px-4 py-4">
-            <div className="space-y-4 pb-4">
+        <form onSubmit={handleSubmit} className="flex flex-col h-[calc(100vh-64px)]">
+          <ScrollArea className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="space-y-4 pb-20">
               <FormField
                 control={form.control}
                 name="date"
@@ -339,7 +340,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
             </div>
           </ScrollArea>
 
-          <div className="sticky bottom-0 p-4 bg-background border-t shadow-sm">
+          <div className="sticky bottom-0 p-4 bg-background border-t shadow-sm mt-auto">
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
                 Cancel
