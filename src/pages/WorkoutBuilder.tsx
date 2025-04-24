@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical, ArrowLeft } from "lucide-react";
@@ -81,7 +82,9 @@ const ExerciseItem = ({
             <GripVertical className="h-4 w-4 text-muted-foreground" />
             <span className="font-semibold">{exercise.name}</span>
             {exercise.prExerciseType && (
-              <Trophy className="h-3 w-3 text-yellow-500" title={`${prExerciseName} PR`} />
+              <div className="flex items-center" title={`${prExerciseName} PR`}>
+                <Trophy className="h-3 w-3 text-yellow-500" />
+              </div>
             )}
             <span className="ml-2 text-xs text-muted-foreground">
               {exercise.sets.length} sets × {exercise.sets[0]?.reps ?? "-"} reps,{" "}
