@@ -1,5 +1,6 @@
+
 import React, { useMemo, useState, useEffect } from "react";
-import { useAppContext } from "@/context/AppContext";
+import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
 import NavigationHeader from "@/components/NavigationHeader";
 import {
   Card,
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import ProgressChart from "@/components/ProgressChart";
 import { v4 as uuid } from "uuid";
+import { toast } from "sonner";
 
 interface Draft {
   date: string;
@@ -27,55 +29,39 @@ interface Draft {
   photoData?: string;
 }
 
-interface Measurement {
-  id: string;
-  date: Date;
-  weight?: number;
-  chest?: number;
-  waist?: number;
-  arms?: number;
-  forearms?: number;
-  thighs?: number;
-  calves?: number;
-  notes?: string;
-  photoData?: string;
-}
-
 export default function Measurements() {
-  const { measurements, addMeasurement } = useAppContext();
+  const { bodyMeasurements, addBodyMeasurement } = useBodyMeasurements();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>({
     date: new Date().toISOString().slice(0, 10),
   });
-  const [error, setError] = useState("");
-
-  // Save to localStorage whenever measurements change
-  useEffect(() => {
-    if (measurements) {
-      localStorage.setItem("measurements", JSON.stringify(measurements));
-    }
-  }, [measurements]);
+  const [error, setError] = useState<string>("");
 
   const handleSave = () => {
+    // Reset error
+    setError("");
+
     // Validate inputs
     const numericFields = [
-      "weight",
-      "chest",
-      "waist",
-      "arms",
-      "forearms",
-      "thighs",
-      "calves",
+      { key: "weight", label: "Weight", unit: "lbs" },
+      { key: "chest", label: "Chest", unit: "in" },
+      { key: "waist", label: "Waist", unit: "in" },
+      { key: "arms", label: "Arms", unit: "in" },
+      { key: "forearms", label: "Forearms", unit: "in" },
+      { key: "thighs", label: "Thighs", unit: "in" },
+      { key: "calves", label: "Calves", unit: "in" },
     ];
+
     for (const field of numericFields) {
-      const value = draft[field as keyof Draft];
+      const value = draft[field.key as keyof Draft];
       if (value && (isNaN(Number(value)) || Number(value) <= 0)) {
-        setError(`Invalid ${field}: must be a positive number.`);
+        setError(`Invalid ${field.label}: must be a positive number in ${field.unit}`);
         return;
       }
     }
 
-    addMeasurement({
+    // Convert successful measurements to numbers
+    const measurement = {
       id: uuid(),
       date: new Date(draft.date),
       weight: draft.weight ? Number(draft.weight) : undefined,
@@ -87,7 +73,10 @@ export default function Measurements() {
       calves: draft.calves ? Number(draft.calves) : undefined,
       notes: draft.notes,
       photoData: draft.photoData,
-    });
+    };
+
+    addBodyMeasurement(measurement);
+    toast.success("Measurement saved successfully");
     setOpen(false);
     setDraft({ date: new Date().toISOString().slice(0, 10) });
     setError("");
@@ -95,17 +84,21 @@ export default function Measurements() {
 
   const weightRows = useMemo(
     () =>
-      (measurements ?? [])
-        .filter((m) => m.weight !== undefined)
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
+      bodyMeasurements
+        ?.filter((m) => m.weight !== undefined)
+        .sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        })
         .map((m) => ({
-          date: m.date.toLocaleDateString("en-US", {
+          date: new Date(m.date).toLocaleDateString("en-US", {
             day: "2-digit",
             month: "short",
           }),
           value: m.weight!,
-        })),
-    [measurements]
+        })) ?? [],
+    [bodyMeasurements]
   );
 
   return (
@@ -114,28 +107,25 @@ export default function Measurements() {
 
       <div className="p-4 space-y-4">
         {/* Latest entry card */}
-        {measurements && measurements.length > 0 ? (
+        {bodyMeasurements && bodyMeasurements.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Latest Entry</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(measurements[measurements.length - 1]).map(
-                ([k, v]) =>
-                  k !== "id" &&
-                  k !== "photoData" && (
-                    <React.Fragment key={k}>
-                      <span className="text-muted-foreground capitalize">
-                        {k}
-                      </span>
-                      <span>
-                        {k === "date"
-                          ? (v as Date).toLocaleDateString()
-                          : v}
-                      </span>
-                    </React.Fragment>
-                  )
-              )}
+              {Object.entries(bodyMeasurements[bodyMeasurements.length - 1])
+                .filter(([k]) => k !== "id" && k !== "photoData")
+                .map(([k, v]) => (
+                  <React.Fragment key={k}>
+                    <span className="text-muted-foreground capitalize">{k}</span>
+                    <span>
+                      {k === "date"
+                        ? new Date(v as Date | string).toLocaleDateString()
+                        : v}
+                      {k === "weight" ? " lbs" : k !== "date" && k !== "notes" ? " in" : ""}
+                    </span>
+                  </React.Fragment>
+                ))}
             </CardContent>
           </Card>
         ) : (
@@ -160,7 +150,7 @@ export default function Measurements() {
           </Card>
         )}
 
-        {/* Add / open drawer */}
+        {/* Add / open drawer button */}
         <Button className="w-full" onClick={() => setOpen(true)}>
           Add Measurement
         </Button>
@@ -169,7 +159,9 @@ export default function Measurements() {
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerContent className="p-4 space-y-3">
             <h3 className="font-medium text-lg">New Measurement</h3>
-            {error && <p className="text-red-500">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm font-medium">{error}</p>
+            )}
 
             <Input
               type="date"
@@ -201,23 +193,17 @@ export default function Measurements() {
               <Input
                 placeholder="Forearms (in)"
                 value={draft.forearms ?? ""}
-                onChange={(e) =>
-                  setDraft({ ...draft, forearms: e.target.value })
-                }
+                onChange={(e) => setDraft({ ...draft, forearms: e.target.value })}
               />
               <Input
                 placeholder="Thighs (in)"
                 value={draft.thighs ?? ""}
-                onChange={(e) =>
-                  setDraft({ ...draft, thighs: e.target.value })
-                }
+                onChange={(e) => setDraft({ ...draft, thighs: e.target.value })}
               />
               <Input
                 placeholder="Calves (in)"
                 value={draft.calves ?? ""}
-                onChange={(e) =>
-                  setDraft({ ...draft, calves: e.target.value })
-                }
+                onChange={(e) => setDraft({ ...draft, calves: e.target.value })}
               />
             </div>
 
@@ -227,7 +213,7 @@ export default function Measurements() {
               onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
             />
 
-            <label className="block text-sm font-medium">Progress Photo</label>
+            <label className="block text-sm font-medium mb-1">Progress Photo</label>
             <input
               type="file"
               accept="image/*"
@@ -242,6 +228,7 @@ export default function Measurements() {
                   });
                 reader.readAsDataURL(file);
               }}
+              className="w-full"
             />
 
             <Button className="w-full" onClick={handleSave}>
