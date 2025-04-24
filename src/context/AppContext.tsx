@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast'; // Ensure shadcn-ui toast component is installed: `npx shadcn-ui@latest add toast`
 import { 
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, SteroidCycle, Reminder, SteroidCompound,
@@ -768,7 +768,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTrainingBlock = (id: string) => {
-    setTrainingBlocks((prev) : prev.filter((b) => b.id !== id));
+    setTrainingBlocks((prev) => prev.filter((b) => b.id !== id));
     toast({
       title: "Training Block Deleted",
       description: "Your training block has been removed.",
