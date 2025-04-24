@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Logo from './Logo';
 
 interface NavigationHeaderProps {
   title: string;

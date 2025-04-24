@@ -32,16 +32,17 @@ const Logo: React.FC<LogoProps> = ({ className, size = 'md', textOnly = false })
   }
 
   return (
-    <img
-      src="/lovable-uploads/cf1d5ff1-7878-480a-830b-da26d921e635.png"
-      alt="IronLog"
-      className={cn(
-        "dark:invert", // Invert colors in dark mode
-        sizeClasses[size],
-        "w-auto object-contain",
-        className
-      )}
-    />
+    <span className={cn(
+      "font-bold text-primary tracking-tight",
+      {
+        'text-lg': size === 'sm',
+        'text-xl': size === 'md',
+        'text-2xl': size === 'lg',
+      },
+      className
+    )}>
+      IronLog
+    </span>
   );
 };
 
