@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LiftProgressGraph from "@/components/LiftProgressGraph";
 import ExerciseProgressTracker from "@/components/ExerciseProgressTracker";
+import CorePRTracker from "@/components/CorePRTracker";
 import { useAppContext } from "@/context/AppContext";
 
 const WeeklyProgress = () => {
@@ -21,15 +22,19 @@ const WeeklyProgress = () => {
         defaultValue="overview"
         className="w-full"
       >
-        <TabsList className="w-full grid grid-cols-2">
-          <TabsTrigger value="overview">Overall Progress</TabsTrigger>
-          <TabsTrigger value="exercise">Exercise Progress</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="overview">Progress</TabsTrigger>
+          <TabsTrigger value="exercise">Exercise</TabsTrigger>
+          <TabsTrigger value="pr">PR Tracker</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <LiftProgressGraph />
         </TabsContent>
         <TabsContent value="exercise">
           <ExerciseProgressTracker />
+        </TabsContent>
+        <TabsContent value="pr">
+          <CorePRTracker />
         </TabsContent>
       </Tabs>
     </div>

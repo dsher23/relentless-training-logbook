@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit } from 'lucide-react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
@@ -50,6 +50,12 @@ const WorkoutHistory: React.FC = () => {
     e.preventDefault();
     setWorkoutToDelete(id);
   };
+  
+  const handleEditWorkout = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(`/workouts/${id}`);
+  };
 
   return (
     <div className="app-container animate-fade-in">
@@ -59,8 +65,17 @@ const WorkoutHistory: React.FC = () => {
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
+            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/dashboard')}
+            aria-label="Home"
+          >
+            <span className="text-xs font-medium">Home</span>
           </Button>
         </div>
       </Header>
@@ -89,13 +104,22 @@ const WorkoutHistory: React.FC = () => {
                   workout={workout}
                   onClick={() => navigate(`/workouts/${workout.id}`)}
                   actionButton={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => confirmDelete(workout.id, e)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleEditWorkout(workout.id, e)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => confirmDelete(workout.id, e)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
                   }
                 />
               </div>
