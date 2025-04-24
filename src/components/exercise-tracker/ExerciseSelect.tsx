@@ -42,8 +42,10 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     return favorites?.some(fav => fav?.name === name) || false;
   };
 
-  // Ensure we always have a valid array
-  const safeExerciseNames = Array.isArray(exerciseNames) ? exerciseNames : [];
+  // Ensure we always have a valid array with string values only
+  const safeExerciseNames = Array.isArray(exerciseNames) 
+    ? exerciseNames.filter(Boolean) 
+    : [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -61,7 +63,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command shouldFilter={false}>
+        <Command shouldFilter={false} className="w-full">
           <CommandInput 
             placeholder="Search exercises..." 
             className="h-9"
@@ -70,12 +72,13 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
               if (onSearchChange) onSearchChange(value);
             }}
           />
-          <CommandEmpty>No exercise found.</CommandEmpty>
-          <CommandGroup className="max-h-64 overflow-auto">
-            {safeExerciseNames.map((exercise) => (
-              exercise ? (
+          {safeExerciseNames.length === 0 ? (
+            <CommandEmpty>No exercise found.</CommandEmpty>
+          ) : (
+            <CommandGroup className="max-h-64 overflow-auto">
+              {safeExerciseNames.map((exercise, index) => (
                 <CommandItem
-                  key={exercise}
+                  key={`${exercise}-${index}`}
                   value={exercise}
                   onSelect={(currentValue) => {
                     if (onSelectExercise) onSelectExercise(currentValue);
@@ -103,9 +106,9 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                     </span>
                   </Button>
                 </CommandItem>
-              ) : null
-            ))}
-          </CommandGroup>
+              ))}
+            </CommandGroup>
+          )}
         </Command>
       </PopoverContent>
     </Popover>
