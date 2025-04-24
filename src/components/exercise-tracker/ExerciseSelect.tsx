@@ -42,6 +42,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     return favorites?.some(fav => fav?.name === name) || false;
   };
 
+  // Ensure we always have a valid array
   const safeExerciseNames = Array.isArray(exerciseNames) ? exerciseNames : [];
 
   return (
@@ -65,7 +66,9 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
             placeholder="Search exercises..." 
             className="h-9"
             value={searchTerm || ""}
-            onValueChange={onSearchChange || (() => {})}
+            onValueChange={(value) => {
+              if (onSearchChange) onSearchChange(value);
+            }}
           />
           <CommandEmpty>No exercise found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
@@ -73,8 +76,8 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
               <CommandItem
                 key={exercise}
                 value={exercise || ""}
-                onSelect={() => {
-                  if (onSelectExercise) onSelectExercise(exercise);
+                onSelect={(currentValue) => {
+                  if (onSelectExercise) onSelectExercise(currentValue);
                   if (setOpen) setOpen(false);
                 }}
                 className="flex justify-between items-center"
