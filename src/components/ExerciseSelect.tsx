@@ -142,6 +142,17 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     }
   };
   
+  // Remove duplicates from filteredExerciseNames
+  const uniqueFilteredExerciseNames = useMemo(() => {
+    const uniqueNames = new Set<string>();
+    return filteredExerciseNames.filter(name => {
+      const normalized = name.toLowerCase();
+      if (uniqueNames.has(normalized)) return false;
+      uniqueNames.add(normalized);
+      return true;
+    });
+  }, [filteredExerciseNames]);
+  
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -170,7 +181,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
               }}
             />
             <CommandList className="max-h-[300px] overflow-y-auto">
-              {filteredExerciseNames.length === 0 ? (
+              {uniqueFilteredExerciseNames.length === 0 ? (
                 <CommandEmpty>
                   <div className="py-6 text-center text-sm">
                     <p>No exercise found.</p>
@@ -187,15 +198,18 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                 </CommandEmpty>
               ) : (
                 <CommandGroup className="max-h-64 overflow-auto">
-                  {filteredExerciseNames.map((exercise, index) => (
+                  {uniqueFilteredExerciseNames.map((exercise, index) => (
                     <CommandItem
                       key={`${exercise}-${index}`}
                       value={exercise}
                       onSelect={(currentValue) => {
+                        // Explicitly call the onSelectExercise function
                         onSelectExercise(currentValue);
                         setOpen(false);
                       }}
-                      className="flex justify-between items-center"
+                      className={`flex justify-between items-center ${
+                        selectedExercise === exercise ? "bg-accent text-accent-foreground" : ""
+                      }`}
                     >
                       <span>{exercise}</span>
                       <Button
