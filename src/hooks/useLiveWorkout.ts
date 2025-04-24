@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,23 @@ export const useLiveWorkout = () => {
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [exerciseData, setExerciseData] = useState({});
+
+  // Helper function to initialize exercise data with proper default values
+  const initializeExerciseData = useCallback((exercise) => {
+    const initialSets = exercise.sets?.length > 0 
+      ? exercise.sets.map(set => ({ 
+          reps: set.reps || 0, 
+          weight: set.weight || 0 
+        }))
+      : [{ reps: 0, weight: 0 }];
+      
+    return {
+      sets: initialSets,
+      notes: exercise.notes || "",
+      previousStats: exercise.previousStats,
+      prExerciseType: exercise.prExerciseType
+    };
+  }, []);
 
   const finishWorkout = useCallback(() => {
     if (!workout) {
@@ -128,17 +146,7 @@ export const useLiveWorkout = () => {
           if (!exerciseData[exercise.id]) {
             setExerciseData(prev => ({
               ...prev,
-              [exercise.id]: {
-                sets: exercise.sets?.length ? 
-                  exercise.sets.map(set => ({ 
-                    reps: set.reps || 0, 
-                    weight: set.weight || 0 
-                  })) : 
-                  [{ reps: 0, weight: 0 }],
-                notes: exercise.notes || "",
-                previousStats: exercise.previousStats,
-                prExerciseType: exercise.prExerciseType
-              }
+              [exercise.id]: initializeExerciseData(exercise)
             }));
           }
         });
@@ -154,7 +162,7 @@ export const useLiveWorkout = () => {
       });
       setTimeout(() => navigate("/workouts"), 500);
     }
-  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, exerciseData]);
+  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, exerciseData, initializeExerciseData]);
 
   const nextExercise = useCallback(() => {
     if (!workout) return;
@@ -163,22 +171,13 @@ export const useLiveWorkout = () => {
       const nextExercise = workout.exercises[nextIndex];
       const nextExerciseId = nextExercise.id;
       
+      // Initialize the next exercise data if it doesn't already exist
       setExerciseData(prev => {
         if (prev[nextExerciseId]) return prev;
         
         return {
           ...prev,
-          [nextExerciseId]: {
-            sets: nextExercise.sets?.length ? 
-              nextExercise.sets.map(set => ({ 
-                reps: set.reps || 0, 
-                weight: set.weight || 0 
-              })) : 
-              [{ reps: 0, weight: 0 }],
-            notes: "",
-            previousStats: nextExercise.previousStats,
-            prExerciseType: nextExercise.prExerciseType
-          }
+          [nextExerciseId]: initializeExerciseData(nextExercise)
         };
       });
       
@@ -186,7 +185,7 @@ export const useLiveWorkout = () => {
       
       console.log(`Moving to exercise ${nextIndex + 1}: ${nextExercise.name}`);
     }
-  }, [workout, currentExerciseIndex]);
+  }, [workout, currentExerciseIndex, initializeExerciseData]);
 
   const previousExercise = useCallback(() => {
     if (currentExerciseIndex > 0) {
@@ -214,16 +213,22 @@ export const useLiveWorkout = () => {
       const exercise = prev[exerciseId];
       if (!exercise) return prev;
       
+      // Create a deep copy of the sets array
       const updatedSets = [...exercise.sets];
       
+      // Ensure the set at this index exists
       if (!updatedSets[setIndex]) {
         updatedSets[setIndex] = { reps: 0, weight: 0 };
       }
       
+      // Update the specific field
       updatedSets[setIndex] = { 
         ...updatedSets[setIndex], 
         [field]: value 
       };
+      
+      // Log what's being updated for debugging
+      console.log(`Updating set ${setIndex} ${field} to ${value}`);
       
       return {
         ...prev,
