@@ -1,7 +1,8 @@
+
 export interface Workout {
   id: string;
   name: string;
-  date: string;
+  date: string | Date; // Support both Date objects and ISO strings
   exercises: Exercise[];
   notes?: string;
   completed: boolean;

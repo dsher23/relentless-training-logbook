@@ -11,7 +11,7 @@ export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => 
   return {
     id: uuidv4(), // Generate a new unique ID for the workout
     name: template.name,
-    date: new Date(),
+    date: new Date().toISOString(), // Convert to ISO string
     completed: false,
     notes: '', // Set a default empty string for notes since it's required in Workout
     exercises: template.exercises.map(exercise => ({
@@ -54,7 +54,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
           foundWorkout = {
             ...foundWorkout,
             notes: foundWorkout.notes || "",
-            date: foundWorkout.date || new Date(),
+            date: foundWorkout.date || new Date().toISOString(), // Convert to ISO string if needed
             completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false,
             exercises: foundWorkout.exercises.map(ex => ({
               ...ex,
@@ -77,7 +77,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
           foundWorkout = {
             ...foundWorkout,
             notes: foundWorkout.notes || "",
-            date: foundWorkout.date || new Date(),
+            date: foundWorkout.date || new Date().toISOString(), // Convert to ISO string if needed
             completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false,
             exercises: foundWorkout.exercises.map(ex => ({
               ...ex,

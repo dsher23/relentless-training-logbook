@@ -56,8 +56,25 @@ export function useWorkouts() {
 
   /* ----------  CRUD helpers ---------- */
 
-  /** Create a blank workout (completed = false) */
+  /** Create a workout from provided workout object */
   const addWorkout = useCallback(
+    (workout: Workout) => {
+      const newWorkout: Workout = {
+        id: workout.id || uuid(),
+        name: workout.name,
+        date: workout.date || new Date().toISOString(),
+        completed: workout.completed === true,
+        exercises: workout.exercises || [],
+        isDeload: workout.isDeload
+      };
+      setWorkouts((prev) => [...prev, newWorkout]);
+      return newWorkout.id;
+    },
+    []
+  );
+
+  // Legacy version for backward compatibility
+  const addWorkoutByName = useCallback(
     (name: string, exercises: Exercise[] = []) => {
       const newWorkout: Workout = {
         id: uuid(),
@@ -129,6 +146,7 @@ export function useWorkouts() {
   return {
     workouts,
     addWorkout,
+    addWorkoutByName, // Backward compatibility
     updateWorkout,
     markWorkoutCompleted,
     deleteWorkout,

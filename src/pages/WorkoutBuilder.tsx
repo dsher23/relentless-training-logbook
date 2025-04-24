@@ -265,7 +265,7 @@ const WorkoutBuilder: React.FC = () => {
           id: workoutId,
           name: workoutName,
           exercises: exercises,
-          date: originalWorkout?.date || new Date(),
+          date: originalWorkout?.date || new Date().toISOString(),
           completed: originalWorkout?.completed || false,
           notes: originalWorkout?.notes || "",
         };

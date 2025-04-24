@@ -141,14 +141,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const {
     workouts,
     setWorkouts,
-    addWorkout,
+    addWorkout: hookAddWorkout,
+    addWorkoutByName,
     updateWorkout,
     deleteWorkout,
     getWorkoutById,
     duplicateWorkout,
     toggleDeloadMode
   } = useWorkouts();
-  
+
+  const addWorkout = (workout: Workout) => {
+    hookAddWorkout(workout);
+  };
+
   const {
     workoutTemplates,
     setWorkoutTemplates,
