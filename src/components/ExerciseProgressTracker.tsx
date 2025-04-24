@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart } from "lucide-react";
-import { ProgressChart } from "@/components/exercise-tracker/ProgressChart";
+import ProgressChart from "@/components/ProgressChart";   // ✅ unified path
 
 type Mode = "weight" | "volume";
 
@@ -22,7 +22,7 @@ export default function ExerciseProgressTracker() {
     [workouts]
   );
 
-  /* list of unique exercise names (case-insensitive) */
+  /* list of unique exercise names */
   const names = useMemo(() => {
     const map = new Map<string, string>();
     finished.forEach((w) =>
