@@ -22,10 +22,9 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
   debugInfo
 }) => {
   return (
-    <div className="sticky top-0 bg-background z-10 border-b">
+    <div className="bg-background z-10 border-b">
       <div className="flex items-center justify-between p-4">
         <div>
-          <h1 className="text-lg font-semibold">{workoutName}</h1>
           <div className="text-muted-foreground text-sm">Live Workout</div>
         </div>
         <div className="flex items-center gap-2">

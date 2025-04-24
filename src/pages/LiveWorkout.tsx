@@ -8,12 +8,14 @@ import { RestTimer } from "@/components/workout/RestTimer";
 import { ExerciseLog } from "@/components/workout/ExerciseLog";
 import { WorkoutControls } from "@/components/workout/WorkoutControls";
 import { DeleteSetDialog } from "@/components/workout/DeleteSetDialog";
+import NavigationHeader from "@/components/NavigationHeader";
 import { useWorkoutTimer } from "@/hooks/useWorkoutTimer";
 import { useLiveWorkout } from "@/hooks/useLiveWorkout";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const LiveWorkout = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const {
     workout,
     currentExerciseIndex,
@@ -170,10 +172,17 @@ const LiveWorkout = () => {
 
   if (!workout) {
     return (
-      <div className="flex items-center justify-center h-60 p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading workout...</p>
+      <div className="app-container">
+        <NavigationHeader
+          title="Workout"
+          showBack={true}
+          showHome={true}
+        />
+        <div className="flex items-center justify-center h-60 p-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading workout...</p>
+          </div>
         </div>
       </div>
     );
@@ -188,8 +197,15 @@ const LiveWorkout = () => {
   
   if (!currentExercise) {
     return (
-      <div className="p-4 text-center">
-        This workout doesn't have any exercises yet. Please add exercises first.
+      <div className="app-container">
+        <NavigationHeader
+          title="Workout"
+          showBack={true}
+          showHome={true}
+        />
+        <div className="p-4 text-center">
+          This workout doesn't have any exercises yet. Please add exercises first.
+        </div>
       </div>
     );
   }
@@ -207,10 +223,17 @@ const LiveWorkout = () => {
     }));
     
     return (
-      <div className="flex items-center justify-center h-60 p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Preparing exercise data...</p>
+      <div className="app-container">
+        <NavigationHeader
+          title="Workout"
+          showBack={true}
+          showHome={true}
+        />
+        <div className="flex items-center justify-center h-60 p-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Preparing exercise data...</p>
+          </div>
         </div>
       </div>
     );
@@ -220,12 +243,27 @@ const LiveWorkout = () => {
 
   return (
     <div className="app-container pb-8 animate-fade-in">
+      <NavigationHeader
+        title={workout.name}
+        showBack={true}
+        showHome={true}
+      />
+      
       <WorkoutHeader
         workoutName={workout.name}
         workoutTime={workoutTime}
         isTimerRunning={isTimerRunning}
         onToggleTimer={toggleTimer}
         debugMode={debugMode}
+        debugInfo={
+          debugMode ? (
+            <div className="text-xs">
+              <p>Current Exercise: {currentExercise.name} ({safeCurrentExerciseIndex + 1}/{workout.exercises.length})</p>
+              <p>Timer: {isTimerRunning ? 'Running' : 'Paused'}</p>
+              <p>Total Time: {workoutTime}s</p>
+            </div>
+          ) : undefined
+        }
       />
       
       <div className="px-4 pb-2">
