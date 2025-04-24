@@ -21,7 +21,7 @@ import { useAppContext } from "@/context/AppContext";
 import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, Trophy } from "lucide-react";
-import { ProgressChart } from "@/components/exercise-tracker/ProgressChart";
+import { ProgressChart } from "@/components/ProgressChart";  // Updated import path
 import { useExercises } from "@/hooks/useExercises";
 
 const CorePRTracker: React.FC = () => {
