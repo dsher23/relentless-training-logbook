@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkoutLoader, convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
+import { Trophy } from "lucide-react";
 
 const ExerciseItem = ({
   exercise,
@@ -50,6 +51,21 @@ const ExerciseItem = ({
     opacity: 1
   };
 
+  const getPRExerciseName = (prType: string | undefined) => {
+    if (!prType) return null;
+    
+    const CORE_LIFTS = [
+      { id: "bench-press", name: "Bench Press" },
+      { id: "deadlift", name: "Deadlift" },
+      { id: "squat", name: "Squat" },
+      { id: "shoulder-press", name: "Shoulder Press" },
+    ];
+    
+    return CORE_LIFTS.find(lift => lift.id === prType)?.name || "Custom PR";
+  };
+  
+  const prExerciseName = getPRExerciseName(exercise.prExerciseType);
+
   return (
     <Card
       ref={setNodeRef}
@@ -64,6 +80,9 @@ const ExerciseItem = ({
           <div className="flex items-center gap-2">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
             <span className="font-semibold">{exercise.name}</span>
+            {exercise.prExerciseType && (
+              <Trophy className="h-3 w-3 text-yellow-500" title={`${prExerciseName} PR`} />
+            )}
             <span className="ml-2 text-xs text-muted-foreground">
               {exercise.sets.length} sets × {exercise.sets[0]?.reps ?? "-"} reps,{" "}
               {exercise.sets[0]?.weight ?? "-"} kg/lb
@@ -106,6 +125,7 @@ const defaultExerciseFormState = {
   reps: 10,
   weight: 0,
   restTime: "",
+  prExerciseType: "none",
 };
 
 const WorkoutBuilder: React.FC = () => {
@@ -165,6 +185,7 @@ const WorkoutBuilder: React.FC = () => {
         reps: exercise.sets[0]?.reps ?? 10,
         weight: exercise.sets[0]?.weight ?? 0,
         restTime: exercise.restTime ? exercise.restTime.toString() : "",
+        prExerciseType: exercise.prExerciseType || "none",
       });
       setEditingExerciseId(exercise.id);
     } else {

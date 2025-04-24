@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useAppContext, Workout } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
 import { convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
 
 export const useLiveWorkout = () => {
@@ -13,17 +13,11 @@ export const useLiveWorkout = () => {
   const { toast } = useToast();
   const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
   
-  const [workout, setWorkout] = useState<Workout | null>(null);
+  const [workout, setWorkout] = useState(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [debugMode, setDebugMode] = useState<boolean>(false);
-  const [exerciseData, setExerciseData] = useState<{
-    [key: string]: {
-      sets: { reps: number; weight: number }[];
-      notes: string;
-      previousStats?: { reps: number; weight: number }[];
-    }
-  }>({});
+  const [debugMode, setDebugMode] = useState(false);
+  const [exerciseData, setExerciseData] = useState({});
 
   const finishWorkout = useCallback(() => {
     if (!workout) {
@@ -42,11 +36,13 @@ export const useLiveWorkout = () => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
         
+        // Preserve the prExerciseType field when saving workout
         return {
           ...exercise,
           sets: data.sets.map(set => ({ ...set })),
           notes: data.notes || "",
-          lastProgressDate: new Date()
+          lastProgressDate: new Date(),
+          prExerciseType: exercise.prExerciseType
         };
       });
 
@@ -56,7 +52,7 @@ export const useLiveWorkout = () => {
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true, // Explicitly set to boolean true
+        completed: true,
         date: new Date(),
         notes: workout.notes || ""
       };
@@ -105,7 +101,7 @@ export const useLiveWorkout = () => {
         }
       }
       
-      let foundWorkout: Workout | undefined;
+      let foundWorkout;
       
       if (isTemplate) {
         const template = workoutTemplates.find(t => t.id === id);
@@ -114,9 +110,14 @@ export const useLiveWorkout = () => {
           
           if (convertedWorkout) {
             // Ensure converted workouts have completed flag set to false
+            // and preserve prExerciseType field
             const workoutWithCompletedFlag = {
               ...convertedWorkout,
-              completed: false
+              completed: false,
+              exercises: convertedWorkout.exercises.map(ex => ({
+                ...ex,
+                prExerciseType: ex.prExerciseType
+              }))
             };
             addWorkout(workoutWithCompletedFlag);
             foundWorkout = workoutWithCompletedFlag;
@@ -137,7 +138,8 @@ export const useLiveWorkout = () => {
               [exercise.id]: {
                 sets: exercise.sets || [],
                 notes: exercise.notes || "",
-                previousStats: exercise.previousStats
+                previousStats: exercise.previousStats,
+                prExerciseType: exercise.prExerciseType
               }
             }));
           }

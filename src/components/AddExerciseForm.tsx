@@ -54,7 +54,8 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
       restTime: formData.restTime !== "custom" ? parseInt(formData.restTime) : undefined,
       notes: formData.notes.trim() || undefined,
       lastProgressDate: exercise?.lastProgressDate || new Date(),
-      isWeakPoint: formData.isWeakPoint
+      isWeakPoint: formData.isWeakPoint,
+      prExerciseType: formData.prExerciseType !== "none" ? formData.prExerciseType : undefined
     };
 
     onSave(newExercise);
@@ -90,9 +91,11 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({
             restTime={formData.restTime}
             notes={formData.notes}
             isWeakPoint={formData.isWeakPoint}
+            prExerciseType={formData.prExerciseType}
             onRestTimeChange={setters.setRestTime}
             onNotesChange={setters.setNotes}
             onWeakPointChange={setters.setIsWeakPoint}
+            onPrExerciseChange={setters.setPrExerciseType}
           />
           
           <DialogFooter>

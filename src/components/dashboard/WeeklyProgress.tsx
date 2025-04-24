@@ -9,7 +9,7 @@ import { useAppContext } from "@/context/AppContext";
 
 const WeeklyProgress = () => {
   const { workouts } = useAppContext();
-  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [activeTab, setActiveTab] = useState<string>("pr"); // Set "pr" as the default tab
   
   // Use strict equality check for completed === true
   const completedWorkouts = workouts.filter(w => w.completed === true);
@@ -19,7 +19,7 @@ const WeeklyProgress = () => {
       <Tabs 
         value={activeTab} 
         onValueChange={setActiveTab}
-        defaultValue="overview"
+        defaultValue="pr"
         className="w-full"
       >
         <TabsList className="w-full grid grid-cols-3">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,10 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
+import { ChevronDown, ExternalLink, Trophy } from "lucide-react";
+import { ProgressChart } from "@/components/exercise-tracker/ProgressChart";
 
 const CORE_LIFTS = [
   { id: "bench-press", name: "Bench Press" },
@@ -31,7 +39,9 @@ const CorePRTracker: React.FC = () => {
     reps: number;
     oneRM: number;
     date: string;
+    workoutId: string;
   } | null>(null);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!workouts || !Array.isArray(workouts)) return;
@@ -41,32 +51,78 @@ const CorePRTracker: React.FC = () => {
     let bestOneRM = 0;
     let bestSet = null;
     let bestWorkoutDate = null;
+    let bestWorkoutId = null;
+    const historyData: any[] = [];
 
     completedWorkouts.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        const liftName = CORE_LIFTS.find(l => l.id === selectedLift)?.name || "";
-        if (exercise.name.toLowerCase().includes(liftName.toLowerCase())) {
+        // Match by PR exercise type first, or by name if type not available
+        const isPRMatch = exercise.prExerciseType === selectedLift || 
+          (!exercise.prExerciseType && 
+           exercise.name.toLowerCase().includes(
+             CORE_LIFTS.find(l => l.id === selectedLift)?.name.toLowerCase() || ""
+           ));
+        
+        if (isPRMatch) {
+          let bestSetInExercise = null;
+          let bestOneRMInExercise = 0;
+          
           exercise.sets?.forEach(set => {
             const weight = Number(set.weight);
             const reps = Number(set.reps);
             const oneRM = calculateOneRepMax(weight, reps);
             
-            if (oneRM > bestOneRM) {
-              bestOneRM = oneRM;
-              bestSet = set;
-              bestWorkoutDate = workout.date;
+            if (oneRM > bestOneRMInExercise) {
+              bestOneRMInExercise = oneRM;
+              bestSetInExercise = set;
             }
           });
+          
+          if (bestSetInExercise) {
+            const weight = Number(bestSetInExercise.weight);
+            const reps = Number(bestSetInExercise.reps);
+            const oneRM = calculateOneRepMax(weight, reps);
+            
+            historyData.push({
+              date: format(new Date(workout.date), "MM/dd/yy"),
+              fullData: {
+                weight: weight,
+                reps: reps,
+                volume: weight * reps,
+                notes: exercise.notes || ""
+              },
+              "Top Set": weight,
+              "Reps": reps,
+              "Volume": weight * reps,
+              estimatedOneRM: oneRM,
+              workoutId: workout.id
+            });
+            
+            if (oneRM > bestOneRM) {
+              bestOneRM = oneRM;
+              bestSet = bestSetInExercise;
+              bestWorkoutDate = workout.date;
+              bestWorkoutId = workout.id;
+            }
+          }
         }
       });
     });
 
-    if (bestSet && bestWorkoutDate) {
+    // Sort history data by date
+    historyData.sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+    
+    setChartData(historyData);
+
+    if (bestSet && bestWorkoutDate && bestWorkoutId) {
       setPrData({
         weight: Number(bestSet.weight),
         reps: Number(bestSet.reps),
         oneRM: bestOneRM,
-        date: format(new Date(bestWorkoutDate), "MMM d, yyyy")
+        date: format(new Date(bestWorkoutDate), "MMM d, yyyy"),
+        workoutId: bestWorkoutId
       });
     } else {
       setPrData(null);
@@ -74,43 +130,74 @@ const CorePRTracker: React.FC = () => {
   }, [workouts, selectedLift]);
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex justify-between items-center text-base">
+          <span>Core Lift PR Tracker</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8">
+                {CORE_LIFTS.find(l => l.id === selectedLift)?.name || "Select lift"}
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {CORE_LIFTS.map(lift => (
+                <DropdownMenuItem 
+                  key={lift.id}
+                  onClick={() => setSelectedLift(lift.id)}
+                >
+                  {lift.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardTitle>
+      </CardHeader>
+
       <CardContent className="p-4">
         <div className="space-y-4">
-          <div className="flex flex-col space-y-2">
-            <Label htmlFor="core-lift">Core Lift PR Tracker</Label>
-            <Select 
-              value={selectedLift}
-              onValueChange={setSelectedLift}
-            >
-              <SelectTrigger id="core-lift" className="w-full">
-                <SelectValue placeholder="Select lift" />
-              </SelectTrigger>
-              <SelectContent>
-                {CORE_LIFTS.map(lift => (
-                  <SelectItem key={lift.id} value={lift.id}>
-                    {lift.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {prData ? (
-            <div className="pt-2">
-              <h3 className="font-medium text-lg">{CORE_LIFTS.find(l => l.id === selectedLift)?.name} PR</h3>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-medium text-lg flex items-center">
+                    <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                    {CORE_LIFTS.find(l => l.id === selectedLift)?.name} PR
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Achieved on {prData.date}
+                  </p>
+                </div>
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/workouts/${prData.workoutId}`)}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" /> View Workout
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 <div className="bg-secondary/30 p-3 rounded-md text-center">
                   <p className="text-xs text-muted-foreground">Top Set</p>
-                  <p className="font-medium">{prData.weight}kg × {prData.reps}</p>
+                  <p className="font-medium text-lg">{prData.weight}kg × {prData.reps}</p>
                 </div>
                 <div className="bg-secondary/30 p-3 rounded-md text-center">
                   <p className="text-xs text-muted-foreground">Est. 1RM</p>
-                  <p className="font-medium">{prData.oneRM.toFixed(1)}kg</p>
+                  <p className="font-medium text-lg">{prData.oneRM.toFixed(1)}kg</p>
                 </div>
-                <div className="col-span-2 text-xs text-center text-muted-foreground">
-                  Achieved on {prData.date}
-                </div>
+              </div>
+              
+              <div className="h-64">
+                {chartData.length > 0 && (
+                  <ProgressChart 
+                    data={chartData}
+                    displayMode="topSet"
+                    maxValue={prData.weight}
+                    yAxisLabel="Weight (kg)"
+                  />
+                )}
               </div>
             </div>
           ) : (
@@ -120,7 +207,7 @@ const CorePRTracker: React.FC = () => {
                 variant="outline" 
                 size="sm" 
                 className="mt-2"
-                onClick={() => navigate('/workouts/new')}
+                onClick={() => navigate('/workout-selection')}
               >
                 Log a Workout
               </Button>

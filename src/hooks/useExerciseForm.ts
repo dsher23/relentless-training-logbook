@@ -16,6 +16,7 @@ export const useExerciseForm = ({ exercise, onClose, onSave }: UseExerciseFormPr
   const [restTime, setRestTime] = useState<string>("90");
   const [notes, setNotes] = useState("");
   const [isWeakPoint, setIsWeakPoint] = useState(false);
+  const [prExerciseType, setPrExerciseType] = useState<string>("none");
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export const useExerciseForm = ({ exercise, onClose, onSave }: UseExerciseFormPr
       setRestTime(exercise.restTime ? exercise.restTime.toString() : "90");
       setNotes(exercise.notes || "");
       setIsWeakPoint(exercise.isWeakPoint || false);
+      setPrExerciseType(exercise.prExerciseType || "none");
       setIsEditing(true);
     } else {
       setIsEditing(false);
@@ -41,6 +43,7 @@ export const useExerciseForm = ({ exercise, onClose, onSave }: UseExerciseFormPr
     setRestTime("90");
     setNotes("");
     setIsWeakPoint(false);
+    setPrExerciseType("none");
   };
 
   return {
@@ -52,6 +55,7 @@ export const useExerciseForm = ({ exercise, onClose, onSave }: UseExerciseFormPr
       restTime,
       notes,
       isWeakPoint,
+      prExerciseType,
       isEditing
     },
     setters: {
@@ -61,7 +65,8 @@ export const useExerciseForm = ({ exercise, onClose, onSave }: UseExerciseFormPr
       setWeight,
       setRestTime,
       setNotes,
-      setIsWeakPoint
+      setIsWeakPoint,
+      setPrExerciseType
     },
     resetForm
   };

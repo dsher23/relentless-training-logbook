@@ -19,6 +19,7 @@ export interface Exercise {
   previousStats?: { reps: number; weight: number }[];
   isWeakPoint?: boolean;
   restTime?: number;
+  prExerciseType?: string;
 }
 
 export interface BodyMeasurement {
