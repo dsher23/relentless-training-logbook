@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -95,6 +94,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
         title="Add Measurements"
         showBack={true}
         showHome={true}
+        className="sticky top-0 z-50 bg-background border-b"
       />
       
       <Form {...form}>
