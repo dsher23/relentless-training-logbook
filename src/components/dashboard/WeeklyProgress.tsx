@@ -9,10 +9,15 @@ import { useAppContext } from "@/context/AppContext";
 
 const WeeklyProgress = () => {
   const { workouts = [] } = useAppContext();
-  const [activeTab, setActiveTab] = useState<string>("pr"); // Set "pr" as the default tab
+  const [activeTab, setActiveTab] = useState<string>("pr");
   
-  // Use strict equality check for completed === true
-  const completedWorkouts = Array.isArray(workouts) ? workouts.filter(w => w?.completed === true) : [];
+  // Ensure workouts is an array and each workout has exercises array
+  const completedWorkouts = Array.isArray(workouts) 
+    ? workouts.filter(w => 
+        w?.completed === true && 
+        Array.isArray(w?.exercises)
+      ) 
+    : [];
   
   return (
     <div className="space-y-4">

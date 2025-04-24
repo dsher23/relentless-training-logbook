@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Search, Star, StarOff } from "lucide-react";
 import {
@@ -63,14 +62,12 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command shouldFilter={false} className="w-full">
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Search exercises..." 
             className="h-9"
-            value={searchTerm || ""}
-            onValueChange={(value) => {
-              if (onSearchChange) onSearchChange(value);
-            }}
+            value={searchTerm}
+            onValueChange={onSearchChange}
           />
           {safeExerciseNames.length === 0 ? (
             <CommandEmpty>No exercise found.</CommandEmpty>
@@ -81,8 +78,8 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                   key={`${exercise}-${index}`}
                   value={exercise}
                   onSelect={(currentValue) => {
-                    if (onSelectExercise) onSelectExercise(currentValue);
-                    if (setOpen) setOpen(false);
+                    onSelectExercise(currentValue);
+                    setOpen(false);
                   }}
                   className="flex justify-between items-center"
                 >
@@ -93,7 +90,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (onToggleFavorite) onToggleFavorite(exercise);
+                      onToggleFavorite(exercise);
                     }}
                   >
                     {isExerciseFavorite(exercise) ? (
