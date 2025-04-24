@@ -31,9 +31,10 @@ const Logo: React.FC<LogoProps> = ({ className, size = 'md', textOnly = false })
     );
   }
 
+  // TODO: Replace with actual logo image when available
   return (
     <span className={cn(
-      "font-bold text-primary tracking-tight",
+      "font-bold text-primary tracking-tight flex items-center",
       {
         'text-lg': size === 'sm',
         'text-xl': size === 'md',
@@ -41,6 +42,14 @@ const Logo: React.FC<LogoProps> = ({ className, size = 'md', textOnly = false })
       },
       className
     )}>
+      <img 
+        src="/lovable-uploads/iron-log-logo.png" 
+        alt="IronLog Logo" 
+        className={cn(
+          "mr-2",
+          sizeClasses[size]
+        )} 
+      />
       IronLog
     </span>
   );
