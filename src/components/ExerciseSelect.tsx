@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Search, Star, StarOff, Plus } from "lucide-react";
 import {
   Command,
@@ -74,13 +74,27 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     ? combinedExerciseNames.filter(Boolean) 
     : [];
   
-  const filteredExerciseNames = safeExerciseNames.filter(name => 
-    name.toLowerCase().includes((localSearchTerm || "").toLowerCase())
-  );
+  // Sort exercises alphabetically
+  const sortedExerciseNames = useMemo(() => {
+    return [...safeExerciseNames].sort((a, b) => 
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
+  }, [safeExerciseNames]);
+  
+  // Filter exercises based on search term (case insensitive)
+  const filteredExerciseNames = useMemo(() => {
+    if (!localSearchTerm) return sortedExerciseNames;
+    
+    return sortedExerciseNames.filter(name => 
+      name.toLowerCase().includes((localSearchTerm || "").toLowerCase())
+    );
+  }, [sortedExerciseNames, localSearchTerm]);
   
   const isExerciseFavorite = (name: string) => {
     if (!favorites || !Array.isArray(favorites) || !name) return false;
-    return favorites.some(fav => fav?.name === name);
+    return favorites.some(fav => 
+      fav?.name && fav.name.toLowerCase() === name.toLowerCase()
+    );
   };
   
   const handleAddNewExercise = () => {
@@ -155,7 +169,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                 onSearchChange(value);
               }}
             />
-            <CommandList>
+            <CommandList className="max-h-[300px] overflow-y-auto">
               {filteredExerciseNames.length === 0 ? (
                 <CommandEmpty>
                   <div className="py-6 text-center text-sm">

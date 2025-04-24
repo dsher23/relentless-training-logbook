@@ -21,6 +21,7 @@ interface ChartDataPoint {
     notes: string;
   };
   estimatedOneRM: number;
+  [key: string]: any; // Allow for dynamic keys based on display mode
 }
 
 interface ProgressChartProps {
@@ -36,18 +37,19 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   maxValue,
   yAxisLabel
 }) => {
+  // Ensure we're working with valid data
+  const safeData = Array.isArray(data) ? data : [];
+  
   const getYAxisDomain = () => {
-    if (data.length === 0) return [0, 10];
+    if (safeData.length === 0) return [0, 10];
     
-    const values = data.map(d => {
-      if (displayMode === "topSet") {
-        return Number(d["Top Set"] || 0);
-      } else if (displayMode === "volume") {
-        return Number(d["Volume"] || 0);
-      } else {
-        return Number(d["Reps"] || 0);
-      }
-    });
+    const dataKey = displayMode === "topSet" 
+      ? "Top Set" 
+      : displayMode === "volume" 
+        ? "Volume" 
+        : "Reps";
+    
+    const values = safeData.map(d => Number(d[dataKey] || 0));
     
     const max = Math.max(...values);
     const min = Math.min(...values);
@@ -56,7 +58,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
     return [Math.max(0, min - padding), max + padding];
   };
 
-  if (data.length === 0) {
+  if (safeData.length === 0) {
     return (
       <div className="flex items-center justify-center h-full border rounded-md border-dashed">
         <p className="text-muted-foreground text-sm">
@@ -73,7 +75,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
     >
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
-          data={data}
+          data={safeData}
           margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -106,19 +108,19 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
                       <div className="font-medium">{data.date}</div>
                       <div className="text-sm text-muted-foreground">
                         {displayMode === "topSet" && 
-                          <span>Weight: <span className="font-medium">{Number(data.fullData.weight)} kg</span> × {Number(data.fullData.reps)} reps</span>
+                          <span>Weight: <span className="font-medium">{Number(data.fullData?.weight || 0)} kg</span> × {Number(data.fullData?.reps || 0)} reps</span>
                         }
                         {displayMode === "volume" && 
-                          <span>Volume: <span className="font-medium">{Number(data.fullData.volume)} kg</span></span>
+                          <span>Volume: <span className="font-medium">{Number(data.fullData?.volume || 0)} kg</span></span>
                         }
                         {displayMode === "reps" && 
-                          <span>Reps: <span className="font-medium">{Number(data.fullData.reps)}</span> at {Number(data.fullData.weight)} kg</span>
+                          <span>Reps: <span className="font-medium">{Number(data.fullData?.reps || 0)}</span> at {Number(data.fullData?.weight || 0)} kg</span>
                         }
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Est. 1RM: <span className="font-medium">{Number(data.estimatedOneRM)} kg</span>
+                        Est. 1RM: <span className="font-medium">{Number(data.estimatedOneRM || 0)} kg</span>
                       </div>
-                      {data.fullData.notes && (
+                      {data.fullData?.notes && (
                         <div className="text-xs italic mt-1 text-muted-foreground">
                           "{data.fullData.notes}"
                         </div>
@@ -143,6 +145,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
             strokeWidth={2}
             dot={{ r: 4, strokeWidth: 2 }}
             activeDot={{ r: 6, strokeWidth: 2 }}
+            connectNulls={true}
           />
           {maxValue !== undefined && (
             <ReferenceLine 

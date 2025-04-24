@@ -34,7 +34,7 @@ interface FavoriteExercise {
 const ExerciseProgressTracker: React.FC = () => {
   const { workouts } = useAppContext();
   const { toast } = useToast();
-  const { getAllExerciseNames } = useExercises();
+  const { getAllExerciseNames, findExerciseByName } = useExercises();
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [open, setOpen] = useState(false);
@@ -52,16 +52,21 @@ const ExerciseProgressTracker: React.FC = () => {
   // Force refresh when exercises change
   const [refreshKey, setRefreshKey] = useState(0);
   
-  const completedWorkouts = (workouts || [])?.filter(workout => workout?.completed === true) || [];
+  const completedWorkouts = Array.isArray(workouts) 
+    ? workouts.filter(workout => workout?.completed === true)
+    : [];
 
   // Get exercise names from our custom hook instead of parsing workouts
   const exerciseNames = useMemo(() => {
     return getAllExerciseNames();
   }, [getAllExerciseNames, refreshKey]);
 
+  // Case insensitive favorite checking
   const isExerciseFavorite = (name: string) => {
     if (!favorites || !Array.isArray(favorites) || !name) return false;
-    return favorites.some(fav => fav?.name === name);
+    return favorites.some(fav => 
+      fav?.name && fav.name.toLowerCase() === name.toLowerCase()
+    );
   };
 
   const toggleFavorite = (name: string) => {
@@ -70,7 +75,9 @@ const ExerciseProgressTracker: React.FC = () => {
     let newFavorites: FavoriteExercise[];
     
     if (isExerciseFavorite(name)) {
-      newFavorites = (favorites || []).filter(fav => fav?.name !== name);
+      newFavorites = (favorites || []).filter(fav => 
+        fav?.name && fav.name.toLowerCase() !== name.toLowerCase()
+      );
     } else {
       newFavorites = [
         ...(favorites || []), 
@@ -86,6 +93,7 @@ const ExerciseProgressTracker: React.FC = () => {
     }
   };
 
+  // Find all exercises that match the selected name (case-insensitive)
   const exerciseData = useMemo(() => {
     if (!selectedExercise || !completedWorkouts || !Array.isArray(completedWorkouts)) return [];
     
@@ -94,49 +102,53 @@ const ExerciseProgressTracker: React.FC = () => {
     completedWorkouts.forEach(workout => {
       if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
       
-      const matchingExercise = workout.exercises.find(
-        exercise => exercise?.name === selectedExercise
+      // Case insensitive match for exercise name
+      const matchingExercises = workout.exercises.filter(
+        exercise => exercise?.name && 
+          exercise.name.toLowerCase() === selectedExercise.toLowerCase()
       );
       
-      if (matchingExercise && Array.isArray(matchingExercise.sets) && matchingExercise.sets.length > 0) {
-        let topSetValue = 0;
-        let topSetWeight = 0;
-        let topSetReps = 0;
-        
-        let totalVolume = 0;
-        let totalReps = 0;
-        
-        matchingExercise.sets.forEach(set => {
-          const weight = Number(set?.weight || 0);
-          const reps = Number(set?.reps || 0);
+      matchingExercises.forEach(matchingExercise => {
+        if (Array.isArray(matchingExercise.sets) && matchingExercise.sets.length > 0) {
+          let topSetValue = 0;
+          let topSetWeight = 0;
+          let topSetReps = 0;
           
-          if (weight && reps) {
-            const setVolume = weight * reps;
-            totalVolume += setVolume;
-            totalReps += reps;
+          let totalVolume = 0;
+          let totalReps = 0;
+          
+          matchingExercise.sets.forEach(set => {
+            const weight = Number(set?.weight || 0);
+            const reps = Number(set?.reps || 0);
             
-            if (setVolume > topSetValue) {
-              topSetValue = setVolume;
-              topSetWeight = weight;
-              topSetReps = reps;
+            if (weight && reps) {
+              const setVolume = weight * reps;
+              totalVolume += setVolume;
+              totalReps += reps;
+              
+              if (setVolume > topSetValue) {
+                topSetValue = setVolume;
+                topSetWeight = weight;
+                topSetReps = reps;
+              }
             }
-          }
-        });
-        
-        const workoutDate = new Date(workout.date);
-        
-        data.push({
-          date: workoutDate,
-          weight: topSetWeight,
-          reps: topSetReps,
-          sets: matchingExercise.sets.length,
-          volume: totalVolume,
-          topSet: topSetWeight,
-          workoutName: workout.name,
-          notes: matchingExercise.notes || "",
-          dateFormatted: workoutDate.toLocaleDateString()
-        });
-      }
+          });
+          
+          const workoutDate = new Date(workout.date);
+          
+          data.push({
+            date: workoutDate,
+            weight: topSetWeight,
+            reps: topSetReps,
+            sets: matchingExercise.sets.length,
+            volume: totalVolume,
+            topSet: topSetWeight,
+            workoutName: workout.name,
+            notes: matchingExercise.notes || "",
+            dateFormatted: workoutDate.toLocaleDateString()
+          });
+        }
+      });
     });
     
     return data.sort((a, b) => a.date.getTime() - b.date.getTime());

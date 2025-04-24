@@ -64,9 +64,12 @@ export const useExercises = () => {
     completedWorkouts.forEach(workout => {
       if (workout?.exercises && Array.isArray(workout.exercises)) {
         workout.exercises.forEach(exercise => {
-          if (exercise?.name && !customExercises.some(e => e.name === exercise.name)) {
+          // Check if exercise name exists and it's not already in our list (case insensitive check)
+          if (exercise?.name && !customExercises.some(e => 
+            e.name.toLowerCase() === exercise.name.toLowerCase()
+          )) {
             newExercises.push({
-              name: exercise.name,
+              name: exercise.name.trim(), // Keep original casing but trim whitespace
               isPrRelevant: !!exercise.prExerciseType,
               prExerciseType: exercise.prExerciseType,
               lastUsed: new Date(workout.date)
@@ -85,9 +88,9 @@ export const useExercises = () => {
   const addExercise = useCallback((name: string, isPrRelevant: boolean, prExerciseType?: string): boolean => {
     if (!name || name.trim() === '') return false;
     
-    const normalizedName = name.trim();
+    const normalizedName = name.trim(); // Keep original casing but trim whitespace
     
-    // Check if exercise already exists
+    // Check if exercise already exists (case insensitive)
     if (customExercises.some(ex => ex.name.toLowerCase() === normalizedName.toLowerCase())) {
       return false;
     }
@@ -111,7 +114,7 @@ export const useExercises = () => {
     
     setCustomExercises(prev => 
       prev.map(ex => 
-        ex.name === name ? { ...ex, ...updates } : ex
+        ex.name.toLowerCase() === name.toLowerCase() ? { ...ex, ...updates } : ex
       )
     );
     
@@ -121,6 +124,11 @@ export const useExercises = () => {
   // Get all exercise names
   const getAllExerciseNames = useCallback((): string[] => {
     return customExercises.map(ex => ex.name);
+  }, [customExercises]);
+
+  // Find exercise by name (case insensitive)
+  const findExerciseByName = useCallback((name: string): CustomExercise | undefined => {
+    return customExercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
   }, [customExercises]);
   
   // Get PR-relevant exercises
@@ -133,6 +141,7 @@ export const useExercises = () => {
     addExercise,
     updateExercise,
     getAllExerciseNames,
+    findExerciseByName,
     getPrExercises,
     CORE_LIFTS
   };
