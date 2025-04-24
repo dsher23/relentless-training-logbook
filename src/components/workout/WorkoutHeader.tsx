@@ -3,6 +3,7 @@ import React from 'react';
 import { formatDuration } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Bug, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface WorkoutHeaderProps {
   workoutName: string;
@@ -12,6 +13,7 @@ interface WorkoutHeaderProps {
   onFinishWorkout: () => void;
   debugMode?: boolean;
   debugInfo?: React.ReactNode;
+  className?: string;
 }
 
 export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
@@ -21,10 +23,11 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
   onToggleTimer,
   onFinishWorkout,
   debugMode,
-  debugInfo
+  debugInfo,
+  className
 }) => {
   return (
-    <div className="bg-background z-10 border-b">
+    <div className={cn("sticky top-0 z-10 bg-background border-b", className)}>
       <div className="flex items-center justify-between p-4">
         <div>
           <div className="text-muted-foreground text-sm">Live Workout</div>
