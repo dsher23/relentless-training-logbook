@@ -35,7 +35,6 @@ export const useLiveWorkout = () => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
         
-        // Preserve the prExerciseType field when saving workout
         return {
           ...exercise,
           sets: data.sets.map(set => ({ ...set })),
@@ -45,7 +44,6 @@ export const useLiveWorkout = () => {
         };
       });
 
-      // Create a completed workout with explicitly set boolean completed flag
       const completedWorkout = {
         ...workout,
         id: workout.id,
@@ -56,7 +54,6 @@ export const useLiveWorkout = () => {
         notes: workout.notes || ""
       };
       
-      // Log the workout we're about to save for verification
       console.log("Saving completed workout:", {
         id: completedWorkout.id,
         name: completedWorkout.name,
@@ -108,8 +105,6 @@ export const useLiveWorkout = () => {
           const convertedWorkout = convertTemplateToWorkout(template);
           
           if (convertedWorkout) {
-            // Ensure converted workouts have completed flag set to false
-            // and preserve prExerciseType field
             const workoutWithCompletedFlag = {
               ...convertedWorkout,
               completed: false,
@@ -129,7 +124,6 @@ export const useLiveWorkout = () => {
       if (foundWorkout) {
         setWorkout(foundWorkout);
         
-        // Initialize exerciseData for each exercise if it doesn't exist
         foundWorkout.exercises.forEach(exercise => {
           if (!exerciseData[exercise.id]) {
             setExerciseData(prev => ({
@@ -160,17 +154,27 @@ export const useLiveWorkout = () => {
   const nextExercise = useCallback(() => {
     if (!workout) return;
     if (currentExerciseIndex < workout.exercises.length - 1) {
-      // Reset exercise data for the new exercise
-      const nextExerciseId = workout.exercises[currentExerciseIndex + 1].id;
-      setExerciseData(prev => ({
-        ...prev,
-        [nextExerciseId]: {
-          sets: [],
-          notes: "",
-          previousStats: workout.exercises[currentExerciseIndex + 1].previousStats
-        }
-      }));
-      setCurrentExerciseIndex(prev => prev + 1);
+      const nextIndex = currentExerciseIndex + 1;
+      const nextExercise = workout.exercises[nextIndex];
+      const nextExerciseId = nextExercise.id;
+      
+      setExerciseData(prev => {
+        if (prev[nextExerciseId]) return prev;
+        
+        return {
+          ...prev,
+          [nextExerciseId]: {
+            sets: [],
+            notes: "",
+            previousStats: nextExercise.previousStats,
+            prExerciseType: nextExercise.prExerciseType
+          }
+        };
+      });
+      
+      setCurrentExerciseIndex(nextIndex);
+      
+      console.log(`Moving to exercise ${nextIndex + 1}: ${nextExercise.name}`);
     }
   }, [workout, currentExerciseIndex]);
 
@@ -178,7 +182,7 @@ export const useLiveWorkout = () => {
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex(prev => prev - 1);
     }
-  }, []);
+  }, [currentExerciseIndex]);
 
   const handleUpdateNotes = useCallback((exerciseId: string, notes: string) => {
     setExerciseData(prev => {
@@ -221,7 +225,6 @@ export const useLiveWorkout = () => {
       const exercise = prev[exerciseId];
       if (!exercise) return prev;
       
-      // Start with empty values for new sets
       return {
         ...prev,
         [exerciseId]: {

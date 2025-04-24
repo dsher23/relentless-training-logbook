@@ -21,22 +21,24 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
   onRemoveSet,
   isMobile = false,
 }) => {
-  const [weightInput, setWeightInput] = useState<string>("0");
-  const [repsInput, setRepsInput] = useState<string>("0");
+  // Initialize inputs with "0" if no values are provided
+  const [weightInput, setWeightInput] = useState<string>((set?.weight ?? 0).toString());
+  const [repsInput, setRepsInput] = useState<string>((set?.reps ?? 0).toString());
 
-  // Explicitly reset inputs when set changes
+  // Update local state whenever set prop changes
   useEffect(() => {
-    setWeightInput((set.weight ?? 0).toString());
-    setRepsInput((set.reps ?? 0).toString());
-  }, [set.weight, set.reps]);
+    console.log(`Set ${setIndex} updated:`, set);
+    setWeightInput((set?.weight ?? 0).toString());
+    setRepsInput((set?.reps ?? 0).toString());
+  }, [set, setIndex]);
 
   const renderProgressIndicator = () => {
     if (!previousSet) return null;
     
     const prevWeight = previousSet.weight || 0;
     const prevReps = previousSet.reps || 0;
-    const currWeight = set.weight || 0;
-    const currReps = set.reps || 0;
+    const currWeight = set?.weight || 0;
+    const currReps = set?.reps || 0;
     
     const prevVolume = prevReps * prevWeight;
     const currentVolume = currReps * currWeight;
@@ -75,11 +77,11 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
       if (!isNaN(value)) {
         onUpdateSet('weight', value);
       } else {
-        setWeightInput((set.weight ?? 0).toString());
+        setWeightInput((set?.weight ?? 0).toString());
       }
     } catch (error) {
       console.error("Error updating weight:", error);
-      setWeightInput((set.weight ?? 0).toString());
+      setWeightInput((set?.weight ?? 0).toString());
     }
   };
 
@@ -89,11 +91,11 @@ export const ExerciseSetEntry: React.FC<ExerciseSetEntryProps> = ({
       if (!isNaN(value)) {
         onUpdateSet('reps', value);
       } else {
-        setRepsInput((set.reps ?? 0).toString());
+        setRepsInput((set?.reps ?? 0).toString());
       }
     } catch (error) {
       console.error("Error updating reps:", error);
-      setRepsInput((set.reps ?? 0).toString());
+      setRepsInput((set?.reps ?? 0).toString());
     }
   };
 

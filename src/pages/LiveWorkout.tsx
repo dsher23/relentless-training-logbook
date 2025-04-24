@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bug } from "lucide-react";
@@ -27,6 +28,12 @@ const LiveWorkout = () => {
     setExerciseData,
     finishWorkout,
     loadWorkout,
+    nextExercise,
+    previousExercise,
+    handleUpdateNotes,
+    handleSetUpdate,
+    handleAddSet,
+    handleRemoveSet
   } = useLiveWorkout();
   
   const [isTimerRunning, setIsTimerRunning] = useState(true);
@@ -70,78 +77,13 @@ const LiveWorkout = () => {
   const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
   const toggleDebugMode = () => setDebugMode(!debugMode);
 
-  const nextExercise = () => {
-    if (!workout) return;
-    if (currentExerciseIndex < workout.exercises.length - 1) {
-      setCurrentExerciseIndex(prev => prev + 1);
-    }
+  // Use the hook's nextExercise function directly instead of defining a new one here
+  const handleNextExercise = () => {
+    nextExercise();
   };
 
-  const previousExercise = () => {
-    if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex(prev => prev - 1);
-    }
-  };
-
-  const handleUpdateNotes = (exerciseId: string, notes: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          notes
-        }
-      };
-    });
-  };
-
-  const handleSetUpdate = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets[setIndex] = { 
-        ...updatedSets[setIndex], 
-        [field]: value 
-      };
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
-  };
-
-  const handleAddSet = (exerciseId: string) => {
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const lastSet = exercise.sets[exercise.sets.length - 1];
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: [...exercise.sets, { 
-            reps: lastSet?.reps || 0, 
-            weight: lastSet?.weight || 0 
-          }]
-        }
-      };
-    });
-  };
-
-  const handleRemoveSet = (exerciseId: string, setIndex: number) => {
-    setDeleteSetInfo({ exerciseId, setIndex });
-    setConfirmDeleteSetDialog(true);
+  const handlePreviousExercise = () => {
+    previousExercise();
   };
 
   const confirmDeleteSet = () => {
@@ -149,21 +91,7 @@ const LiveWorkout = () => {
     
     const { exerciseId, setIndex } = deleteSetInfo;
     
-    setExerciseData(prev => {
-      const exercise = prev[exerciseId];
-      if (!exercise) return prev;
-      
-      const updatedSets = [...exercise.sets];
-      updatedSets.splice(setIndex, 1);
-      
-      return {
-        ...prev,
-        [exerciseId]: {
-          ...exercise,
-          sets: updatedSets
-        }
-      };
-    });
+    handleRemoveSet(exerciseId, setIndex);
     
     setConfirmDeleteSetDialog(false);
     setDeleteSetInfo(null);
@@ -210,6 +138,7 @@ const LiveWorkout = () => {
   }
   
   if (!exerciseData[currentExercise.id]) {
+    // Initialize empty exercise data with zeroed sets
     setExerciseData(prev => ({
       ...prev,
       [currentExercise.id]: {
@@ -271,7 +200,7 @@ const LiveWorkout = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={previousExercise} 
+              onClick={handlePreviousExercise} 
               disabled={safeCurrentExerciseIndex === 0}
             >
               Prev
@@ -279,7 +208,7 @@ const LiveWorkout = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={nextExercise} 
+              onClick={handleNextExercise} 
               disabled={safeCurrentExerciseIndex === workout.exercises.length - 1}
             >
               Next
@@ -312,7 +241,10 @@ const LiveWorkout = () => {
             onUpdateSet={(setIndex, field, value) => 
               handleSetUpdate(currentExercise.id, setIndex, field, value)
             }
-            onRemoveSet={(setIndex) => handleRemoveSet(currentExercise.id, setIndex)}
+            onRemoveSet={(setIndex) => {
+              setDeleteSetInfo({ exerciseId: currentExercise.id, setIndex });
+              setConfirmDeleteSetDialog(true);
+            }}
             onUpdateNotes={(notes) => handleUpdateNotes(currentExercise.id, notes)}
             onStartRest={() => {
               startRest();
@@ -323,7 +255,7 @@ const LiveWorkout = () => {
           <div className="flex justify-between p-4">
             <WorkoutControls
               isLastExercise={safeCurrentExerciseIndex === workout.exercises.length - 1}
-              onNextExercise={nextExercise}
+              onNextExercise={handleNextExercise}
               onFinishWorkout={finishWorkout}
               isMobile={isMobile}
             />
