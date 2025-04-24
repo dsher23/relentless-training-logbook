@@ -1,37 +1,30 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Save, Play } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Save, Play } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
-import { useAppContext, Workout } from "@/context/AppContext";
 import Header from "@/components/Header";
 
 interface CreateWorkoutFormValues {
   name: string;
-  date: Date;
   notes?: string;
 }
 
 const CreateWorkout: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<CreateWorkoutFormValues>({
     defaultValues: {
       name: "",
-      date: new Date(),
       notes: ""
     }
   });
@@ -44,6 +37,7 @@ const CreateWorkout: React.FC = () => {
       navigate("/workouts/builder", {
         state: { 
           workoutName: values.name,
+          notes: values.notes,
           startAfterCreation: startWorkout 
         }
       });
@@ -80,42 +74,6 @@ const CreateWorkout: React.FC = () => {
                       <FormControl>
                         <Input placeholder="e.g., Push Day, Leg Day" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Workout Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className="w-full pl-3 text-left font-normal"
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}

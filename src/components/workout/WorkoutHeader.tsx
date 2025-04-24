@@ -31,6 +31,7 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
       <div className="flex items-center justify-between p-4">
         <div>
           <div className="text-muted-foreground text-sm">Live Workout</div>
+          <div className="font-medium">{workoutName}</div>
         </div>
         <div className="flex items-center gap-2">
           <Button 

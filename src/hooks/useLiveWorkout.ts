@@ -61,12 +61,13 @@ export const useLiveWorkout = () => {
         notes: workout.notes || ""
       };
       
-      // Log the workout we're about to save to verify it's correct
+      // Log the workout we're about to save for verification
       console.log("Saving completed workout:", {
         id: completedWorkout.id,
         name: completedWorkout.name,
         completed: completedWorkout.completed,
-        completedType: typeof completedWorkout.completed
+        completedType: typeof completedWorkout.completed,
+        date: completedWorkout.date
       });
       
       updateWorkout(completedWorkout);
@@ -80,7 +81,7 @@ export const useLiveWorkout = () => {
       
       setTimeout(() => {
         navigate("/workout-history");
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.error("Error saving workout:", error);
       toast({
