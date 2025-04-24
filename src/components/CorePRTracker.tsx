@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ const CORE_LIFTS = [
 ];
 
 const CorePRTracker: React.FC = () => {
+  const navigate = useNavigate();
   const { workouts } = useAppContext();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [prData, setPrData] = useState<{
@@ -34,20 +35,16 @@ const CorePRTracker: React.FC = () => {
   useEffect(() => {
     if (!workouts || !Array.isArray(workouts)) return;
 
-    // Only consider completed workouts
     const completedWorkouts = workouts.filter(w => w.completed === true);
     
-    // Find all exercises matching the selected lift name
     let bestOneRM = 0;
     let bestSet = null;
     let bestWorkoutDate = null;
 
     completedWorkouts.forEach(workout => {
       workout.exercises.forEach(exercise => {
-        // Check if exercise name contains the selected lift name (case insensitive)
         const liftName = CORE_LIFTS.find(l => l.id === selectedLift)?.name || "";
         if (exercise.name.toLowerCase().includes(liftName.toLowerCase())) {
-          // Find the best set based on estimated 1RM
           exercise.sets?.forEach(set => {
             const weight = Number(set.weight);
             const reps = Number(set.reps);
