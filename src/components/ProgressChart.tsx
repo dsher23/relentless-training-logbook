@@ -1,54 +1,77 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import React from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 
-interface ProgressChartProps {
-  title: string;
-  data?: Array<{ date: string; value: number }>;
-  interval?: 'weekly' | 'monthly';
+/* ---------- props ---------- */
+export interface ProgressChartProps {
+  title?: string;
+  data: Array<{ date: string; value: number }>;
+  /** optional label on the Y-axis */
+  yAxisLabel?: string;
+  /** optional upper-limit if you want head-room */
+  maxValue?: number;
+  /** group by calendar week or month (future-proof) */
+  interval?: "weekly" | "monthly";
 }
 
-const ProgressChart: React.FC<ProgressChartProps> = ({ title, data = [], interval = 'weekly' }) => {
-  // Aggregate data based on interval
-  const aggregatedData = React.useMemo(() => {
-    if (interval === 'monthly') {
-      const monthlyData = new Map<string, number[]>();
-      
-      data.forEach(item => {
-        const monthYear = item.date.substring(0, 5); // Get MM/YY format
-        if (!monthlyData.has(monthYear)) {
-          monthlyData.set(monthYear, []);
-        }
-        monthlyData.get(monthYear)?.push(item.value);
-      });
-
-      return Array.from(monthlyData.entries()).map(([date, values]) => ({
-        date,
-        value: values.reduce((a, b) => a + b, 0) / values.length
-      }));
-    }
-
-    return data;
-  }, [data, interval]);
+export const ProgressChart: React.FC<ProgressChartProps> = ({
+  data,
+  yAxisLabel,
+  maxValue,
+}) => {
+  /* domain for nice padding */
+  const [min, max] = React.useMemo(() => {
+    if (!data.length) return [0, 10];
+    const vals = data.map((d) => d.value);
+    const hi = maxValue ?? Math.max(...vals);
+    const lo = Math.min(...vals);
+    const pad = (hi - lo) * 0.1;
+    return [Math.max(0, lo - pad), hi + pad];
+  }, [data, maxValue]);
 
   return (
-    <div className="w-full h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={aggregatedData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#8884d8"
-            strokeWidth={2}
-            dot={{ r: 4 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+        <XAxis
+          dataKey="date"
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          domain={[min, max]}
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={false}
+          label={
+            yAxisLabel
+              ? {
+                  value: yAxisLabel,
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { fontSize: 10, textAnchor: "middle" },
+                }
+              : undefined
+          }
+        />
+        <Tooltip />
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke="#8884d8"
+          strokeWidth={2}
+          dot={{ r: 4, strokeWidth: 2 }}
+          activeDot={{ r: 6, strokeWidth: 2 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 };
-
-export default ProgressChart;
