@@ -20,11 +20,13 @@ const Profile: React.FC = () => {
   const [settings, setSettings] = React.useState({
     darkMode: false,
     restTimer: true,
-    units: "kg" as "kg" | "lbs"
+    units: "kg" as "kg" | "lbs",
+    showLastLift: true,
+    showMotivation: true
   });
 
   const handleSettingChange = (
-    setting: "darkMode" | "restTimer" | "units",
+    setting: "darkMode" | "restTimer" | "units" | "showLastLift" | "showMotivation",
     value: boolean | string
   ) => {
     setSettings(prev => ({ ...prev, [setting]: value }));
