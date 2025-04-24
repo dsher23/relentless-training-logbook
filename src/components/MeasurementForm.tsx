@@ -2,6 +2,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -33,6 +34,7 @@ interface MeasurementFormProps {
 }
 
 const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, unitSystem = 'metric' }) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const weightUnit = unitSystem === 'metric' ? 'kg' : 'lbs';
   const sizeUnit = unitSystem === 'metric' ? 'cm' : 'in';
@@ -84,6 +86,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
     });
 
     onSubmit(measurement);
+    navigate('/measurements');
   });
 
   return (
@@ -152,7 +155,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
               )}
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="chest"
@@ -180,7 +183,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="armsLeft"
@@ -208,7 +211,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="biceps"
@@ -236,7 +239,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="legsLeft"
@@ -264,7 +267,7 @@ const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel, u
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="thigh"
