@@ -33,6 +33,9 @@ export interface BodyMeasurement {
   chest?: number;
   waist?: number;
   legs?: number;
+  forearms?: number;  // Added missing property
+  thighs?: number;    // Added missing property
+  calves?: number;    // Added missing property
   notes?: string;
   photoUrl?: string;
   unit?: 'metric' | 'imperial';

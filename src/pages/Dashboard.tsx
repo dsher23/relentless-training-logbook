@@ -13,15 +13,15 @@ import { Badge } from "@/components/ui/badge";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { weeklyRoutines, workoutTemplates } = useAppContext();
+  const { weeklyRoutines = [], workoutTemplates = [] } = useAppContext();
   
   // Get today's workout from weekly routine if available
-  const activeRoutine = weeklyRoutines.find(r => !r.archived);
+  const activeRoutine = weeklyRoutines?.find(r => !r.archived);
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
   
-  const todaysWorkoutDay = activeRoutine?.workoutDays.find(day => day.dayOfWeek === dayOfWeek);
-  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId 
+  const todaysWorkoutDay = activeRoutine?.workoutDays?.find(day => day.dayOfWeek === dayOfWeek);
+  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId && workoutTemplates?.length > 0
     ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
     : null;
 
