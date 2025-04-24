@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Workout, Exercise, BodyMeasurement, Supplement, 
   SupplementLog, SteroidCycle, Reminder, SteroidCompound,
@@ -37,6 +38,7 @@ export interface AppContextType {
   workouts: Workout[];
   setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
   addWorkout: (workout: Workout) => void;
+  addWorkoutByName?: (workoutName: string) => void;
   updateWorkout: (workout: Workout) => void;
   deleteWorkout: (id: string) => void;
   getWorkoutById: (id: string) => Workout;
@@ -48,17 +50,17 @@ export interface AppContextType {
   addWorkoutTemplate: (workoutTemplate: WorkoutTemplate) => void;
   updateWorkoutTemplate: (workoutTemplate: WorkoutTemplate) => void;
   deleteWorkoutTemplate: (id: string) => void;
-  duplicateWorkoutTemplate?: (id: string) => void;
+  duplicateWorkoutTemplate: (id: string) => void;
   
   workoutPlans: WorkoutPlan[];
   setWorkoutPlans: React.Dispatch<React.SetStateAction<WorkoutPlan[]>>;
   addWorkoutPlan: (workoutPlan: WorkoutPlan) => void;
   updateWorkoutPlan: (workoutPlan: WorkoutPlan) => void;
   deleteWorkoutPlan: (id: string) => void;
-  duplicateWorkoutPlan?: (id: string) => void;
-  setActivePlan?: (id: string) => void;
-  addTemplateToPlan?: (planId: string, templateId: string) => void;
-  removeTemplateFromPlan?: (planId: string, templateId: string) => void;
+  duplicateWorkoutPlan: (id: string) => void;
+  setActivePlan: (id: string) => void;
+  addTemplateToPlan: (planId: string, templateId: string) => void;
+  removeTemplateFromPlan: (planId: string, templateId: string) => void;
   
   supplements: Supplement[];
   setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>;
@@ -98,38 +100,38 @@ export interface AppContextType {
   addBodyMeasurement: (measurement: BodyMeasurement) => void;
   updateBodyMeasurement: (measurement: BodyMeasurement) => void;
   deleteBodyMeasurement: (id: string) => void;
-  getBodyMeasurementById?: (id: string) => BodyMeasurement;
+  getBodyMeasurementById: (id: string) => BodyMeasurement;
 
   moodLogs: MoodLog[];
   setMoodLogs: React.Dispatch<React.SetStateAction<MoodLog[]>>;
   addMoodLog: (log: MoodLog) => void;
   updateMoodLog: (log: MoodLog) => void;
   deleteMoodLog: (id: string) => void;
-  getMoodLogById?: (id: string) => MoodLog;
+  getMoodLogById: (id: string) => MoodLog;
 
   weakPoints: WeakPoint[];
   setWeakPoints: React.Dispatch<React.SetStateAction<WeakPoint[]>>;
   addWeakPoint: (weakPoint: WeakPoint) => void;
   updateWeakPoint: (weakPoint: WeakPoint) => void;
   deleteWeakPoint: (id: string) => void;
-  getWeakPointById?: (id: string) => WeakPoint;
+  getWeakPointById: (id: string) => WeakPoint;
 
   weeklyRoutines: WeeklyRoutine[];
   setWeeklyRoutines: React.Dispatch<React.SetStateAction<WeeklyRoutine[]>>;
   addWeeklyRoutine: (routine: WeeklyRoutine) => void;
   updateWeeklyRoutine: (routine: WeeklyRoutine) => void;
   deleteWeeklyRoutine: (id: string) => void;
-  getWeeklyRoutineById?: (id: string) => WeeklyRoutine;
-  duplicateWeeklyRoutine?: (id: string) => void;
-  archiveWeeklyRoutine?: (id: string, archived: boolean) => void;
+  getWeeklyRoutineById: (id: string) => WeeklyRoutine;
+  duplicateWeeklyRoutine: (id: string) => void;
+  archiveWeeklyRoutine: (id: string, archived: boolean) => void;
 
   trainingBlocks: TrainingBlock[];
   setTrainingBlocks: React.Dispatch<React.SetStateAction<TrainingBlock[]>>;
   addTrainingBlock: (block: TrainingBlock) => void;
   updateTrainingBlock: (block: TrainingBlock) => void;
   deleteTrainingBlock: (id: string) => void;
-  getTrainingBlockById?: (id: string) => TrainingBlock;
-  checkTrainingBlockStatus?: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | null };
+  getTrainingBlockById: (id: string) => TrainingBlock;
+  checkTrainingBlockStatus: () => { needsUpdate: boolean; trainingBlock: TrainingBlock | null };
 
   progressPhotos: ProgressPhoto[];
   setProgressPhotos: React.Dispatch<React.SetStateAction<ProgressPhoto[]>>;
@@ -145,7 +147,7 @@ export interface AppContextType {
   getWeightUnitDisplay: (unit: WeightUnit) => string;
   getMeasurementUnitDisplay: (unit: MeasurementUnit) => string;
   
-  exportData?: (type: string) => string;
+  exportData: (type: string) => string;
 }
 
 export const AppContext = createContext<AppContextType>({} as AppContextType);
@@ -153,203 +155,702 @@ export const AppContext = createContext<AppContextType>({} as AppContextType);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
   
-  const {
-    workouts,
-    setWorkouts,
-    addWorkout: hookAddWorkout,
-    addWorkoutByName,
-    updateWorkout,
-    deleteWorkout,
-    getWorkoutById,
-    duplicateWorkout,
-    toggleDeloadMode
-  } = useWorkouts();
+  const [workouts, setWorkouts] = useState<Workout[]>(() => {
+    const saved = localStorage.getItem('workouts');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(() => {
+    const saved = localStorage.getItem('workoutTemplates');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>(() => {
+    const saved = localStorage.getItem('workoutPlans');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [supplements, setSupplements] = useState<Supplement[]>(() => {
+    const saved = localStorage.getItem('supplements');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [supplementLogs, setSupplementLogs] = useState<SupplementLog[]>(() => {
+    const saved = localStorage.getItem('supplementLogs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>(() => {
+    const saved = localStorage.getItem('steroidCycles');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [compounds, setCompounds] = useState<SteroidCompound[]>(() => {
+    const saved = localStorage.getItem('compounds');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [reminders, setReminders] = useState<Reminder[]>(() => {
+    const saved = localStorage.getItem('reminders');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>(() => {
+    const saved = localStorage.getItem('bodyMeasurements');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [moodLogs, setMoodLogs] = useState<MoodLog[]>(() => {
+    const saved = localStorage.getItem('moodLogs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [weakPoints, setWeakPoints] = useState<WeakPoint[]>(() => {
+    const saved = localStorage.getItem('weakPoints');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>(() => {
+    const saved = localStorage.getItem('weeklyRoutines');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>(() => {
+    const saved = localStorage.getItem('trainingBlocks');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>(() => {
+    const saved = localStorage.getItem('progressPhotos');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
+    const storedSystem = localStorage.getItem('ironlog_unit_system');
+    if (storedSystem) {
+      try {
+        return JSON.parse(storedSystem);
+      } catch (error) {
+        console.error("Failed to parse unit system from localStorage", error);
+      }
+    }
+    return {
+      bodyWeightUnit: 'lbs',
+      bodyMeasurementUnit: 'in',
+      liftingWeightUnit: 'kg'
+    };
+  });
 
   const addWorkout = (workout: Workout) => {
-    hookAddWorkout(workout as any);
+    setWorkouts((prev) => [...prev, workout]);
+    toast({
+      title: "Workout Added",
+      description: "Your workout has been saved.",
+    });
   };
 
-  const {
-    workoutTemplates,
-    setWorkoutTemplates,
-    addWorkoutTemplate,
-    updateWorkoutTemplate,
-    deleteWorkoutTemplate,
-    duplicateWorkoutTemplate = (id) => {
-      const template = workoutTemplates.find(t => t.id === id);
-      if (template) {
-        const newTemplate = {
-          ...template,
-          id: uuidv4(),
-          name: `${template.name} (Copy)`,
-        };
-        addWorkoutTemplate(newTemplate);
-      }
-    }
-  } = useWorkoutTemplates();
-  
-  const {
-    workoutPlans,
-    setWorkoutPlans,
-    addWorkoutPlan,
-    updateWorkoutPlan,
-    deleteWorkoutPlan,
-    duplicateWorkoutPlan = (id) => {
-      const plan = workoutPlans.find(p => p.id === id);
-      if (plan) {
-        const newPlan = {
-          ...plan,
-          id: uuidv4(),
-          name: `${plan.name} (Copy)`,
-          isActive: false
-        };
-        addWorkoutPlan(newPlan);
-      }
-    },
-    setActivePlan = (id) => {
-      workoutPlans.forEach(plan => {
-        if (plan.id === id) {
-          updateWorkoutPlan({ ...plan, isActive: true });
-        } else if (plan.isActive) {
-          updateWorkoutPlan({ ...plan, isActive: false });
-        }
+  const addWorkoutByName = (workoutName: string) => {
+    const newWorkout: Workout = {
+      id: uuidv4(),
+      name: workoutName,
+      date: new Date().toISOString(),
+      exercises: [],
+      completed: false,
+    };
+    setWorkouts((prev) => [...prev, newWorkout]);
+    toast({
+      title: "Workout Added",
+      description: `Workout "${workoutName}" has been created.`,
+    });
+  };
+
+  const updateWorkout = (workout: Workout) => {
+    setWorkouts((prev) => prev.map((w) => (w.id === workout.id ? workout : w)));
+    toast({
+      title: "Workout Updated",
+      description: "Your workout has been updated.",
+    });
+  };
+
+  const deleteWorkout = (id: string) => {
+    setWorkouts((prev) => prev.filter((w) => w.id !== id));
+    toast({
+      title: "Workout Deleted",
+      description: "Your workout has been removed.",
+    });
+  };
+
+  const getWorkoutById = (id: string): Workout => {
+    return workouts.find((w) => w.id === id) || {} as Workout;
+  };
+
+  const duplicateWorkout = (id: string) => {
+    const workout = workouts.find((w) => w.id === id);
+    if (workout) {
+      const newWorkout = {
+        ...workout,
+        id: uuidv4(),
+        name: `${workout.name} (Copy)`,
+        date: new Date().toISOString(),
+      };
+      setWorkouts((prev) => [...prev, newWorkout]);
+      toast({
+        title: "Workout Duplicated",
+        description: "A copy of your workout has been created.",
       });
-    },
-    addTemplateToPlan = (planId, templateId) => {
-      const plan = workoutPlans.find(p => p.id === planId);
-      const template = workoutTemplates.find(t => t.id === templateId);
-      if (plan && template) {
-        updateWorkoutPlan({
-          ...plan,
-          workoutTemplates: [...plan.workoutTemplates, template]
-        });
-      }
-    },
-    removeTemplateFromPlan = (planId, templateId) => {
-      const plan = workoutPlans.find(p => p.id === planId);
-      if (plan) {
-        updateWorkoutPlan({
-          ...plan,
-          workoutTemplates: plan.workoutTemplates.filter(t => t.id !== templateId)
-        });
-      }
     }
-  } = useWorkoutPlans();
-  
-  const {
-    supplements,
-    setSupplements,
-    supplementLogs,
-    setSupplementLogs,
-    addSupplement,
-    updateSupplement,
-    deleteSupplement,
-    addSupplementLog,
-    updateSupplementLog,
-    deleteSupplementLog,
-  } = useSupplements();
-  
-  const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>([]);
+  };
+
+  const toggleDeloadMode = (workoutId: string, isDeload: boolean) => {
+    setWorkouts((prev) =>
+      prev.map((w) =>
+        w.id === workoutId ? { ...w, isDeload } : w
+      )
+    );
+    toast({
+      title: isDeload ? "Deload Mode Enabled" : "Deload Mode Disabled",
+      description: isDeload
+        ? "Your workout is now in deload mode."
+        : "Deload mode has been turned off.",
+    });
+  };
+
+  const addWorkoutTemplate = (workoutTemplate: WorkoutTemplate) => {
+    setWorkoutTemplates((prev) => [...prev, workoutTemplate]);
+    toast({
+      title: "Template Added",
+      description: "Your workout template has been saved.",
+    });
+  };
+
+  const updateWorkoutTemplate = (workoutTemplate: WorkoutTemplate) => {
+    setWorkoutTemplates((prev) =>
+      prev.map((t) => (t.id === workoutTemplate.id ? workoutTemplate : t))
+    );
+    toast({
+      title: "Template Updated",
+      description: "Your workout template has been updated.",
+    });
+  };
+
+  const deleteWorkoutTemplate = (id: string) => {
+    setWorkoutTemplates((prev) => prev.filter((t) => t.id !== id));
+    toast({
+      title: "Template Deleted",
+      description: "Your workout template has been removed.",
+    });
+  };
+
+  const duplicateWorkoutTemplate = (id: string) => {
+    const template = workoutTemplates.find((t) => t.id === id);
+    if (template) {
+      const newTemplate = {
+        ...template,
+        id: uuidv4(),
+        name: `${template.name} (Copy)`,
+      };
+      setWorkoutTemplates((prev) => [...prev, newTemplate]);
+      toast({
+        title: "Template Duplicated",
+        description: "A copy of your workout template has been created.",
+      });
+    }
+  };
+
+  const addWorkoutPlan = (workoutPlan: WorkoutPlan) => {
+    setWorkoutPlans((prev) => [...prev, workoutPlan]);
+    toast({
+      title: "Plan Added",
+      description: "Your workout plan has been saved.",
+    });
+  };
+
+  const updateWorkoutPlan = (workoutPlan: WorkoutPlan) => {
+    setWorkoutPlans((prev) =>
+      prev.map((p) => (p.id === workoutPlan.id ? workoutPlan : p))
+    );
+    toast({
+      title: "Plan Updated",
+      description: "Your workout plan has been updated.",
+    });
+  };
+
+  const deleteWorkoutPlan = (id: string) => {
+    setWorkoutPlans((prev) => prev.filter((p) => p.id !== id));
+    toast({
+      title: "Plan Deleted",
+      description: "Your workout plan has been removed.",
+    });
+  };
+
+  const duplicateWorkoutPlan = (id: string) => {
+    const plan = workoutPlans.find((p) => p.id === id);
+    if (plan) {
+      const newPlan = {
+        ...plan,
+        id: uuidv4(),
+        name: `${plan.name} (Copy)`,
+        isActive: false,
+      };
+      setWorkoutPlans((prev) => [...prev, newPlan]);
+      toast({
+        title: "Plan Duplicated",
+        description: "A copy of your workout plan has been created.",
+      });
+    }
+  };
+
+  const setActivePlan = (id: string) => {
+    setWorkoutPlans((prev) =>
+      prev.map((plan) => ({
+        ...plan,
+        isActive: plan.id === id ? true : false,
+      }))
+    );
+    toast({
+      title: "Active Plan Set",
+      description: "Your active workout plan has been updated.",
+    });
+  };
+
+  const addTemplateToPlan = (planId: string, templateId: string) => {
+    const plan = workoutPlans.find((p) => p.id === planId);
+    const template = workoutTemplates.find((t) => t.id === templateId);
+    if (plan && template) {
+      setWorkoutPlans((prev) =>
+        prev.map((p) =>
+          p.id === planId
+            ? { ...p, workoutTemplates: [...p.workoutTemplates, template] }
+            : p
+        )
+      );
+      toast({
+        title: "Template Added to Plan",
+        description: "The template has been added to your plan.",
+      });
+    }
+  };
+
+  const removeTemplateFromPlan = (planId: string, templateId: string) => {
+    const plan = workoutPlans.find((p) => p.id === planId);
+    if (plan) {
+      setWorkoutPlans((prev) =>
+        prev.map((p) =>
+          p.id === planId
+            ? {
+                ...p,
+                workoutTemplates: p.workoutTemplates.filter((t) => t.id !== templateId),
+              }
+            : p
+        )
+      );
+      toast({
+        title: "Template Removed from Plan",
+        description: "The template has been removed from your plan.",
+      });
+    }
+  };
+
+  const addSupplement = (supplement: Supplement) => {
+    setSupplements((prev) => [...prev, supplement]);
+    toast({
+      title: "Supplement Added",
+      description: "Your supplement has been saved.",
+    });
+  };
+
+  const updateSupplement = (supplement: Supplement) => {
+    setSupplements((prev) =>
+      prev.map((s) => (s.id === supplement.id ? supplement : s))
+    );
+    toast({
+      title: "Supplement Updated",
+      description: "Your supplement has been updated.",
+    });
+  };
+
+  const deleteSupplement = (id: string) => {
+    setSupplements((prev) => prev.filter((s) => s.id !== id));
+    toast({
+      title: "Supplement Deleted",
+      description: "Your supplement has been removed.",
+    });
+  };
+
+  const addSupplementLog = (log: SupplementLog) => {
+    setSupplementLogs((prev) => [...prev, log]);
+    toast({
+      title: "Supplement Log Added",
+      description: "Your supplement log has been saved.",
+    });
+  };
+
+  const updateSupplementLog = (log: SupplementLog) => {
+    setSupplementLogs((prev) => prev.map((l) => (l.id === log.id ? log : l)));
+    toast({
+      title: "Supplement Log Updated",
+      description: "Your supplement log has been updated.",
+    });
+  };
+
+  const deleteSupplementLog = (id: string) => {
+    setSupplementLogs((prev) => prev.filter((l) => l.id !== id));
+    toast({
+      title: "Supplement Log Deleted",
+      description: "Your supplement log has been removed.",
+    });
+  };
 
   const addSteroidCycle = (cycle: SteroidCycle) => {
-    setSteroidCycles([...steroidCycles, cycle]);
+    setSteroidCycles((prev) => [...prev, cycle]);
+    toast({
+      title: "Steroid Cycle Added",
+      description: "Your steroid cycle has been saved.",
+    });
   };
 
   const updateSteroidCycle = (cycle: SteroidCycle) => {
-    setSteroidCycles(steroidCycles.map(c => c.id === cycle.id ? cycle : c));
+    setSteroidCycles((prev) => prev.map((c) => (c.id === cycle.id ? cycle : c)));
+    toast({
+      title: "Steroid Cycle Updated",
+      description: "Your steroid cycle has been updated.",
+    });
   };
 
   const deleteSteroidCycle = (id: string) => {
-    setSteroidCycles(steroidCycles.filter(c => c.id !== id));
+    setSteroidCycles((prev) => prev.filter((c) => c.id !== id));
+    toast({
+      title: "Steroid Cycle Deleted",
+      description: "Your steroid cycle has been removed.",
+    });
   };
-  
-  const { 
-    compounds,
-    setCompounds,
-    addCompound,
-    updateCompound,
-    deleteCompound,
-    getCompoundsByCycleId
-  } = useCompounds();
 
-  const {
-    reminders,
-    setReminders,
-    addReminder,
-    updateReminder,
-    deleteReminder,
-    getDueReminders,
-    markReminderAsSeen,
-    dismissReminder,
-  } = useReminders();
+  const addCompound = (compound: SteroidCompound) => {
+    setCompounds((prev) => [...prev, compound]);
+    toast({
+      title: "Compound Added",
+      description: "Your compound has been saved.",
+    });
+  };
 
-  const {
-    bodyMeasurements = [],
-    setBodyMeasurements = () => {},
-    addBodyMeasurement = () => {},
-    updateBodyMeasurement = () => {},
-    deleteBodyMeasurement = () => {},
-    progressPhotos = [],
-    setProgressPhotos = () => {},
-    addProgressPhoto = () => {},
-    updateProgressPhoto = () => {},
-    deleteProgressPhoto = () => {},
-    getBodyMeasurementById = (id) => bodyMeasurements.find(m => m.id === id) || {} as BodyMeasurement
-  } = useBodyMeasurements ? useBodyMeasurements() : {} as any;
+  const updateCompound = (compound: SteroidCompound) => {
+    setCompounds((prev) => prev.map((c) => (c.id === compound.id ? compound : c)));
+    toast({
+      title: "Compound Updated",
+      description: "Your compound has been updated.",
+    });
+  };
 
-  const {
-    moodLogs = [],
-    setMoodLogs = () => {},
-    addMoodLog = () => {},
-    updateMoodLog = () => {},
-    deleteMoodLog = () => {},
-    getMoodLogById = (id) => moodLogs.find(m => m.id === id) || {} as MoodLog
-  } = useMoodLogs ? useMoodLogs() : {} as any;
+  const deleteCompound = (id: string) => {
+    setCompounds((prev) => prev.filter((c) => c.id !== id));
+    toast({
+      title: "Compound Deleted",
+      description: "Your compound has been removed.",
+    });
+  };
 
-  const {
-    weakPoints = [],
-    setWeakPoints = () => {},
-    addWeakPoint = () => {},
-    updateWeakPoint = () => {},
-    deleteWeakPoint = () => {},
-    getWeakPointById = (id) => weakPoints.find(w => w.id === id) || {} as WeakPoint
-  } = useWeakPoints ? useWeakPoints() : {} as any;
+  const getCompoundsByCycleId = (cycleId: string): SteroidCompound[] => {
+    return compounds.filter((c) => c.cycleId === cycleId);
+  };
 
-  const {
-    weeklyRoutines = [],
-    setWeeklyRoutines = () => {},
-    addWeeklyRoutine = () => {},
-    updateWeeklyRoutine = () => {},
-    deleteWeeklyRoutine = () => {},
-    getWeeklyRoutineById = (id) => weeklyRoutines.find(r => r.id === id) || {} as WeeklyRoutine,
-    duplicateWeeklyRoutine = (id) => {
-      const routine = weeklyRoutines.find(r => r.id === id);
-      if (routine) {
-        const newRoutine = {
-          ...routine,
-          id: uuidv4(),
-          name: `${routine.name} (Copy)`,
-        };
-        addWeeklyRoutine(newRoutine);
-      }
-    },
-    archiveWeeklyRoutine = (id, archived) => {
-      const routine = weeklyRoutines.find(r => r.id === id);
-      if (routine) {
-        updateWeeklyRoutine({ ...routine, archived });
-      }
+  const addReminder = (reminder: Reminder) => {
+    setReminders((prev) => [...prev, reminder]);
+    toast({
+      title: "Reminder Added",
+      description: "Your reminder has been saved.",
+    });
+  };
+
+  const updateReminder = (reminder: Reminder) => {
+    setReminders((prev) => prev.map((r) => (r.id === reminder.id ? reminder : r)));
+    toast({
+      title: "Reminder Updated",
+      description: "Your reminder has been updated.",
+    });
+  };
+
+  const deleteReminder = (id: string) => {
+    setReminders((prev) => prev.filter((r) => r.id !== id));
+    toast({
+      title: "Reminder Deleted",
+      description: "Your reminder has been removed.",
+    });
+  };
+
+  const getDueReminders = (): Reminder[] => {
+    const now = new Date();
+    return reminders.filter((r) => {
+      if (r.dismissed) return false;
+      const dueDate = new Date(r.dueDate);
+      return dueDate <= now && !r.seen;
+    });
+  };
+
+  const markReminderAsSeen = (id: string) => {
+    setReminders((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, seen: true } : r))
+    );
+    toast({
+      title: "Reminder Marked as Seen",
+      description: "The reminder has been marked as seen.",
+    });
+  };
+
+  const dismissReminder = (id: string) => {
+    setReminders((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, dismissed: true } : r))
+    );
+    toast({
+      title: "Reminder Dismissed",
+      description: "The reminder has been dismissed.",
+    });
+  };
+
+  const addBodyMeasurement = (measurement: BodyMeasurement) => {
+    setBodyMeasurements((prev) => [...prev, measurement]);
+    toast({
+      title: "Measurement Added",
+      description: "Your body measurement has been saved.",
+    });
+  };
+
+  const updateBodyMeasurement = (measurement: BodyMeasurement) => {
+    setBodyMeasurements((prev) =>
+      prev.map((m) => (m.id === measurement.id ? measurement : m))
+    );
+    toast({
+      title: "Measurement Updated",
+      description: "Your body measurement has been updated.",
+    });
+  };
+
+  const deleteBodyMeasurement = (id: string) => {
+    setBodyMeasurements((prev) => prev.filter((m) => m.id !== id));
+    toast({
+      title: "Measurement Deleted",
+      description: "Your body measurement has been removed.",
+    });
+  };
+
+  const getBodyMeasurementById = (id: string): BodyMeasurement => {
+    return bodyMeasurements.find((m) => m.id === id) || {} as BodyMeasurement;
+  };
+
+  const addMoodLog = (log: MoodLog) => {
+    setMoodLogs((prev) => [...prev, log]);
+    toast({
+      title: "Mood Log Added",
+      description: "Your mood log has been saved.",
+    });
+  };
+
+  const updateMoodLog = (log: MoodLog) => {
+    setMoodLogs((prev) => prev.map((l) => (l.id === log.id ? log : l)));
+    toast({
+      title: "Mood Log Updated",
+      description: "Your mood log has been updated.",
+    });
+  };
+
+  const deleteMoodLog = (id: string) => {
+    setMoodLogs((prev) => prev.filter((l) => l.id !== id));
+    toast({
+      title: "Mood Log Deleted",
+      description: "Your mood log has been removed.",
+    });
+  };
+
+  const getMoodLogById = (id: string): MoodLog => {
+    return moodLogs.find((m) => m.id === id) || {} as MoodLog;
+  };
+
+  const addWeakPoint = (weakPoint: WeakPoint) => {
+    setWeakPoints((prev) => [...prev, weakPoint]);
+    toast({
+      title: "Weak Point Added",
+      description: "Your weak point has been saved.",
+    });
+  };
+
+  const updateWeakPoint = (weakPoint: WeakPoint) => {
+    setWeakPoints((prev) => prev.map((w) => (w.id === weakPoint.id ? weakPoint : w)));
+    toast({
+      title: "Weak Point Updated",
+      description: "Your weak point has been updated.",
+    });
+  };
+
+  const deleteWeakPoint = (id: string) => {
+    setWeakPoints((prev) => prev.filter((w) => w.id !== id));
+    toast({
+      title: "Weak Point Deleted",
+      description: "Your weak point has been removed.",
+    });
+  };
+
+  const getWeakPointById = (id: string): WeakPoint => {
+    return weakPoints.find((w) => w.id === id) || {} as WeakPoint;
+  };
+
+  const addWeeklyRoutine = (routine: WeeklyRoutine) => {
+    setWeeklyRoutines((prev) => [...prev, routine]);
+    toast({
+      title: "Routine Added",
+      description: "Your weekly routine has been saved.",
+    });
+  };
+
+  const updateWeeklyRoutine = (routine: WeeklyRoutine) => {
+    setWeeklyRoutines((prev) => prev.map((r) => (r.id === routine.id ? routine : r)));
+    toast({
+      title: "Routine Updated",
+      description: "Your weekly routine has been updated.",
+    });
+  };
+
+  const deleteWeeklyRoutine = (id: string) => {
+    setWeeklyRoutines((prev) => prev.filter((r) => r.id !== id));
+    toast({
+      title: "Routine Deleted",
+      description: "Your weekly routine has been removed.",
+    });
+  };
+
+  const getWeeklyRoutineById = (id: string): WeeklyRoutine => {
+    return weeklyRoutines.find((r) => r.id === id) || {} as WeeklyRoutine;
+  };
+
+  const duplicateWeeklyRoutine = (id: string) => {
+    const routine = weeklyRoutines.find((r) => r.id === id);
+    if (routine) {
+      const newRoutine = {
+        ...routine,
+        id: uuidv4(),
+        name: `${routine.name} (Copy)`,
+      };
+      setWeeklyRoutines((prev) => [...prev, newRoutine]);
+      toast({
+        title: "Routine Duplicated",
+        description: "A copy of your weekly routine has been created.",
+      });
     }
-  } = useWeeklyRoutines ? useWeeklyRoutines() : {} as any;
+  };
 
-  const {
-    trainingBlocks = [],
-    setTrainingBlocks = () => {},
-    addTrainingBlock = () => {},
-    updateTrainingBlock = () => {},
-    deleteTrainingBlock = () => {},
-    getTrainingBlockById = (id) => trainingBlocks.find(b => b.id === id) || {} as TrainingBlock,
-    checkTrainingBlockStatus = () => ({ needsUpdate: false, trainingBlock: null })
-  } = useTrainingBlocks ? useTrainingBlocks() : {} as any;
+  const archiveWeeklyRoutine = (id: string, archived: boolean) => {
+    const routine = weeklyRoutines.find((r) => r.id === id);
+    if (routine) {
+      setWeeklyRoutines((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, archived } : r))
+      );
+      toast({
+        title: archived ? "Routine Archived" : "Routine Unarchived",
+        description: archived
+          ? "Your weekly routine has been archived."
+          : "Your weekly routine has been unarchived.",
+      });
+    }
+  };
+
+  const addTrainingBlock = (block: TrainingBlock) => {
+    setTrainingBlocks((prev) => [...prev, block]);
+    toast({
+      title: "Training Block Added",
+      description: "Your training block has been saved.",
+    });
+  };
+
+  const updateTrainingBlock = (block: TrainingBlock) => {
+    setTrainingBlocks((prev) => prev.map((b) => (b.id === block.id ? block : b)));
+    toast({
+      title: "Training Block Updated",
+      description: "Your training block has been updated.",
+    });
+  };
+
+  const deleteTrainingBlock = (id: string) => {
+    setTrainingBlocks((prev) : prev.filter((b) => b.id !== id));
+    toast({
+      title: "Training Block Deleted",
+      description: "Your training block has been removed.",
+    });
+  };
+
+  const getTrainingBlockById = (id: string): TrainingBlock => {
+    return trainingBlocks.find((b) => b.id === id) || {} as TrainingBlock;
+  };
+
+  const checkTrainingBlockStatus = (): { needsUpdate: boolean; trainingBlock: TrainingBlock | null } => {
+    const now = new Date();
+    const activeBlock = trainingBlocks.find((block) => {
+      const start = new Date(block.startDate);
+      const endDate = new Date(start);
+      endDate.setDate(start.getDate() + block.durationWeeks * 7);
+      return now >= start && now <= endDate;
+    });
+
+    if (!activeBlock) return { needsUpdate: false, trainingBlock: null };
+
+    const start = new Date(activeBlock.startDate);
+    const endDate = new Date(start);
+    endDate.setDate(start.getDate() + activeBlock.durationWeeks * 7);
+    const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const needsUpdate = daysRemaining <= 7;
+
+    return { needsUpdate, trainingBlock: activeBlock };
+  };
+
+  const addProgressPhoto = (photo: ProgressPhoto) => {
+    setProgressPhotos((prev) => [...prev, photo]);
+    toast({
+      title: "Progress Photo Added",
+      description: "Your progress photo has been saved.",
+    });
+  };
+
+  const updateProgressPhoto = (photo: ProgressPhoto) => {
+    setProgressPhotos((prev) => prev.map((p) => (p.id === photo.id ? photo : p)));
+    toast({
+      title: "Progress Photo Updated",
+      description: "Your progress photo has been updated.",
+    });
+  };
+
+  const deleteProgressPhoto = (id: string) => {
+    setProgressPhotos((prev) => prev.filter((p) => p.id !== id));
+    toast({
+      title: "Progress Photo Deleted",
+      description: "Your progress photo has been removed.",
+    });
+  };
+
+  const updateUnitSystem = (update: Partial<UnitSystem>) => {
+    setUnitSystem((prev) => {
+      const newSystem = { ...prev, ...update };
+      localStorage.setItem('ironlog_unit_system', JSON.stringify(newSystem));
+      return newSystem;
+    });
+    toast({
+      title: "Unit System Updated",
+      description: "Your unit preferences have been updated.",
+    });
+  };
+
+  const getWeightUnitDisplay = (unit: WeightUnit): string => {
+    switch (unit) {
+      case 'kg': return 'kg';
+      case 'lbs': return 'lbs';
+      case 'stone': return 'st';
+      default: return 'kg';
+    }
+  };
+
+  const getMeasurementUnitDisplay = (unit: MeasurementUnit): string => {
+    switch (unit) {
+      case 'cm': return 'cm';
+      case 'in': return 'in';
+      default: return 'cm';
+    }
+  };
 
   const exportData = (type: string): string => {
     let csvData = '';
@@ -405,172 +906,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   };
-
-  const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
-    const storedSystem = localStorage.getItem('ironlog_unit_system');
-    if (storedSystem) {
-      try {
-        return JSON.parse(storedSystem);
-      } catch (error) {
-        console.error("Failed to parse unit system from localStorage", error);
-      }
-    }
-    return {
-      bodyWeightUnit: 'lbs',
-      bodyMeasurementUnit: 'in',
-      liftingWeightUnit: 'kg'
-    };
-  });
-
-  const updateUnitSystem = (update: Partial<UnitSystem>) => {
-    setUnitSystem((prev) => {
-      const newSystem = { ...prev, ...update };
-      localStorage.setItem('ironlog_unit_system', JSON.stringify(newSystem));
-      return newSystem;
-    });
-  };
-
-  const getWeightUnitDisplay = (unit: WeightUnit): string => {
-    switch (unit) {
-      case 'kg': return 'kg';
-      case 'lbs': return 'lbs';
-      case 'stone': return 'st';
-      default: return 'kg';
-    }
-  };
-
-  const getMeasurementUnitDisplay = (unit: MeasurementUnit): string => {
-    switch (unit) {
-      case 'cm': return 'cm';
-      case 'in': return 'in';
-      default: return 'cm';
-    }
-  };
-
-  useEffect(() => {
-    try {
-      const storedWorkoutTemplates = localStorage.getItem('workoutTemplates');
-      if (storedWorkoutTemplates) {
-        setWorkoutTemplates(JSON.parse(storedWorkoutTemplates));
-      }
-    } catch (error) {
-      console.error('Error loading workout templates:', error);
-    }
-    
-    try {
-      const storedWorkoutPlans = localStorage.getItem('workoutPlans');
-      if (storedWorkoutPlans) {
-        setWorkoutPlans(JSON.parse(storedWorkoutPlans));
-      }
-    } catch (error) {
-      console.error('Error loading workout plans:', error);
-    }
-    
-    try {
-      const storedSupplements = localStorage.getItem('supplements');
-      if (storedSupplements) {
-        setSupplements(JSON.parse(storedSupplements));
-      }
-    } catch (error) {
-      console.error('Error loading supplements:', error);
-    }
-    
-    try {
-      const storedSupplementLogs = localStorage.getItem('supplementLogs');
-      if (storedSupplementLogs) {
-        setSupplementLogs(JSON.parse(storedSupplementLogs));
-      }
-    } catch (error) {
-      console.error('Error loading supplement logs:', error);
-    }
-    
-    try {
-      const storedSteroidCycles = localStorage.getItem('steroidCycles');
-      if (storedSteroidCycles) {
-        setSteroidCycles(JSON.parse(storedSteroidCycles));
-      }
-    } catch (error) {
-      console.error('Error loading steroid cycles:', error);
-    }
-    
-    try {
-      const storedCompounds = localStorage.getItem('compounds');
-      if (storedCompounds) {
-        setCompounds(JSON.parse(storedCompounds));
-      }
-    } catch (error) {
-      console.error('Error loading compounds:', error);
-    }
-    
-    try {
-      const storedReminders = localStorage.getItem('reminders');
-      if (storedReminders) {
-        setReminders(JSON.parse(storedReminders));
-      }
-    } catch (error) {
-      console.error('Error loading reminders:', error);
-    }
-    
-    try {
-      const storedBodyMeasurements = localStorage.getItem('bodyMeasurements');
-      if (storedBodyMeasurements && setBodyMeasurements) {
-        setBodyMeasurements(JSON.parse(storedBodyMeasurements));
-      }
-    } catch (error) {
-      console.error('Error loading body measurements:', error);
-    }
-    
-    try {
-      const storedMoodLogs = localStorage.getItem('moodLogs');
-      if (storedMoodLogs && setMoodLogs) {
-        setMoodLogs(JSON.parse(storedMoodLogs));
-      }
-    } catch (error) {
-      console.error('Error loading mood logs:', error);
-    }
-    
-    try {
-      const storedWeakPoints = localStorage.getItem('weakPoints');
-      if (storedWeakPoints && setWeakPoints) {
-        setWeakPoints(JSON.parse(storedWeakPoints));
-      }
-    } catch (error) {
-      console.error('Error loading weak points:', error);
-    }
-    
-    try {
-      const storedWeeklyRoutines = localStorage.getItem('weeklyRoutines');
-      if (storedWeeklyRoutines && setWeeklyRoutines) {
-        setWeeklyRoutines(JSON.parse(storedWeeklyRoutines));
-      }
-    } catch (error) {
-      console.error('Error loading weekly routines:', error);
-    }
-    
-    try {
-      const storedTrainingBlocks = localStorage.getItem('trainingBlocks');
-      if (storedTrainingBlocks && setTrainingBlocks) {
-        setTrainingBlocks(JSON.parse(storedTrainingBlocks));
-      }
-    } catch (error) {
-      console.error('Error loading training blocks:', error);
-    }
-    
-    try {
-      const storedProgressPhotos = localStorage.getItem('progressPhotos');
-      if (storedProgressPhotos && setProgressPhotos) {
-        setProgressPhotos(JSON.parse(storedProgressPhotos));
-      }
-    } catch (error) {
-      console.error('Error loading progress photos:', error);
-    }
-  }, [
-    setWorkoutTemplates, setWorkoutPlans, 
-    setSupplements, setSupplementLogs, setSteroidCycles, 
-    setCompounds, setReminders, setBodyMeasurements,
-    setMoodLogs, setWeakPoints, setWeeklyRoutines, setTrainingBlocks,
-    setProgressPhotos
-  ]);
 
   useEffect(() => {
     if (workoutTemplates.length > 0) {
@@ -640,6 +975,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     workouts,
     setWorkouts,
     addWorkout,
+    addWorkoutByName,
     updateWorkout,
     deleteWorkout,
     getWorkoutById,
