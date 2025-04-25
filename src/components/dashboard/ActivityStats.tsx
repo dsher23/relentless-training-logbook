@@ -5,7 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 
 const ActivityStats = () => {
-  const { bodyMeasurements = [], supplements = [] } = useAppContext();
+  const context = useAppContext();
+  const bodyMeasurements = context?.bodyMeasurements ?? [];
+  const supplements = context?.supplements ?? [];
 
   // Get the latest measurement date
   const latestMeasurement = bodyMeasurements.length > 0
