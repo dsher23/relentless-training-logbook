@@ -12,7 +12,6 @@ export const useAppContext = () => {
   return context;
 };
 
-// Export all types used in the context
 export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -68,8 +67,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const toggleDeloadMode = (id: string) => {
-    setWorkouts(workouts.map((w) => (w.id === id ? { ...w, deloadMode: !w.deloadMode } : w)));
+  const toggleDeloadMode = (id: string, isDeload: boolean) => {
+    setWorkouts(workouts.map((w) => (w.id === id ? { ...w, deloadMode: isDeload } : w)));
   };
 
   const addSupplement = (supplement: Supplement) => {
@@ -140,9 +139,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return JSON.stringify(data);
   };
 
-  const unitSystem = 'metric'; // Example implementation
-  const convertWeight = (weight: number) => weight; // Example implementation
-  const getWeightUnitDisplay = () => 'kg'; // Example implementation
+  const unitSystem = 'metric';
+  const convertWeight = (weight: number) => weight;
+  const getWeightUnitDisplay = () => 'kg';
 
   const getDueReminders = () => {
     return reminders.filter((reminder) => !reminder.dismissed);
@@ -279,4 +278,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateWorkout,
       markWorkoutCompleted,
       deleteWorkout,
-      getWorkoutByI
+      getWorkoutById,
+      duplicateWorkout,
+      toggleDeloadMode,
+      addSupplement,
+      updateSupplement,
+      deleteSupplement,
+      addCycle,
+      updateCycle,
+      deleteCycle,
+      markSupplementTaken,
+      markCycleTaken,
+      addExercise,
+      addSteroidCycle,
+      exportData,
+      unitSystem,
+      convertWeight,
+      getWeightUnitDisplay,
+      getDueReminders,
+      markReminderAsSeen,
+      dismissReminder,
+      addSupplementLog,
+      updateSupplementLog,
+      addReminder,
+      addTrainingBlock,
+      updateTrainingBlock,
+      addWeeklyRoutine,
+      updateWeeklyRoutine,
+      addWeakPoint,
+      deleteWeakPoint,
+      addMoodLog,
+      updateMoodLog,
+      addWorkoutTemplate,
+      updateWorkoutTemplate,
+      addWorkoutPlan,
+      updateWorkoutPlan,
+      deleteWorkoutPlan,
+      duplicateWorkoutPlan,
+      setActivePlan,
+      removeTemplateFromPlan,
+    }),
+    [workouts, measurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans]
+  );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
