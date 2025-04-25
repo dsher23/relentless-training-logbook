@@ -102,7 +102,7 @@ export interface WorkoutTemplate {
   id: string;
   name: string;
   exercises: Exercise[];
-  // Added for WeeklyPlanView.tsx
+  isFavorite?: boolean; // Added for WorkoutBuilder.tsx
 }
 
 export interface WorkoutPlan {
@@ -209,4 +209,6 @@ export interface AppContextType {
   markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void;
   markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
   addExercise: (exercise: Exercise) => void;
+  addWorkoutTemplate: (template: WorkoutTemplate) => void;
+  updateWorkoutTemplate: (template: WorkoutTemplate) => void;
 }
