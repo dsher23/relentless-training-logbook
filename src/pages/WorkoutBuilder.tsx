@@ -86,7 +86,7 @@ const ExerciseItem = ({
               </div>
             )}
             <span className="ml-2 text-xs text-muted-foreground">
-              {exercise.sets} sets × {exercise.reps} reps, {exercise.weight || "-"} kg/lb
+              {Array.isArray(exercise.sets) ? exercise.sets.length : exercise.sets} sets × {exercise.reps} reps, {exercise.weight || "-"} kg/lb
               {exercise.restTime ? `, ${exercise.restTime}s rest` : ""}
             </span>
           </div>
@@ -175,10 +175,20 @@ const WorkoutBuilder: React.FC = () => {
   };
 
   const handleSelectExercise = () => {
-    const exercise = exercises.find(ex => ex.id === selectedExerciseId);
-    if (exercise) {
-      setSelectedExercises([...selectedExercises, { ...exercise, id: uuidv4() }]);
-      setSelectedExerciseId("");
+    if (selectedExerciseId) {
+      const exercise = exercises.find(ex => ex.id === selectedExerciseId);
+      if (exercise) {
+        const exerciseCopy = { 
+          ...exercise, 
+          id: uuidv4(),
+          sets: Array.isArray(exercise.sets) ? 
+            [...exercise.sets] : 
+            Array(3).fill({ reps: exercise.reps || 10, weight: exercise.weight || 0 }) 
+        };
+        
+        setSelectedExercises([...selectedExercises, exerciseCopy]);
+        setSelectedExerciseId("");
+      }
     }
   };
 
@@ -378,7 +388,8 @@ const WorkoutBuilder: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {['upper', 'lower', 'core', 'other'].map((category) => (
-                        <optgroup key={category} label={category.toUpperCase()}>
+                        <React.Fragment key={category}>
+                          <SelectItem value={`category-${category}`} disabled>{category.toUpperCase()}</SelectItem>
                           {exercises
                             .filter((ex) => ex.category === category)
                             .map((ex) => (
@@ -386,7 +397,7 @@ const WorkoutBuilder: React.FC = () => {
                                 {ex.name}
                               </SelectItem>
                             ))}
-                        </optgroup>
+                        </React.Fragment>
                       ))}
                     </SelectContent>
                   </Select>
@@ -426,7 +437,6 @@ const WorkoutBuilder: React.FC = () => {
                   key={exercise.id}
                   exercise={exercise}
                   index={index}
-                  moveExercise={() => {}} // Not used since DndContext handles dragging
                   onEdit={handleEditExercise}
                   onDelete={promptDeleteExercise}
                 />

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -24,7 +25,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
     defaultValues: exercise || {
       id: "",
       name: "",
-      sets: 3,
+      sets: [] as any, // Change from number to array to match Exercise type
       reps: 10,
       weight: 0,
       restTime: 60,
@@ -55,10 +56,18 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
   }, [selectedExerciseId, exercises, setValue]);
 
   const onSubmit = (data: Exercise) => {
+    // Create sets array based on the sets count
+    const setsCount = typeof data.sets === 'number' ? data.sets : 3;
+    const setsArray = Array.from({ length: setsCount }, () => ({
+      reps: data.reps,
+      weight: data.weight || 0
+    }));
+
     const newExercise: Exercise = {
       ...data,
       id: exercise?.id || uuidv4(),
       name: selectedExerciseId ? exercises.find(ex => ex.id === selectedExerciseId)!.name : data.name,
+      sets: setsArray,
       category: selectedExerciseId ? exercises.find(ex => ex.id === selectedExerciseId)!.category : data.category,
     };
     if (!selectedExerciseId) {
@@ -68,7 +77,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
   };
 
   const prExerciseOptions = [
-    { id: "", name: "Not tracked as PR" },
+    { id: "none", name: "Not tracked as PR" },
     { id: "bench-press", name: "Bench Press" },
     { id: "deadlift", name: "Deadlift" },
     { id: "squat", name: "Squat" },
@@ -90,7 +99,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
             <Label htmlFor="prExerciseType">PR Exercise Type</Label>
             <Select
               onValueChange={(value) => setValue("prExerciseType", value)}
-              defaultValue={exercise?.prExerciseType || ""}
+              defaultValue={exercise?.prExerciseType || "none"}
             >
               <SelectTrigger id="prExerciseType">
                 <SelectValue placeholder="Select PR type" />
@@ -112,7 +121,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
                 <SelectValue placeholder="Select or type a new exercise" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Type a new exercise</SelectItem>
+                <SelectItem value="new-exercise">Type a new exercise</SelectItem>
                 {['upper', 'lower', 'core', 'other'].map((category) => (
                   <optgroup key={category} label={category.toUpperCase()}>
                     {exercises
@@ -126,7 +135,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
                 ))}
               </SelectContent>
             </Select>
-            {!selectedExerciseId && (
+            {(selectedExerciseId === "new-exercise" || !selectedExerciseId) && (
               <Input
                 id="name"
                 placeholder="e.g., Bench Press"
