@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ export const useLiveWorkout = () => {
   const [debugMode, setDebugMode] = useState(false);
   const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
 
+  // Save workout progress to localStorage
   useEffect(() => {
     if (workout && Object.keys(exerciseData).length > 0) {
       const progressData = {

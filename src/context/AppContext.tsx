@@ -36,19 +36,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [prLifts, setPRLifts] = useState<PR[]>([]);
 
-  const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
-    const id = additionalData.id || uuidv4();
-    const newWorkout: Workout = { id, name, date: new Date(), exercises, completed: false, ...additionalData };
+  const addWorkout = (id: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
+    const newWorkout: Workout = {
+      id: id || uuidv4(),
+      name: additionalData.name || "New Workout",
+      date: new Date(),
+      exercises,
+      completed: false,
+      ...additionalData
+    };
     setWorkouts([...workouts, newWorkout]);
-    return id;
+    return newWorkout.id;
   };
 
   const updateWorkout = (updated: Workout) => {
-    setWorkouts(workouts.map((w) => (w.id === updated.id ? updated : w)));
+    setWorkouts(workouts.map(workout => workout.id === updated.id ? updated : workout));
   };
 
   const markWorkoutCompleted = (id: string) => {
-    setWorkouts(workouts.map((w) => (w.id === id ? { ...w, completed: true } : w)));
+    setWorkouts(
+      workouts.map(workout =>
+        workout.id === id ? { ...workout, completed: !workout.completed } : workout
+      )
+    );
   };
 
   const deleteWorkout = (id: string) => {

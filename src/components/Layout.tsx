@@ -8,10 +8,15 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const showBottomNav = !location.pathname.includes('live-workout'); // Hide during live workout
   
+  // Don't show the header on pages that have their own (like Dashboard)
+  const hideHeader = location.pathname === '/dashboard' || 
+                     location.pathname.includes('/profile') ||
+                     location.pathname.includes('/settings');
+  
   return (
     <div className="pb-16 min-h-screen bg-background"> 
-      <NavigationHeader title="Relentless" showBack={false} />
-      <div className="pt-14"> {/* Add padding top to account for the header */}
+      {!hideHeader && <NavigationHeader title="Relentless" showBack={false} />}
+      <div className={!hideHeader ? "pt-14" : ""}> {/* Add padding top only if header is shown */}
         <Outlet />
       </div>
       {showBottomNav && <BottomNavigation />}

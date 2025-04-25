@@ -26,7 +26,7 @@ const WorkoutSelection: React.FC = () => {
 
         <Card>
           <CardContent className="p-4">
-            <Link to="/workouts/new">
+            <Link to="/workouts/builder">
               <Button className="w-full flex items-center justify-center">
                 <Plus className="h-4 w-4 mr-2" /> Create New Workout
               </Button>
@@ -45,7 +45,7 @@ const WorkoutSelection: React.FC = () => {
             </AlertDescription>
             <Button 
               className="mt-3" 
-              onClick={() => navigate("/workouts/new")}
+              onClick={() => navigate("/workouts/builder")}
             >
               <Plus className="h-4 w-4 mr-2" /> Create Workout
             </Button>
