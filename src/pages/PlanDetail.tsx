@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -73,7 +72,7 @@ const PlanDetail: React.FC = () => {
   
   const handleAddExistingTemplate = (templateId: string) => {
     if (addTemplateToPlan) {
-      addTemplateToPlan(plan.id, templateId);
+      addTemplateToPlan(plan.id, templateId, "");
       setIsAddDialogOpen(false);
       
       toast({
@@ -102,7 +101,7 @@ const PlanDetail: React.FC = () => {
     addWorkoutTemplate(newTemplate);
     
     if (addTemplateToPlan) {
-      addTemplateToPlan(plan.id, newTemplate.id);
+      addTemplateToPlan(plan.id, newTemplate.id, "");
     }
     
     setNewTemplateName("");
