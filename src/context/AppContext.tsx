@@ -1,6 +1,6 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, WeightUnit, MeasurementUnit } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -35,7 +35,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     liftingWeightUnit: 'kg',
   });
 
-  // Define all methods before useMemo to avoid ReferenceError
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const id = additionalData.id || uuidv4();
     const newWorkout: Workout = { id, name, date: new Date(), exercises, completed: false, ...additionalData };
@@ -146,50 +145,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return JSON.stringify(data);
   };
 
-  const convertWeight = (weight: number, unit: 'kg' | 'lbs' | 'stone', unitSystem: UnitSystem) => {
-    if (unit === unitSystem.liftingWeightUnit || unit === unitSystem.bodyWeightUnit) {
-      return weight; // No conversion needed if units match
+  const convertWeight = (weight: number, fromUnit?: WeightUnit, toUnit?: WeightUnit) => {
+    if (!fromUnit || !toUnit || fromUnit === toUnit) {
+      return weight; // No conversion needed if units match or are not specified
     }
 
-    if (unit === 'kg') {
-      if (unitSystem.liftingWeightUnit === 'lbs' || unitSystem.bodyWeightUnit === 'lbs') {
+    if (fromUnit === 'kg') {
+      if (toUnit === 'lbs') {
         return weight * 2.20462; // kg to lbs
       }
-      if (unitSystem.bodyWeightUnit === 'stone') {
+      if (toUnit === 'stone') {
         return weight * 0.157473; // kg to stone
       }
-    } else if (unit === 'lbs') {
-      if (unitSystem.liftingWeightUnit === 'kg' || unitSystem.bodyWeightUnit === 'kg') {
+    } else if (fromUnit === 'lbs') {
+      if (toUnit === 'kg') {
         return weight / 2.20462; // lbs to kg
       }
-      if (unitSystem.bodyWeightUnit === 'stone') {
+      if (toUnit === 'stone') {
         return weight / 14; // lbs to stone
       }
-    } else if (unit === 'stone') {
-      if (unitSystem.bodyWeightUnit === 'kg') {
+    } else if (fromUnit === 'stone') {
+      if (toUnit === 'kg') {
         return weight / 0.157473; // stone to kg
       }
-      if (unitSystem.bodyWeightUnit === 'lbs') {
+      if (toUnit === 'lbs') {
         return weight * 14; // stone to lbs
       }
     }
     return weight; // Fallback
   };
 
-  const convertMeasurement = (value: number, unit: 'cm' | 'in', unitSystem: UnitSystem) => {
-    if (unit === unitSystem.bodyMeasurementUnit) {
-      return value; // No conversion needed if units match
+  const convertMeasurement = (value: number, fromUnit?: MeasurementUnit, toUnit?: MeasurementUnit) => {
+    if (!fromUnit || !toUnit || fromUnit === toUnit) {
+      return value; // No conversion needed if units match or are not specified
     }
 
-    if (unit === 'cm') {
-      if (unitSystem.bodyMeasurementUnit === 'in') {
-        return value / 2.54; // cm to inches
-      }
-    } else if (unit === 'in') {
-      if (unitSystem.bodyMeasurementUnit === 'cm') {
-        return value * 2.54; // inches to cm
-      }
+    if (fromUnit === 'cm' && toUnit === 'in') {
+      return value / 2.54; // cm to inches
+    } else if (fromUnit === 'in' && toUnit === 'cm') {
+      return value * 2.54; // inches to cm
     }
+    
     return value; // Fallback
   };
 
@@ -280,7 +276,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteWorkoutTemplate = (id: string) => {
-    setWorkoutTemplates(workoutTemplates.filter((t) => t.id !== id));
+    setWorkoutTemplates(workoutTemplates.filter(t => t.id !== id));
   };
 
   const addWorkoutPlan = (plan: WorkoutPlan) => {

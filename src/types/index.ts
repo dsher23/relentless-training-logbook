@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -232,7 +231,6 @@ export interface PRLift {
 }
 
 export type AppContextType = {
-  // Workout-related properties and methods
   workouts: Workout[];
   setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
   addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
@@ -243,21 +241,17 @@ export type AppContextType = {
   duplicateWorkout: (id: string) => void;
   toggleDeloadMode: (id: string, isDeload: boolean) => void;
   
-  // Exercise-related properties and methods
   exercises: Exercise[];
   addExercise: (exercise: Exercise) => void;
   
-  // Measurement-related properties
   measurements: Measurement[];
   bodyMeasurements: BodyMeasurement[];
   
-  // Supplement-related properties and methods
   supplements: Supplement[];
   addSupplement: (supplement: Supplement) => void;
   updateSupplement: (updated: Supplement) => void;
   deleteSupplement: (id: string) => void;
   
-  // Cycle-related properties and methods
   cycles: Cycle[];
   addCycle: (cycle: Cycle) => void;
   updateCycle: (updated: Cycle) => void;
@@ -265,7 +259,6 @@ export type AppContextType = {
   markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void;
   markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
   
-  // Steroid cycle related properties and methods
   steroidCycles: SteroidCycle[];
   steroidCompounds: SteroidCompound[];
   addSteroidCycle: (cycle: SteroidCycle) => void;
@@ -273,23 +266,15 @@ export type AppContextType = {
   updateSteroidCompound: (updated: SteroidCompound) => void;
   deleteSteroidCompound: (id: string) => void;
   
-  // Compound functions for supplements.tsx
-  addCompound: (compound: SteroidCompound) => void;
-  updateCompound: (compound: SteroidCompound) => void;
-  deleteCompound: (id: string) => void;
-  
-  // Cycle compound related properties and methods
   cycleCompounds: CycleCompound[];
   addCycleCompound: (compound: CycleCompound) => void;
   updateCycleCompound: (updated: CycleCompound) => void;
   deleteCycleCompound: (id: string) => void;
   
-  // Supplement log related properties and methods
   supplementLogs: SupplementLog[];
   addSupplementLog: (log: SupplementLog) => void;
   updateSupplementLog: (updated: SupplementLog) => void;
   
-  // Weekly routine related properties and methods
   weeklyRoutines: WeeklyRoutine[];
   addWeeklyRoutine: (routine: WeeklyRoutine) => void;
   updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
@@ -297,36 +282,30 @@ export type AppContextType = {
   duplicateWeeklyRoutine: (id: string) => void;
   archiveWeeklyRoutine: (id: string, archived: boolean) => void;
   
-  // Training block related properties and methods
   trainingBlocks: TrainingBlock[];
   addTrainingBlock: (block: TrainingBlock) => void;
   updateTrainingBlock: (updated: TrainingBlock) => void;
   
-  // Weak point related properties and methods
   weakPoints: WeakPoint[];
   addWeakPoint: (weakPoint: WeakPoint) => void;
   deleteWeakPoint: (id: string) => void;
   
-  // Mood log related properties and methods
   moodLogs: MoodLog[];
   addMoodLog: (moodLog: MoodLog) => void;
   updateMoodLog: (updated: MoodLog) => void;
   
-  // Reminder related properties and methods
   reminders: Reminder[];
   addReminder: (reminder: Reminder) => void;
   markReminderAsSeen: (id: string) => void;
   dismissReminder: (id: string) => void;
   getDueReminders: () => Reminder[];
   
-  // Workout template related properties and methods
   workoutTemplates: WorkoutTemplate[];
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
   duplicateWorkoutTemplate?: (id: string) => void;
   deleteWorkoutTemplate: (id: string) => void;
   
-  // Workout plan related properties and methods
   workoutPlans: WorkoutPlan[];
   addWorkoutPlan: (plan: WorkoutPlan) => void;
   updateWorkoutPlan: (updated: WorkoutPlan) => void;
@@ -336,13 +315,11 @@ export type AppContextType = {
   addTemplateToPlan?: (planId: string, templateId: string) => void;
   removeTemplateFromPlan: (planId: string, templateId: string) => void;
   
-  // Progress photo related properties and methods
   progressPhotos: ProgressPhoto[];
   addProgressPhoto: (photo: ProgressPhoto) => void;
   updateProgressPhoto: (updated: ProgressPhoto) => void;
   deleteProgressPhoto: (id: string) => void;
   
-  // Unit system related properties and methods
   unitSystem: UnitSystem;
   convertWeight: (weight: number, fromUnit?: WeightUnit, toUnit?: WeightUnit) => number;
   convertMeasurement: (value: number, fromUnit?: MeasurementUnit, toUnit?: MeasurementUnit) => number;
@@ -350,10 +327,8 @@ export type AppContextType = {
   getMeasurementUnitDisplay: () => MeasurementUnit;
   updateUnitSystem: (update: Partial<UnitSystem>) => void;
   
-  // Export related properties and methods
   exportData: (type?: string) => string;
   
-  // PR related methods
   addPRLift: (prData: Omit<PR, 'id'>) => void;
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
