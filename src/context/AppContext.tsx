@@ -4,16 +4,6 @@ import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Remi
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const useAppContext = () => {
-  const context = React.useContext(AppContext);
-  if (!context) {
-    throw new Error('useAppContext must be used within AppContextProvider');
-  }
-  return context;
-};
-
-export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
@@ -199,6 +189,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMoodLogs(moodLogs.map((ml) => (ml.id === updated.id ? updated : ml)));
   };
 
+  const addWorkoutTemplate = (template: WorkoutTemplate) => {
+    setWorkoutTemplates([...workoutTemplates, template]);
+  };
+
+  const updateWorkoutTemplate = (updated: WorkoutTemplate) => {
+    setWorkoutTemplates(workoutTemplates.map((t) => (t.id === updated.id ? updated : t)));
+  };
+
   const addWorkoutPlan = (plan: WorkoutPlan) => {
     setWorkoutPlans([...workoutPlans, plan]);
   };
@@ -323,3 +321,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
+
+export const useAppContext = () => {
+  const context = React.useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within AppProvider');
+  }
+  return context;
+};
+
+export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
