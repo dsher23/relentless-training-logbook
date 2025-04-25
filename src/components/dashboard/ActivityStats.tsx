@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Ruler, PillIcon } from "lucide-react";
@@ -6,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 
 const ActivityStats = () => {
-  const { bodyMeasurements, supplements } = useAppContext();
+  const { bodyMeasurements = [], supplements = [] } = useAppContext();
 
   // Get the latest measurement date
   const latestMeasurement = bodyMeasurements.length > 0
@@ -52,4 +51,3 @@ const ActivityStats = () => {
 };
 
 export default ActivityStats;
-
