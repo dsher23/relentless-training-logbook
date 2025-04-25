@@ -25,8 +25,12 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout }) => {
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteWorkout(workout.id);
-    toast.success("Workout deleted successfully");
+    if (deleteWorkout) {
+      deleteWorkout(workout.id);
+      toast.success("Workout deleted successfully");
+    } else {
+      toast.error("Delete function not available");
+    }
   };
 
   const handleEdit = (e: React.MouseEvent) => {

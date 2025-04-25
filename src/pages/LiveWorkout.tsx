@@ -10,6 +10,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Exercise } from "@/types";
 import { useLiveWorkout } from "@/hooks/useLiveWorkout";
 import { Textarea } from "@/components/ui/textarea";
+import NavigationHeader from "@/components/NavigationHeader";
 import {
   Sheet,
   SheetContent,
@@ -93,13 +94,23 @@ const LiveWorkout: React.FC = () => {
   };
   
   if (!workout) {
-    return <div className="p-4">Loading workout...</div>;
+    return (
+      <>
+        <NavigationHeader title="Loading" showBack={true} />
+        <div className="p-4">Loading workout...</div>
+      </>
+    );
   }
   
   const currentExercise = workout.exercises[currentExerciseIndex];
   
   if (!currentExercise) {
-    return <div className="p-4">No exercises found in this workout.</div>;
+    return (
+      <>
+        <NavigationHeader title={workout.name} showBack={true} />
+        <div className="p-4">No exercises found in this workout.</div>
+      </>
+    );
   }
 
   const ExerciseBlock: React.FC<{
@@ -127,7 +138,6 @@ const LiveWorkout: React.FC = () => {
       onUpdateNotes(notes);
     };
 
-    // Handle previousStats, ensuring it exists
     const previousStats = exercise.previousStats || {};
 
     return (
@@ -208,16 +218,22 @@ const LiveWorkout: React.FC = () => {
   
   return (
     <div className="app-container animate-fade-in pb-16">
-      <div className="px-4">
+      <NavigationHeader 
+        title={workout.name}
+        showBack={true}
+        showHome={true} 
+        showProfile={false}
+      />
+      
+      <div className="px-4 pt-4">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold">{workout.name}</h1>
             <p className="text-sm text-muted-foreground">
               {isTemplate ? "Template" : "Workout"}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={toggleTimer}>
+            <Button variant="outline" onClick={() => setIsRunning(prev => !prev)}>
               <Clock className="h-4 w-4 mr-2" />
               {isRunning ? "Pause" : "Start"}
             </Button>

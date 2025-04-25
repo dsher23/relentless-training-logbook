@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
@@ -18,6 +18,17 @@ export const useLiveWorkout = () => {
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (workout && Object.keys(exerciseData).length > 0) {
+      const progressData = {
+        workoutId: workout.id,
+        exerciseData,
+        currentExerciseIndex
+      };
+      localStorage.setItem('workout_in_progress', JSON.stringify(progressData));
+    }
+  }, [workout, exerciseData, currentExerciseIndex]);
 
   const initializeExerciseData = useCallback((exercise) => {
     const initialSets = exercise.sets?.length > 0 
@@ -71,13 +82,7 @@ export const useLiveWorkout = () => {
         notes: workout.notes || ""
       };
       
-      console.log("Saving completed workout:", {
-        id: completedWorkout.id,
-        name: completedWorkout.name,
-        completed: completedWorkout.completed,
-        completedType: typeof completedWorkout.completed,
-        date: completedWorkout.date
-      });
+      console.log("Saving completed workout:", completedWorkout);
       
       updateWorkout(completedWorkout);
       
