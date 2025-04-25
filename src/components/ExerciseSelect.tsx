@@ -203,7 +203,6 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                       key={`${exercise}-${index}`}
                       value={exercise}
                       onSelect={(currentValue) => {
-                        // Explicitly call the onSelectExercise function
                         onSelectExercise(currentValue);
                         setOpen(false);
                       }}
@@ -280,7 +279,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="pr-type">PR Category</Label>
                 <Select value={prExerciseType} onValueChange={setPrExerciseType}>
-                  <SelectTrigger>
+                  <SelectTrigger id="pr-type">
                     <SelectValue placeholder="Select PR category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -310,3 +309,5 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     </>
   );
 };
+
+export default ExerciseSelect;

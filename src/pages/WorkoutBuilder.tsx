@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
@@ -387,18 +388,22 @@ const WorkoutBuilder: React.FC = () => {
                       <SelectValue placeholder="Select Exercise" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['upper', 'lower', 'core', 'other'].map((category) => (
-                        <React.Fragment key={category}>
-                          <SelectItem value={`category-${category}`} disabled>{category.toUpperCase()}</SelectItem>
-                          {exercises
-                            .filter((ex) => ex.category === category)
-                            .map((ex) => (
-                              <SelectItem key={ex.id} value={ex.id}>
-                                {ex.name}
-                              </SelectItem>
-                            ))}
-                        </React.Fragment>
-                      ))}
+                      {exercises.length > 0 ? (
+                        ['upper', 'lower', 'core', 'other'].map((category) => (
+                          <React.Fragment key={category}>
+                            <SelectItem value={`category-${category}`} disabled>{category.toUpperCase()}</SelectItem>
+                            {exercises
+                              .filter((ex) => ex.category === category)
+                              .map((ex) => (
+                                <SelectItem key={ex.id} value={ex.id}>
+                                  {ex.name}
+                                </SelectItem>
+                              ))}
+                          </React.Fragment>
+                        ))
+                      ) : (
+                        <SelectItem value="no-exercises" disabled>No exercises available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <Button size="sm" onClick={handleSelectExercise} disabled={!selectedExerciseId}>
