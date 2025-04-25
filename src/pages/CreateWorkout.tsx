@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Save, Play } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import Header from "@/components/Header";
-import { AppContext } from "../../context/AppContext";
 
 interface CreateWorkoutFormValues {
   name: string;
@@ -18,7 +17,6 @@ interface CreateWorkoutFormValues {
 }
 
 const CreateWorkout: React.FC = () => {
-  const { addWorkout } = useContext(AppContext)!;
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -88,7 +86,7 @@ const CreateWorkout: React.FC = () => {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>Notes</Label>
                       <FormControl>
                         <Textarea 
                           placeholder="Any specific goals for this workout?"
