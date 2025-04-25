@@ -1,9 +1,9 @@
-
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
 import { convertTemplateToWorkout } from "@/hooks/useWorkoutLoader";
+import { Workout } from '@/types';
 
 export const useLiveWorkout = () => {
   const { id } = useParams();
@@ -13,13 +13,12 @@ export const useLiveWorkout = () => {
   const { toast } = useToast();
   const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
   
-  const [workout, setWorkout] = useState(null);
+  const [workout, setWorkout] = useState<Workout | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
-  const [exerciseData, setExerciseData] = useState({});
+  const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
 
-  // Helper function to initialize exercise data with proper default values
   const initializeExerciseData = useCallback((exercise) => {
     const initialSets = exercise.sets?.length > 0 
       ? exercise.sets.map(set => ({ 
@@ -49,18 +48,18 @@ export const useLiveWorkout = () => {
     try {
       setHasAttemptedSave(true);
       
-      const updatedExercises = workout.exercises.map(exercise => {
+      const updatedExercises = workout.exercises?.map(exercise => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
         
         return {
           ...exercise,
-          sets: data.sets.map(set => ({ ...set })),
+          sets: data.sets.map((set: any) => ({ ...set })),
           notes: data.notes || "",
           lastProgressDate: new Date(),
           prExerciseType: exercise.prExerciseType
         };
-      });
+      }) || [];
 
       const completedWorkout = {
         ...workout,
@@ -171,11 +170,7 @@ export const useLiveWorkout = () => {
       const nextExercise = workout.exercises[nextIndex];
       const nextExerciseId = nextExercise.id;
       
-      // Initialize the next exercise data if it doesn't already exist
-      // This ensures it resets properly when switching exercises
       setExerciseData(prev => {
-        // Always create a fresh initialized exercise data when switching
-        // This ensures we reset values properly
         return {
           ...prev,
           [nextExerciseId]: initializeExerciseData(nextExercise)
@@ -214,21 +209,17 @@ export const useLiveWorkout = () => {
       const exercise = prev[exerciseId];
       if (!exercise) return prev;
       
-      // Create a deep copy of the sets array
       const updatedSets = [...exercise.sets];
       
-      // Ensure the set at this index exists
       if (!updatedSets[setIndex]) {
         updatedSets[setIndex] = { reps: 0, weight: 0 };
       }
       
-      // Update the specific field
       updatedSets[setIndex] = { 
         ...updatedSets[setIndex], 
         [field]: value 
       };
       
-      // Log what's being updated for debugging
       console.log(`Updating set ${setIndex} ${field} to ${value}`);
       
       return {

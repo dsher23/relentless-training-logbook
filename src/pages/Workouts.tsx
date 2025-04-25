@@ -1,254 +1,368 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Plus, Calendar, ClipboardList, Star, CalendarDays } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Header from "@/components/Header";
-import WorkoutCard from "@/components/WorkoutCard";
-import StartWorkoutButton from "@/components/StartWorkoutButton";
-import { useAppContext } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import WeeklyPlanView from "@/components/WeeklyPlanView";
-import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import { useAppContext } from "@/context/AppContext";
+import { format } from "date-fns";
+import { Plus, Calendar, Dumbbell, MoreVertical, Copy, Trash2, Star, Clock } from "lucide-react";
+import Header from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { WorkoutTemplate } from "@/types";
+import { toast } from "sonner";
 
 const Workouts: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts, workoutTemplates, workoutPlans, deleteWorkoutTemplate } = useAppContext();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { workouts, workoutTemplates, deleteWorkoutTemplate } = useAppContext();
+  const [showDialog, setShowDialog] = useState(false);
+  const [newWorkoutName, setNewWorkoutName] = useState("");
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
-  
-  // Sort templates to show favorites first
-  const sortedTemplates = [...workoutTemplates].sort((a, b) => {
-    if (a.isFavorite === b.isFavorite) {
-      return a.name.localeCompare(b.name);
+
+  const activeWorkouts = workouts.filter(w => !w.completed);
+  const completedWorkouts = workouts.filter(w => w.completed);
+  const favoriteTemplates = workoutTemplates.filter(t => t.isFavorite);
+
+  const handleCreateWorkout = () => {
+    if (newWorkoutName.trim()) {
+      navigate(`/workouts/builder/new?name=${encodeURIComponent(newWorkoutName)}`);
+      setShowDialog(false);
+      setNewWorkoutName("");
     }
-    return a.isFavorite ? -1 : 1;
-  });
-  
-  // Group workouts by completion status and sort by date
-  const completedWorkouts = workouts
-    .filter(w => w.completed === true)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  
-  // Get active workout plan
-  const activePlan = workoutPlans.find(p => p.isActive);
-  
-  // Handle delete confirmation
-  const handleDeleteClick = (templateId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setTemplateToDelete(templateId);
-    setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (templateToDelete) {
+  const handleDeleteTemplate = (id: string) => {
+    setTemplateToDelete(id);
+    setConfirmDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (templateToDelete && deleteWorkoutTemplate) {
       deleteWorkoutTemplate(templateToDelete);
-      setDeleteDialogOpen(false);
+      toast.success("Template deleted successfully");
+      setConfirmDeleteDialog(false);
       setTemplateToDelete(null);
     }
   };
 
-  // Navigation handler for workout edit
-  const handleEditWorkoutDay = (templateId: string) => {
-    const planId = activePlan?.id || '';
-    if (planId) {
-      navigate(`/exercise-plans/${planId}/days/${templateId}`);
-    } else {
-      navigate(`/exercise-plans/days/${templateId}`);
-    }
-  };
-  
   return (
     <div className="app-container animate-fade-in pb-16">
       <Header title="Workouts" />
-      
-      <div className="px-4 mb-6">
-        <div className="flex gap-2">
-          <Button
-            className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple"
-            onClick={() => navigate("/workout-selection")}
-          >
+
+      <div className="px-4 mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium">Workout Management</h2>
+          <Button onClick={() => setShowDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Start Workout
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-shrink-0"
-            onClick={() => navigate("/workouts/new")}
-          >
-            <ClipboardList className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-shrink-0"
-            onClick={() => navigate("/weekly-overview")}
-          >
-            <Calendar className="h-4 w-4" />
+            New Workout
           </Button>
         </div>
-      </div>
-      
-      {activePlan && (
-        <div className="px-4 mb-6">
-          <Card className="bg-secondary/50">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium flex items-center">
-                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                    Active Plan: {activePlan.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {activePlan.workoutTemplates.length} workout days in plan
-                  </p>
-                </div>
-                <Button 
-                  size="sm"
-                  onClick={() => navigate(`/exercise-plans/${activePlan.id}/days`)}
-                >
-                  View Plan
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      <Tabs defaultValue="routines" className="w-full">
-        <TabsList className="grid grid-cols-2 mx-4 mb-4">
-          <TabsTrigger value="routines">
-            <ClipboardList className="h-4 w-4 mr-2" /> Workout Days
-          </TabsTrigger>
-          <TabsTrigger value="weekly">
-            <CalendarDays className="h-4 w-4 mr-2" /> Weekly Plan
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="routines">
-          {sortedTemplates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-6 text-center">
-              <Dumbbell className="h-12 w-12 text-gym-purple mb-4" />
-              <h2 className="text-xl font-bold mb-2">No Workout Days Yet</h2>
-              <p className="text-muted-foreground mb-6">
-                Start by creating your first workout day or exercise plan.
-              </p>
-              <div className="flex gap-2">
-                <Button onClick={() => navigate("/workouts/new")}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Workout Day
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/exercise-plans")}
-                >
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  View Workout Plans
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="px-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">My Workout Days</h2>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => navigate("/exercise-plans")}>
-                    Workout Plans
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => navigate("/workouts/new")}>
-                    <Plus className="h-4 w-4 mr-1" /> New
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {sortedTemplates.map(template => (
-                  <Card 
-                    key={template.id} 
-                    className="hover:border-primary cursor-pointer shadow-sm"
-                    onClick={() => handleEditWorkoutDay(template.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {template.isFavorite && (
-                            <Star className="h-4 w-4 text-yellow-500" />
-                          )}
+
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active">
+            {activeWorkouts.length > 0 ? (
+              <div className="space-y-4">
+                {activeWorkouts.map((workout) => (
+                  <Card key={workout.id} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div
+                        className="p-4 cursor-pointer"
+                        onClick={() => navigate(`/workouts/${workout.id}`)}
+                      >
+                        <div className="flex justify-between items-center">
                           <div>
-                            <h3 className="font-medium">{template.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {template.exercises?.length || 0} exercises
+                            <h3 className="font-medium">{workout.name}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {workout.date &&
+                                format(new Date(workout.date), "MMM d, yyyy")}
                             </p>
                           </div>
+                          <Badge variant={workout.completed ? "outline" : "default"}>
+                            {workout.completed ? "Completed" : "In Progress"}
+                          </Badge>
                         </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditWorkoutDay(template.id);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={(e) => handleDeleteClick(template.id, e)}
-                          >
-                            Delete
-                          </Button>
-                          <StartWorkoutButton 
-                            workoutId={template.id} 
-                            className="bg-gym-blue hover:bg-blue-700"
-                            isTemplate
-                          />
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          {workout.exercises?.length || 0} exercises
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="weekly" className="mt-4 px-4">
-          <WeeklyPlanView />
-        </TabsContent>
-      </Tabs>
-      
-      {completedWorkouts.length > 0 && (
-        <section className="px-4 mt-8 mb-16">
-          <h2 className="text-lg font-semibold mb-4">Completed Workouts</h2>
-          <div className="space-y-3">
-            {completedWorkouts.slice(0, 5).map(workout => (
-              <WorkoutCard 
-                key={workout.id} 
-                workout={workout}
-                onClick={() => navigate(`/workouts/${workout.id}`)}
-              />
-            ))}
-            {completedWorkouts.length > 5 && (
-              <Button 
-                variant="outline" 
-                className="w-full mt-2" 
-                onClick={() => navigate("/workout-history")}
-              >
-                View All Completed Workouts
-              </Button>
+            ) : (
+              <div className="text-center py-8">
+                <Dumbbell className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+                <h3 className="mt-4 text-lg font-medium">No active workouts</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create a new workout to get started
+                </p>
+                <Button
+                  onClick={() => setShowDialog(true)}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Workout
+                </Button>
+              </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="templates">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium mb-2">Favorite Templates</h3>
+              {favoriteTemplates.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {favoriteTemplates.map((template) => (
+                    <Card key={template.id}>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium flex items-center">
+                              {template.name}
+                              <Star className="h-3 w-3 ml-1 fill-yellow-400 text-yellow-400" />
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {template.exercises.length} exercises
+                            </p>
+                          </div>
+                          <div className="flex">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(`/workouts/start/${template.id}?isTemplate=true`)
+                              }
+                            >
+                              Start
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => navigate(`/workouts/${template.id}`)}
+                                >
+                                  View
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => navigate(`/workouts/builder/${template.id}`)}
+                                >
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteTemplate(template.id)}
+                                  className="text-red-500"
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No favorite templates yet
+                </p>
+              )}
+            </div>
+
+            <h3 className="text-sm font-medium mb-2">All Templates</h3>
+            {workoutTemplates.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {workoutTemplates.map((template) => (
+                  <Card key={template.id}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{template.name}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {template.exercises.length} exercises
+                          </p>
+                        </div>
+                        <div className="flex">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/workouts/start/${template.id}?isTemplate=true`)
+                            }
+                          >
+                            Start
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => navigate(`/workouts/${template.id}`)}
+                              >
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => navigate(`/workouts/builder/${template.id}`)}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteTemplate(template.id)}
+                                className="text-red-500"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+                <h3 className="mt-4 text-lg font-medium">No templates</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create workout templates to reuse later
+                </p>
+                <Button
+                  onClick={() => navigate("/workouts/template/new")}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Template
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history">
+            {completedWorkouts.length > 0 ? (
+              <div className="space-y-4">
+                {completedWorkouts
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                  )
+                  .map((workout) => (
+                    <Card key={workout.id} className="overflow-hidden">
+                      <CardContent className="p-0">
+                        <div
+                          className="p-4 cursor-pointer"
+                          onClick={() => navigate(`/workouts/${workout.id}`)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h3 className="font-medium">{workout.name}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                {workout.date &&
+                                  format(new Date(workout.date), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                            <Badge variant="outline">Completed</Badge>
+                          </div>
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            {workout.exercises?.length || 0} exercises
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Clock className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+                <h3 className="mt-4 text-lg font-medium">No workout history</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Complete workouts to see them here
+                </p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* New Workout Dialog */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Workout</DialogTitle>
+            <DialogDescription>
+              Give your workout a name to get started
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">Workout Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g., Upper Body Day"
+                value={newWorkoutName}
+                onChange={(e) => setNewWorkoutName(e.target.value)}
+              />
+            </div>
           </div>
-        </section>
-      )}
-      
-      <DeleteConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeleteDialogOpen(false)}
-        title="Delete Workout Day"
-        message="Are you sure you want to delete this workout day? This action cannot be undone."
-      />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateWorkout}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <Dialog open={confirmDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Template</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this template? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

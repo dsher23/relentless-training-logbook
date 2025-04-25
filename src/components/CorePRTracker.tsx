@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,7 @@ const CorePRTracker: React.FC = () => {
   } | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
 
-  const weightUnit = getWeightUnitDisplay(unitSystem.liftingWeightUnit);
+  const weightUnit = getWeightUnitDisplay();
 
   const prExerciseOptions = [
     { id: "bench-press", name: "Bench Press" },
@@ -107,7 +106,7 @@ const CorePRTracker: React.FC = () => {
     
     let bestOneRM = 0;
     let bestSet = null;
-    let bestWorkoutDate: Date | string | null = null;
+    let bestWorkoutDate: Date | null = null;
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
@@ -115,13 +114,13 @@ const CorePRTracker: React.FC = () => {
     directPRs.forEach(pr => {
       if (pr.exerciseId === selectedLift) {
         // Convert stored weight (kg) to display unit
-        const displayWeight = convertWeight(pr.weight, "kg", unitSystem.liftingWeightUnit);
+        const displayWeight = convertWeight(Number(pr.weight), "kg", unitSystem.liftingWeightUnit);
         
         const oneRM = calculateOneRepMax(displayWeight, pr.reps);
         if (oneRM > bestOneRM) {
           bestOneRM = oneRM;
           bestSet = { weight: displayWeight, reps: pr.reps };
-          bestWorkoutDate = pr.date;
+          bestWorkoutDate = new Date(pr.date);
           bestWorkoutId = undefined;
         }
         
@@ -213,7 +212,7 @@ const CorePRTracker: React.FC = () => {
         weight: Number(bestSet.weight),
         reps: Number(bestSet.reps),
         oneRM: bestOneRM,
-        date: format(new Date(bestWorkoutDate), "MMM d, yyyy"),
+        date: format(bestWorkoutDate, "MMM d, yyyy"),
         workoutId: bestWorkoutId
       });
     } else {

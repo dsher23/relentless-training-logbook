@@ -33,8 +33,8 @@ export default function Measurements() {
   const { bodyMeasurements, addBodyMeasurement } = useBodyMeasurements();
   const { 
     unitSystem, 
-    convertWeight, 
-    convertMeasurement,
+    convertWeight: appConvertWeight, 
+    convertMeasurement: appConvertMeasurement,
     getWeightUnitDisplay, 
     getMeasurementUnitDisplay 
   } = useAppContext();
@@ -44,22 +44,41 @@ export default function Measurements() {
   });
   const [error, setError] = useState<string>("");
 
-  const weightUnit = getWeightUnitDisplay(unitSystem.bodyWeightUnit);
-  const measureUnit = getMeasurementUnitDisplay(unitSystem.bodyMeasurementUnit);
+  const weightUnit = getWeightUnitDisplay();
+  const measureUnit = getMeasurementUnitDisplay();
 
-  const convertWeight = (weight: number) => {
-    return useAppContext().convertWeight(weight);
-  };
-  
-  const convertMeasurement = (measurement: number) => {
-    return useAppContext().convertMeasurement(measurement);
-  };
+  const convertedMeasurements = useMemo(() => {
+    if (!bodyMeasurements) return [];
+    
+    return bodyMeasurements.map(m => ({
+      ...m,
+      displayWeight: m.weight !== undefined ? 
+        appConvertWeight(m.weight, "kg", unitSystem.bodyWeightUnit) : 
+        undefined,
+      displayChest: m.chest !== undefined ? 
+        appConvertMeasurement(m.chest, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayWaist: m.waist !== undefined ? 
+        appConvertMeasurement(m.waist, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayArms: m.arms !== undefined ? 
+        appConvertMeasurement(m.arms, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayForearms: m.forearms !== undefined ? 
+        appConvertMeasurement(m.forearms, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayThighs: m.thighs !== undefined ? 
+        appConvertMeasurement(m.thighs, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined,
+      displayCalves: m.calves !== undefined ? 
+        appConvertMeasurement(m.calves, "cm", unitSystem.bodyMeasurementUnit) : 
+        undefined
+    }));
+  }, [bodyMeasurements, unitSystem, appConvertWeight, appConvertMeasurement]);
 
   const handleSave = () => {
-    // Reset error
     setError("");
 
-    // Validate inputs
     const numericFields = [
       { key: "weight", label: "Weight", unit: weightUnit },
       { key: "chest", label: "Chest", unit: measureUnit },
@@ -78,30 +97,29 @@ export default function Measurements() {
       }
     }
 
-    // Convert measurements to base units (kg, cm) for storage
     const measurement = {
       id: uuid(),
       date: new Date(draft.date),
       weight: draft.weight ? 
-        convertWeight(Number(draft.weight), unitSystem.bodyWeightUnit, "kg") : 
+        appConvertWeight(Number(draft.weight), unitSystem.bodyWeightUnit, "kg") : 
         undefined,
       chest: draft.chest ? 
-        convertMeasurement(Number(draft.chest), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.chest), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       waist: draft.waist ? 
-        convertMeasurement(Number(draft.waist), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.waist), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       arms: draft.arms ? 
-        convertMeasurement(Number(draft.arms), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.arms), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       forearms: draft.forearms ? 
-        convertMeasurement(Number(draft.forearms), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.forearms), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       thighs: draft.thighs ? 
-        convertMeasurement(Number(draft.thighs), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.thighs), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       calves: draft.calves ? 
-        convertMeasurement(Number(draft.calves), unitSystem.bodyMeasurementUnit, "cm") : 
+        appConvertMeasurement(Number(draft.calves), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       notes: draft.notes,
       photoData: draft.photoData,
@@ -113,36 +131,6 @@ export default function Measurements() {
     setDraft({ date: new Date().toISOString().slice(0, 10) });
     setError("");
   };
-
-  // Convert stored measurements (in base units) to display units
-  const convertedMeasurements = useMemo(() => {
-    if (!bodyMeasurements) return [];
-    
-    return bodyMeasurements.map(m => ({
-      ...m,
-      displayWeight: m.weight !== undefined ? 
-        convertWeight(m.weight, "kg", unitSystem.bodyWeightUnit) : 
-        undefined,
-      displayChest: m.chest !== undefined ? 
-        convertMeasurement(m.chest, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined,
-      displayWaist: m.waist !== undefined ? 
-        convertMeasurement(m.waist, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined,
-      displayArms: m.arms !== undefined ? 
-        convertMeasurement(m.arms, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined,
-      displayForearms: m.forearms !== undefined ? 
-        convertMeasurement(m.forearms, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined,
-      displayThighs: m.thighs !== undefined ? 
-        convertMeasurement(m.thighs, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined,
-      displayCalves: m.calves !== undefined ? 
-        convertMeasurement(m.calves, "cm", unitSystem.bodyMeasurementUnit) : 
-        undefined
-    }));
-  }, [bodyMeasurements, unitSystem, convertWeight, convertMeasurement]);
 
   const weightRows = useMemo(
     () =>
@@ -163,7 +151,6 @@ export default function Measurements() {
     [convertedMeasurements]
   );
 
-  // Function to display measurement with unit
   const formatMeasurement = (key: string, value: any): string => {
     if (key === "date") {
       return new Date(value as Date | string).toLocaleDateString();
@@ -185,7 +172,6 @@ export default function Measurements() {
       <NavigationHeader title="Measurements" showBack showHome />
 
       <div className="p-4 space-y-4">
-        {/* Latest entry card */}
         {convertedMeasurements && convertedMeasurements.length > 0 ? (
           <Card>
             <CardHeader>
@@ -274,7 +260,6 @@ export default function Measurements() {
           </p>
         )}
 
-        {/* Weight graph */}
         {weightRows.length > 1 && (
           <Card>
             <CardHeader>
@@ -290,12 +275,10 @@ export default function Measurements() {
           </Card>
         )}
 
-        {/* Add / open drawer button */}
         <Button className="w-full" onClick={() => setOpen(true)}>
           Add Measurement
         </Button>
 
-        {/* Measurement drawer */}
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerContent className="p-4 space-y-3">
             <h3 className="font-medium text-lg">New Measurement</h3>

@@ -1,21 +1,21 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListBullet, Plus, Dumbbell } from "lucide-react";
+import { List, Plus, Dumbbell } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import { Exercise, Workout, WorkoutTemplate } from "@/types";
 import ExerciseItem from "@/components/ExerciseItem";
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const WorkoutDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { workouts, workoutTemplates, getWorkoutById, addWorkoutTemplate, addExercise } = useAppContext();
   const [workout, setWorkout] = useState<Workout | WorkoutTemplate | undefined>(undefined);
-  const { toast } = useToast();
   
   useEffect(() => {
     if (id) {
@@ -56,7 +56,7 @@ const WorkoutDetail: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-2xl font-bold">{workout.name}</h1>
-            {workout.date && (
+            {'date' in workout && workout.date && (
               <p className="text-sm text-muted-foreground">
                 {format(new Date(workout.date), "MMM d, yyyy")}
               </p>
@@ -64,7 +64,7 @@ const WorkoutDetail: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate(`/workouts/builder/${workout.id}`)}>
-              <ListBullet className="h-4 w-4 mr-2" />
+              <List className="h-4 w-4 mr-2" />
               Edit
             </Button>
             <Button onClick={handleDuplicateAsRoutine}>

@@ -15,7 +15,7 @@ import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext } from "@/context/AppContext";
 import DataExport from "@/components/DataExport";
 import { CalendarDays, Plus, MoreVertical, Edit, Trash2 } from "lucide-react";
-import { WeeklyRoutine } from "@/types";
+import { WeeklyRoutine, WorkoutDay } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -173,7 +173,7 @@ const Routines: React.FC = () => {
                         </p>
                         <div className="text-xs text-muted-foreground mt-2">
                           <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
-                            {routine.workoutDays.map((day: WeeklyRoutine) => (
+                            {routine.workoutDays.map((day: WorkoutDay) => (
                               <li key={day.id}>
                                 • {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.dayOfWeek]}: {day.workoutName || 'Rest'}
                               </li>
@@ -200,7 +200,6 @@ const Routines: React.FC = () => {
           </TabsContent>
         </Tabs>
         
-        {/* Create New Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${open ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="bg-white dark:bg-gray-800 p-8 rounded-lg max-w-2xl mx-auto w-full">
@@ -213,7 +212,6 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
-        {/* Edit Routine Modal */}
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 z-50 overflow-y-auto ${editRoutineId ? '' : 'hidden'}`}>
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="bg-white dark:bg-gray-800 p-8 rounded-lg max-w-2xl mx-auto w-full">
@@ -231,7 +229,6 @@ const Routines: React.FC = () => {
           </div>
         </div>
         
-        {/* Confirm Delete Dialog */}
         <Dialog open={confirmDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
           <DialogContent>
             <DialogHeader>
