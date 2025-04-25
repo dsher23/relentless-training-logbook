@@ -36,9 +36,9 @@ const CreateWorkout: React.FC = () => {
     try {
       // Generate a unique ID for the workout
       const workoutId = uuidv4();
-      // Add workout to context
-      addWorkout(values.name, [], { notes: values.notes, id: workoutId });
-      // Pass workout data to builder, including ID for tracking
+      // Add workout to context with initial data
+      addWorkout(values.name, [], { id: workoutId, notes: values.notes });
+      // Pass workout data to builder
       navigate("/workouts/builder", {
         state: { 
           workoutId,
