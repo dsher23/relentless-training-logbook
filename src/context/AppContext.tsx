@@ -432,7 +432,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addCompound,
       updateCompound,
       deleteCompound,
-      supplementLogs,
       addSupplementLog,
       updateSupplementLog,
       exportData,
