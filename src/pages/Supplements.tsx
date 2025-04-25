@@ -15,7 +15,7 @@ import { SteroidCompound } from "@/types";
 import TabNavigation from "@/components/TabNavigation";
 
 const Supplements: React.FC = () => {
-  const { supplements, supplementLogs, steroidCycles, compounds, addCompound, updateCompound, deleteCompound } = useAppContext();
+  const { supplements, supplementLogs, steroidCycles, steroidCompounds, addCompound, updateCompound, deleteCompound } = useAppContext();
   const [isSupplementFormOpen, setIsSupplementFormOpen] = useState(false);
   const [isCycleFormOpen, setIsCycleFormOpen] = useState(false);
   const [isCompoundFormOpen, setIsCompoundFormOpen] = useState(false);
@@ -64,7 +64,7 @@ const Supplements: React.FC = () => {
   };
   
   const cycleCompounds = (cycleId: string) => {
-    return compounds.filter(c => c.cycleId === cycleId);
+    return steroidCompounds.filter(c => c.cycleId === cycleId);
   };
   
   return (
@@ -155,7 +155,8 @@ const Supplements: React.FC = () => {
                       <h3 className="text-base font-medium">{supplement.name}</h3>
                       <p className="text-xs text-muted-foreground">
                         {supplement.dosage}
-                        {supplement.schedule?.times && ` · ${supplement.schedule.times.join(", ")}`}
+                        {supplement.schedule?.times && supplement.schedule.times.length > 0 && 
+                          ` · ${supplement.schedule.times.join(", ")}`}
                       </p>
                       {supplement.notes && (
                         <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>

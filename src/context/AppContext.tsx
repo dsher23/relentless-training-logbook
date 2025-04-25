@@ -315,6 +315,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const addCompound = (compound: SteroidCompound) => {
+    setSteroidCompounds([...steroidCompounds, compound]);
+  };
+
+  const updateCompound = (updated: SteroidCompound) => {
+    setSteroidCompounds(steroidCompounds.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
+  const deleteCompound = (id: string) => {
+    setSteroidCompounds(steroidCompounds.filter((c) => c.id !== id));
+  };
+
+  const duplicateWorkoutTemplate = (id: string) => {
+    const template = workoutTemplates.find((t) => t.id === id);
+    if (template) {
+      const newTemplate = { ...template, id: uuidv4(), name: `${template.name} (Copy)` };
+      setWorkoutTemplates([...workoutTemplates, newTemplate]);
+      return newTemplate.id;
+    }
+    return null;
+  };
+
+  const addTemplateToPlan = (planId: string, templateId: string) => {
+    setWorkoutPlans(workoutPlans.map((p) => {
+      if (p.id !== planId) return p;
+      const template = workoutTemplates.find(t => t.id === templateId);
+      if (!template) return p;
+      
+      return {
+        ...p,
+        workoutTemplates: [...(p.workoutTemplates || []), template]
+      };
+    }));
+  };
+
+  const deleteWeeklyRoutine = (id: string) => {
+    setWeeklyRoutines(weeklyRoutines.filter((r) => r.id !== id));
+  };
+
+  const duplicateWeeklyRoutine = (id: string) => {
+    const routine = weeklyRoutines.find((r) => r.id === id);
+    if (routine) {
+      const newRoutine = { ...routine, id: uuidv4(), name: `${routine.name} (Copy)` };
+      setWeeklyRoutines([...weeklyRoutines, newRoutine]);
+    }
+  };
+
+  const archiveWeeklyRoutine = (id: string, archived: boolean) => {
+    setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === id ? { ...r, archived } : r)));
+  };
+
   const value = useMemo(
     () => ({
       workouts,
@@ -399,6 +450,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       duplicateWorkoutPlan,
       setActivePlan,
       removeTemplateFromPlan,
+      compounds: steroidCompounds,
+      addCompound,
+      updateCompound,
+      deleteCompound,
+      duplicateWorkoutTemplate,
+      addTemplateToPlan,
+      deleteWeeklyRoutine,
+      duplicateWeeklyRoutine,
+      archiveWeeklyRoutine,
     }),
     [workouts, measurements, bodyMeasurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans, steroidCompounds, cycleCompounds, progressPhotos, unitSystem]
   );
@@ -425,5 +485,6 @@ export type {
   SteroidCycle, 
   SupplementLog, 
   WorkoutTemplate, 
-  WorkoutPlan 
+  WorkoutPlan,
+  Exercise 
 };

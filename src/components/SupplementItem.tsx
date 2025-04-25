@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { PillIcon, Check, X, Clock, CalendarCheck, Edit, Save } from "lucide-react";
+import { PillIcon, Check, X, Clock, Edit, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Popover,
@@ -9,7 +9,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Supplement, SupplementLog, useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
+import { Supplement, SupplementLog } from "@/types";
 
 interface SupplementItemProps {
   supplement: Supplement;
@@ -34,13 +35,13 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
         dosageTaken: supplement.dosage,
         taken: true,
         time: new Date()
-      } as SupplementLog);
+      });
     } else {
       updateSupplementLog({
         ...log,
         taken: !log.taken,
         time: log.taken ? undefined : new Date()
-      } as SupplementLog);
+      });
     }
   };
   
@@ -55,6 +56,8 @@ const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date =
       id: crypto.randomUUID(),
       type: "supplement",
       supplementId: supplement.id,
+      time: time,
+      days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
       dateTime: reminderDate,
       title: `Time to take ${supplement.name}`,
       message: `${supplement.dosage} as scheduled`,

@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -56,9 +57,10 @@ export interface Supplement {
   history: { date: Date; taken: boolean }[];
   dosage?: string;
   notes?: string;
-  schedule?: string[];
-  times?: string[];
-  workoutDays?: string[];
+  schedule?: {
+    times?: string[];
+    workoutDays?: boolean;
+  };
 }
 
 export interface Cycle {
@@ -89,6 +91,10 @@ export interface SteroidCycle {
   compounds: SteroidCompound[];
   startDate: Date;
   endDate: Date;
+  notes?: string;
+  isPrivate?: boolean;
+  currentWeek?: number;
+  totalWeeks?: number;
 }
 
 export interface SupplementLog {
@@ -96,6 +102,8 @@ export interface SupplementLog {
   supplementId: string;
   date: Date;
   taken: boolean;
+  time?: Date;
+  dosageTaken?: string;
 }
 
 export interface PR {
@@ -291,4 +299,33 @@ export interface AppContextType {
   duplicateWorkoutPlan: (id: string) => void;
   setActivePlan: (id: string) => void;
   removeTemplateFromPlan: (planId: string, templateId: string) => void;
+  // Additional methods needed based on errors
+  compounds?: SteroidCompound[];
+  addCompound?: (compound: SteroidCompound) => void;
+  updateCompound?: (compound: SteroidCompound) => void;
+  deleteCompound?: (id: string) => void;
+  duplicateWorkoutTemplate?: (id: string) => void;
+  addTemplateToPlan?: (planId: string, templateId: string) => void;
+  deleteWeeklyRoutine?: (id: string) => void;
+  duplicateWeeklyRoutine?: (id: string) => void;
+  archiveWeeklyRoutine?: (id: string, archived: boolean) => void;
+}
+
+export type WeightUnit = 'kg' | 'lbs' | 'stone';
+export type MeasurementUnit = 'cm' | 'in';
+
+export interface UnitSystem {
+  bodyWeightUnit: WeightUnit;
+  bodyMeasurementUnit: MeasurementUnit;
+  liftingWeightUnit: WeightUnit;
+}
+
+export interface PRLift {
+  id: string;
+  exercise: string;
+  weight: number;
+  date: string;
+  reps: number;
+  workoutId?: string;
+  isDirectEntry?: boolean;
 }

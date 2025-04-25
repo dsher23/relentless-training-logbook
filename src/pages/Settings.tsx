@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import NavigationHeader from '@/components/NavigationHeader';
 
 const Settings = () => {
-  const { exportData, unitSystem = { bodyWeightUnit: 'kg', bodyMeasurementUnit: 'cm', liftingWeightUnit: 'kg' }, updateUnitSystem = () => {} } = useAppContext();
+  const { exportData, unitSystem = { bodyWeightUnit: 'kg', bodyMeasurementUnit: 'cm', liftingWeightUnit: 'kg' }, updateUnitSystem } = useAppContext();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
