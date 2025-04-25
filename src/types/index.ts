@@ -1,7 +1,7 @@
 export interface Workout {
   id: string;
   name: string;
-  date: Date | string; // Allow string for parsing
+  date: Date | string;
   exercises?: Exercise[];
   completed?: boolean;
   deloadMode?: boolean;
@@ -17,7 +17,7 @@ export interface Set {
 export interface Exercise {
   id: string;
   name: string;
-  sets: Set[]; // Updated to array of Set objects
+  sets: Set[];
   reps: number;
   weight?: number;
   category: 'upper' | 'lower' | 'core' | 'other';
@@ -41,7 +41,7 @@ export interface BodyMeasurement extends Measurement {
   waist?: number;
   hips?: number;
   arms?: number;
-  legs?: number; // Added for MeasurementForm.tsx
+  legs?: number;
 }
 
 export interface Supplement {
@@ -69,12 +69,12 @@ export interface SteroidCompound {
   name: string;
   dosage?: string;
   frequency?: string;
-  weeklyDosage?: number; // Added for AddCompoundForm.tsx
-  dosageUnit?: string; // Added for AddCompoundForm.tsx
-  duration?: number; // Added for AddCompoundForm.tsx
-  notes?: string; // Added for AddCompoundForm.tsx
-  cycleId?: string; // Added for AddCompoundForm.tsx
-  active?: boolean; // Added for AddCompoundForm.tsx
+  weeklyDosage?: number;
+  dosageUnit?: string;
+  duration?: number;
+  notes?: string;
+  cycleId?: string;
+  active?: boolean;
 }
 
 export interface SteroidCycle {
@@ -95,17 +95,17 @@ export interface SupplementLog {
 export interface PR {
   id: string;
   exerciseId: string;
-  weight: number; // Added for CorePRTracker.tsx
-  reps: number; // Added for CorePRTracker.tsx
-  date: Date; // Added for CorePRTracker.tsx
+  weight: number;
+  reps: number;
+  date: Date;
 }
 
 export interface WeeklyRoutine {
   id: string;
   name: string;
   days: { [key: string]: WorkoutTemplate[] };
-  workoutDays?: any[]; // Added for WeeklyPlanView.tsx
-  archived?: boolean; // Added for WeeklyPlanView.tsx
+  workoutDays?: any[];
+  archived?: boolean;
 }
 
 export interface WorkoutTemplate {
@@ -113,17 +113,17 @@ export interface WorkoutTemplate {
   name: string;
   exercises: Exercise[];
   isFavorite?: boolean;
-  scheduledTime?: string; // Added for WeeklyCalendarView.tsx
-  dayName?: string; // Added for useWorkoutDays.ts
+  scheduledTime?: string;
+  dayName?: string;
 }
 
 export interface WorkoutPlan {
   id: string;
   name: string;
   routines: WeeklyRoutine[];
-  workoutTemplates?: WorkoutTemplate[]; // Added for WeeklyPlanView.tsx
-  isActive?: boolean; // Added for WorkoutDetailsCard.tsx
-  archived?: boolean; // Added for WorkoutPlanList.tsx
+  workoutTemplates?: WorkoutTemplate[];
+  isActive?: boolean;
+  archived?: boolean;
 }
 
 export interface Reminder {
@@ -131,10 +131,10 @@ export interface Reminder {
   type: 'supplement' | 'workout';
   time: string;
   days: string[];
-  dateTime?: Date; // Added for useReminders.ts
-  dueDate?: Date; // Added for useReminders.ts
-  dismissed?: boolean; // Added for useReminders.ts
-  supplementId?: string; // Added for SupplementItem.tsx
+  dateTime?: Date;
+  dueDate?: Date;
+  dismissed?: boolean;
+  supplementId?: string;
 }
 
 export interface MoodLog {
@@ -150,19 +150,19 @@ export interface TrainingBlock {
   startDate: Date;
   endDate: Date;
   routines: WeeklyRoutine[];
-  weeklyRoutineId?: string; // Added for TrainingBlockForm.tsx
-  durationWeeks?: number; // Added for TrainingBlockForm.tsx
-  goal?: string; // Added for TrainingBlockForm.tsx
-  notes?: string; // Added for TrainingBlockForm.tsx
+  weeklyRoutineId?: string;
+  durationWeeks?: number;
+  goal?: string;
+  notes?: string;
 }
 
 export interface WeakPoint {
   id: string;
   exerciseId: string;
   description: string;
-  muscleGroup?: string; // Added for WeakPointTracker.tsx
-  priority?: number; // Added for WeakPointTracker.tsx
-  sessionsPerWeekGoal?: number; // Added for WeakPointTracker.tsx
+  muscleGroup?: string;
+  priority?: number;
+  sessionsPerWeekGoal?: number;
 }
 
 export interface CycleCompound {
@@ -220,7 +220,7 @@ export interface AppContextType {
   deleteWorkout: (id: string) => void;
   getWorkoutById: (id: string) => Workout | undefined;
   duplicateWorkout: (id: string) => void;
-  toggleDeloadMode: (id: string) => void;
+  toggleDeloadMode: (id: string, isDeload: boolean) => void; // Updated signature
   addSupplement: (supplement: Supplement) => void;
   updateSupplement: (updated: Supplement) => void;
   deleteSupplement: (id: string) => void;
