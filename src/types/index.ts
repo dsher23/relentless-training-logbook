@@ -23,10 +23,11 @@ export interface Exercise {
   category: 'upper' | 'lower' | 'core' | 'other';
   lastProgressDate?: Date;
   isWeakPoint?: boolean;
+  isPrRelevant?: boolean;
   restTime?: number;
   notes?: string;
   prExerciseType?: string;
-  previousStats?: any; // Add this property
+  previousStats?: any;
 }
 
 export interface Measurement {

@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CORE_LIFTS } from "@/hooks/useExercises";
 
 interface ExerciseBasicInfoProps {
   name: string;
@@ -36,11 +37,10 @@ const ExerciseBasicInfo: React.FC<ExerciseBasicInfoProps> = ({
   onWeightChange,
   onPrExerciseChange,
 }) => {
-  const CORE_LIFTS = [
-    { id: "bench-press", name: "Bench Press" },
-    { id: "deadlift", name: "Deadlift" },
-    { id: "squat", name: "Squat" },
-    { id: "shoulder-press", name: "Shoulder Press" },
+  // Use the CORE_LIFTS constant imported from useExercises
+  const LIFT_OPTIONS = [
+    { id: "none", name: "Not tracked as PR" },
+    ...CORE_LIFTS,
     { id: "custom", name: "Custom Exercise" },
   ];
 
@@ -51,7 +51,7 @@ const ExerciseBasicInfo: React.FC<ExerciseBasicInfoProps> = ({
       
       // If a predefined lift is selected (and not custom or none), update the name field
       if (value !== "none" && value !== "custom") {
-        const selectedLift = CORE_LIFTS.find(lift => lift.id === value);
+        const selectedLift = LIFT_OPTIONS.find(lift => lift.id === value);
         if (selectedLift) {
           onNameChange(selectedLift.name);
         }
@@ -72,8 +72,7 @@ const ExerciseBasicInfo: React.FC<ExerciseBasicInfoProps> = ({
               <SelectValue placeholder="Select PR type (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Not tracked as PR</SelectItem>
-              {CORE_LIFTS.map((lift) => (
+              {LIFT_OPTIONS.map((lift) => (
                 <SelectItem key={lift.id} value={lift.id}>
                   {lift.name}
                 </SelectItem>

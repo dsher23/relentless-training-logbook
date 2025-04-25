@@ -11,6 +11,14 @@ export interface CustomExercise {
   category: 'upper' | 'lower' | 'core' | 'other';
 }
 
+// Define the core lifts that are used in PR tracking
+export const CORE_LIFTS = [
+  { id: "bench-press", name: "Bench Press" },
+  { id: "deadlift", name: "Deadlift" },
+  { id: "squat", name: "Squat" },
+  { id: "shoulder-press", name: "Shoulder Press" }
+];
+
 export const useExercises = () => {
   const { exercises, addExercise: contextAddExercise } = useAppContext();
   const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
@@ -37,6 +45,7 @@ export const useExercises = () => {
       reps: 10,
       sets: [{ reps: 10, weight: 0 }],
       weight: 0,
+      isPrRelevant: isPrRelevant,
       prExerciseType: isPrRelevant ? prExerciseType : undefined
     };
     
@@ -62,6 +71,7 @@ export const useExercises = () => {
     customExercises,
     addExercise,
     getAllExerciseNames,
-    getExerciseByName
+    getExerciseByName,
+    CORE_LIFTS
   };
 };

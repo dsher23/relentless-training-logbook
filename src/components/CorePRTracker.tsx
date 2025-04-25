@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +21,7 @@ import { calculateOneRepMax } from "@/utils/numberUtils";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, Trophy, Plus } from "lucide-react";
 import { ProgressChart } from "@/components/ProgressChart";
-import { useExercises } from "@/hooks/useExercises";
+import { useExercises, CORE_LIFTS } from "@/hooks/useExercises";
 import { PR } from "@/types";
 import { toast } from "sonner";
 
@@ -31,7 +30,7 @@ const STORAGE_KEY = "ironlog_direct_prs";
 const CorePRTracker: React.FC = () => {
   const navigate = useNavigate();
   const { workouts, unitSystem, convertWeight, getWeightUnitDisplay } = useAppContext();
-  const { customExercises, CORE_LIFTS } = useExercises();
+  const { customExercises } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newWeight, setNewWeight] = useState("");
@@ -49,10 +48,7 @@ const CorePRTracker: React.FC = () => {
   const weightUnit = getWeightUnitDisplay();
 
   const prExerciseOptions = [
-    { id: "bench-press", name: "Bench Press" },
-    { id: "deadlift", name: "Deadlift" },
-    { id: "squat", name: "Squat" },
-    { id: "shoulder-press", name: "Shoulder Press" },
+    ...CORE_LIFTS,
     // Add custom PR types dynamically
     ...customExercises
       .filter(ex => ex.isPrRelevant && ex.prExerciseType === "custom")
