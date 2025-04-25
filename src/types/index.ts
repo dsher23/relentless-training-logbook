@@ -17,7 +17,7 @@ export interface Set {
 export interface Exercise {
   id: string;
   name: string;
-  sets: { reps: number; weight: number }[];
+  sets: Set[];
   reps: number;
   weight?: number;
   category: 'upper' | 'lower' | 'core' | 'other';
@@ -42,6 +42,10 @@ export interface BodyMeasurement extends Measurement {
   hips?: number;
   arms?: number;
   legs?: number;
+  forearms?: number; // Added for Measurements.tsx
+  thighs?: number; // Added for Measurements.tsx
+  calves?: number; // Added for Measurements.tsx
+  notes?: string; // Added for MeasurementForm.tsx
 }
 
 export interface Supplement {
@@ -53,6 +57,8 @@ export interface Supplement {
   dosage?: string;
   notes?: string;
   schedule?: string[];
+  times?: string[]; // Added for SupplementItem.tsx
+  workoutDays?: string[]; // Added for SupplementItem.tsx
 }
 
 export interface Cycle {
@@ -100,11 +106,16 @@ export interface PR {
   date: Date;
 }
 
+export interface WorkoutDay {
+  dayOfWeek: number;
+  workoutTemplateId?: string;
+}
+
 export interface WeeklyRoutine {
   id: string;
   name: string;
   days: { [key: string]: WorkoutTemplate[] };
-  workoutDays?: any[];
+  workoutDays?: WorkoutDay[];
   archived?: boolean;
 }
 
@@ -124,17 +135,21 @@ export interface WorkoutPlan {
   workoutTemplates?: WorkoutTemplate[];
   isActive?: boolean;
   archived?: boolean;
+  description?: string; // Added for useWorkoutPlans.ts
 }
 
 export interface Reminder {
   id: string;
-  type: 'supplement' | 'workout';
+  type: 'supplement' | 'workout' | 'routineChange'; // Added routineChange for ReminderItem.tsx
   time: string;
   days: string[];
   dateTime?: Date;
   dueDate?: Date;
   dismissed?: boolean;
   supplementId?: string;
+  seen?: boolean; // Added for NotificationCenter.tsx
+  title?: string; // Added for ReminderItem.tsx
+  message?: string; // Added for ReminderItem.tsx
 }
 
 export interface MoodLog {
@@ -142,6 +157,11 @@ export interface MoodLog {
   date: Date;
   mood: string;
   notes?: string;
+  sleepQuality?: number; // Added for MoodLogForm.tsx
+  sleep?: number; // Added for MoodLogForm.tsx
+  energyLevel?: number; // Added for MoodLogForm.tsx
+  energy?: number; // Added for MoodLogForm.tsx
+  stressLevel?: number; // Added for MoodLogForm.tsx
 }
 
 export interface TrainingBlock {
@@ -163,6 +183,7 @@ export interface WeakPoint {
   muscleGroup?: string;
   priority?: number;
   sessionsPerWeekGoal?: number;
+  name?: string; // Added for WeakPointTracker.tsx
 }
 
 export interface CycleCompound {
