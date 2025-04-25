@@ -131,4 +131,130 @@ export interface Reminder {
   type: 'supplement' | 'workout';
   time: string;
   days: string[];
-  dateTime?: Date; // Adde
+  dateTime?: Date; // Added for useReminders.ts
+  dueDate?: Date; // Added for useReminders.ts
+  dismissed?: boolean; // Added for useReminders.ts
+  supplementId?: string; // Added for SupplementItem.tsx
+}
+
+export interface MoodLog {
+  id: string;
+  date: Date;
+  mood: string;
+  notes?: string;
+}
+
+export interface TrainingBlock {
+  id: string;
+  name: string;
+  startDate: Date;
+  endDate: Date;
+  routines: WeeklyRoutine[];
+  weeklyRoutineId?: string; // Added for TrainingBlockForm.tsx
+  durationWeeks?: number; // Added for TrainingBlockForm.tsx
+  goal?: string; // Added for TrainingBlockForm.tsx
+  notes?: string; // Added for TrainingBlockForm.tsx
+}
+
+export interface WeakPoint {
+  id: string;
+  exerciseId: string;
+  description: string;
+  muscleGroup?: string; // Added for WeakPointTracker.tsx
+  priority?: number; // Added for WeakPointTracker.tsx
+  sessionsPerWeekGoal?: number; // Added for WeakPointTracker.tsx
+}
+
+export interface CycleCompound {
+  id: string;
+  steroidCompoundId: string;
+  dosage: string;
+}
+
+export interface ProgressPhoto {
+  id: string;
+  date: Date;
+  url: string;
+}
+
+export interface AppContextType {
+  workouts: Workout[];
+  setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
+  measurements: Measurement[];
+  setMeasurements: React.Dispatch<React.SetStateAction<Measurement[]>>;
+  bodyMeasurements: BodyMeasurement[];
+  setBodyMeasurements: React.Dispatch<React.SetStateAction<BodyMeasurement[]>>;
+  supplements: Supplement[];
+  setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>;
+  supplementLogs: SupplementLog[];
+  setSupplementLogs: React.Dispatch<React.SetStateAction<SupplementLog[]>>;
+  cycles: Cycle[];
+  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>;
+  steroidCycles: SteroidCycle[];
+  setSteroidCycles: React.Dispatch<React.SetStateAction<SteroidCycle[]>>;
+  steroidCompounds: SteroidCompound[];
+  setSteroidCompounds: React.Dispatch<React.SetStateAction<SteroidCompound[]>>;
+  reminders: Reminder[];
+  setReminders: React.Dispatch<React.SetStateAction<Reminder[]>>;
+  moodLogs: MoodLog[];
+  setMoodLogs: React.Dispatch<React.SetStateAction<MoodLog[]>>;
+  weeklyRoutines: WeeklyRoutine[];
+  setWeeklyRoutines: React.Dispatch<React.SetStateAction<WeeklyRoutine[]>>;
+  trainingBlocks: TrainingBlock[];
+  setTrainingBlocks: React.Dispatch<React.SetStateAction<TrainingBlock[]>>;
+  weakPoints: WeakPoint[];
+  setWeakPoints: React.Dispatch<React.SetStateAction<WeakPoint[]>>;
+  workoutTemplates: WorkoutTemplate[];
+  setWorkoutTemplates: React.Dispatch<React.SetStateAction<WorkoutTemplate[]>>;
+  workoutPlans: WorkoutPlan[];
+  setWorkoutPlans: React.Dispatch<React.SetStateAction<WorkoutPlan[]>>;
+  cycleCompounds: CycleCompound[];
+  setCycleCompounds: React.Dispatch<React.SetStateAction<CycleCompound[]>>;
+  progressPhotos: ProgressPhoto[];
+  setProgressPhotos: React.Dispatch<React.SetStateAction<ProgressPhoto[]>>;
+  exercises: Exercise[];
+  setExercises: React.Dispatch<React.SetStateAction<Exercise[]>>;
+  addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
+  updateWorkout: (updated: Workout) => void;
+  markWorkoutCompleted: (id: string) => void;
+  deleteWorkout: (id: string) => void;
+  getWorkoutById: (id: string) => Workout | undefined;
+  duplicateWorkout: (id: string) => void;
+  toggleDeloadMode: (id: string) => void;
+  addSupplement: (supplement: Supplement) => void;
+  updateSupplement: (updated: Supplement) => void;
+  deleteSupplement: (id: string) => void;
+  addCycle: (cycle: Cycle) => void;
+  updateCycle: (updated: Cycle) => void;
+  deleteCycle: (id: string) => void;
+  markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void;
+  markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
+  addExercise: (exercise: Exercise) => void;
+  addSteroidCycle: (cycle: SteroidCycle) => void;
+  exportData: () => string;
+  unitSystem: string;
+  convertWeight: (weight: number) => number;
+  getWeightUnitDisplay: () => string;
+  getDueReminders: () => Reminder[];
+  markReminderAsSeen: (id: string) => void;
+  dismissReminder: (id: string) => void;
+  addSupplementLog: (log: SupplementLog) => void;
+  updateSupplementLog: (updated: SupplementLog) => void;
+  addReminder: (reminder: Reminder) => void;
+  addTrainingBlock: (block: TrainingBlock) => void;
+  updateTrainingBlock: (updated: TrainingBlock) => void;
+  addWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
+  addWeakPoint: (weakPoint: WeakPoint) => void;
+  deleteWeakPoint: (id: string) => void;
+  addMoodLog: (moodLog: MoodLog) => void;
+  updateMoodLog: (updated: MoodLog) => void;
+  addWorkoutTemplate: (template: WorkoutTemplate) => void;
+  updateWorkoutTemplate: (template: WorkoutTemplate) => void;
+  addWorkoutPlan: (plan: WorkoutPlan) => void;
+  updateWorkoutPlan: (updated: WorkoutPlan) => void;
+  deleteWorkoutPlan: (id: string) => void;
+  duplicateWorkoutPlan: (id: string) => void;
+  setActivePlan: (id: string) => void;
+  removeTemplateFromPlan: (planId: string, templateId: string) => void;
+}
