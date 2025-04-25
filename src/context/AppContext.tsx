@@ -248,7 +248,6 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const { toast } = useToast();
 
-  // Function to get due reminders
   const getDueReminders = useCallback(() => {
     const now = new Date();
     return reminders.filter(reminder => {
@@ -720,7 +719,6 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setWorkoutTemplates(
       workoutTemplates.filter((workoutTemplate) => workoutTemplate.id !== id)
     );
-    // Remove template from any workout plans that include it
     setWorkoutPlans(workoutPlans.map(plan => ({
       ...plan,
       workoutTemplates: plan.workoutTemplates.filter(template => template.id !== id)
@@ -910,4 +908,191 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     });
   };
 
-  const addWeakPoint = (weakPoint: Omit<WeakPoint
+  const addWeakPoint = (weakPoint: Omit<WeakPoint, "id">) => {
+    const newWeakPoint: WeakPoint = { id: uuidv4(), ...weakPoint };
+    setWeakPoints([...weakPoints, newWeakPoint]);
+    toast({
+      title: "Success",
+      description: `Added weak point ${weakPoint.name}`,
+    });
+  };
+
+  const updateWeakPoint = (weakPoint: WeakPoint) => {
+    setWeakPoints(
+      weakPoints.map((wp) => (wp.id === weakPoint.id ? { ...weakPoint } : wp))
+    );
+    toast({
+      title: "Success",
+      description: `Updated weak point ${weakPoint.name}`,
+    });
+  };
+
+  const deleteWeakPoint = (id: string) => {
+    setWeakPoints(weakPoints.filter((weakPoint) => weakPoint.id !== id));
+    toast({
+      title: "Success",
+      description: "Deleted weak point",
+    });
+  };
+
+  const addCycleCompound = (cycleCompound: Omit<CycleCompound, "id">) => {
+    const newCycleCompound: CycleCompound = { id: uuidv4(), ...cycleCompound };
+    setCycleCompounds([...cycleCompounds, newCycleCompound]);
+    toast({
+      title: "Success",
+      description: `Added cycle compound ${cycleCompound.name}`,
+    });
+  };
+
+  const updateCycleCompound = (cycleCompound: CycleCompound) => {
+    setCycleCompounds(
+      cycleCompounds.map((cc) => (cc.id === cycleCompound.id ? { ...cycleCompound } : cc))
+    );
+    toast({
+      title: "Success",
+      description: `Updated cycle compound ${cycleCompound.name}`,
+    });
+  };
+
+  const deleteCycleCompound = (id: string) => {
+    setCycleCompounds(cycleCompounds.filter((cycleCompound) => cycleCompound.id !== id));
+    toast({
+      title: "Success",
+      description: "Deleted cycle compound",
+    });
+  };
+
+  const addProgressPhoto = (progressPhoto: Omit<ProgressPhoto, "id">) => {
+    const newProgressPhoto: ProgressPhoto = { id: uuidv4(), ...progressPhoto };
+    setProgressPhotos([...progressPhotos, newProgressPhoto]);
+    toast({
+      title: "Success",
+      description: "Added progress photo",
+    });
+  };
+
+  const updateProgressPhoto = (progressPhoto: ProgressPhoto) => {
+    setProgressPhotos(
+      progressPhotos.map((pp) => (pp.id === progressPhoto.id ? { ...progressPhoto } : pp))
+    );
+    toast({
+      title: "Success",
+      description: "Updated progress photo",
+    });
+  };
+
+  const deleteProgressPhoto = (id: string) => {
+    setProgressPhotos(progressPhotos.filter((progressPhoto) => progressPhoto.id !== id));
+    toast({
+      title: "Success",
+      description: "Deleted progress photo",
+    });
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        workouts,
+        addWorkout,
+        updateWorkout,
+        deleteWorkout,
+        markWorkoutCompleted,
+        exercises,
+        addExercise,
+        updateExercise,
+        deleteExercise,
+        measurements,
+        addMeasurement,
+        updateMeasurement,
+        deleteMeasurement,
+        bodyMeasurements,
+        addBodyMeasurement,
+        updateBodyMeasurement,
+        deleteBodyMeasurement,
+        supplements,
+        addSupplement,
+        updateSupplement,
+        deleteSupplement,
+        cycles,
+        addCycle,
+        updateCycle,
+        deleteCycle,
+        steroidCompounds,
+        addSteroidCompound,
+        updateSteroidCompound,
+        deleteSteroidCompound,
+        steroidCycles,
+        addSteroidCycle,
+        updateSteroidCycle,
+        deleteSteroidCycle,
+        supplementLogs,
+        addSupplementLog,
+        updateSupplementLog,
+        deleteSupplementLog,
+        prs,
+        addPR,
+        updatePR,
+        deletePR,
+        workoutDays,
+        addWorkoutDay,
+        updateWorkoutDay,
+        deleteWorkoutDay,
+        weeklyRoutines,
+        addWeeklyRoutine,
+        updateWeeklyRoutine,
+        deleteWeeklyRoutine,
+        workoutTemplates,
+        addWorkoutTemplate,
+        updateWorkoutTemplate,
+        deleteWorkoutTemplate,
+        duplicateWorkoutTemplate,
+        workoutPlans,
+        addWorkoutPlan,
+        updateWorkoutPlan,
+        deleteWorkoutPlan,
+        addTemplateToPlan,
+        removeTemplateFromPlan,
+        activePlanId,
+        setActivePlan,
+        reminders,
+        addReminder,
+        updateReminder,
+        dismissReminder,
+        markReminderAsSeen,
+        moodLogs,
+        addMoodLog,
+        updateMoodLog,
+        deleteMoodLog,
+        trainingBlocks,
+        addTrainingBlock,
+        updateTrainingBlock,
+        deleteTrainingBlock,
+        weakPoints,
+        addWeakPoint,
+        updateWeakPoint,
+        deleteWeakPoint,
+        cycleCompounds,
+        addCycleCompound,
+        updateCycleCompound,
+        deleteCycleCompound,
+        progressPhotos,
+        addProgressPhoto,
+        updateProgressPhoto,
+        deleteProgressPhoto,
+        unitSystem,
+        updateUnitSystem,
+        convertWeight,
+        getWeightUnitDisplay,
+        prLifts,
+        addPRLift,
+        updatePRLift,
+        deletePRLift,
+        getDueReminders,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export { AppContext, AppProvider, useAppContext };
