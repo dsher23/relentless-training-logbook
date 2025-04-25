@@ -273,6 +273,11 @@ export type AppContextType = {
   updateSteroidCompound: (updated: SteroidCompound) => void;
   deleteSteroidCompound: (id: string) => void;
   
+  // Compound functions for supplements.tsx
+  addCompound: (compound: SteroidCompound) => void;
+  updateCompound: (compound: SteroidCompound) => void;
+  deleteCompound: (id: string) => void;
+  
   // Cycle compound related properties and methods
   cycleCompounds: CycleCompound[];
   addCycleCompound: (compound: CycleCompound) => void;
@@ -288,6 +293,9 @@ export type AppContextType = {
   weeklyRoutines: WeeklyRoutine[];
   addWeeklyRoutine: (routine: WeeklyRoutine) => void;
   updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
+  deleteWeeklyRoutine: (id: string) => void;
+  duplicateWeeklyRoutine: (id: string) => void;
+  archiveWeeklyRoutine: (id: string, archived: boolean) => void;
   
   // Training block related properties and methods
   trainingBlocks: TrainingBlock[];
@@ -316,6 +324,7 @@ export type AppContextType = {
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
   duplicateWorkoutTemplate?: (id: string) => void;
+  deleteWorkoutTemplate: (id: string) => void;
   
   // Workout plan related properties and methods
   workoutPlans: WorkoutPlan[];
@@ -335,8 +344,8 @@ export type AppContextType = {
   
   // Unit system related properties and methods
   unitSystem: UnitSystem;
-  convertWeight: (weight: number) => number;
-  convertMeasurement: (value: number) => number;
+  convertWeight: (weight: number, fromUnit?: WeightUnit, toUnit?: WeightUnit) => number;
+  convertMeasurement: (value: number, fromUnit?: MeasurementUnit, toUnit?: MeasurementUnit) => number;
   getWeightUnitDisplay: () => WeightUnit;
   getMeasurementUnitDisplay: () => MeasurementUnit;
   updateUnitSystem: (update: Partial<UnitSystem>) => void;

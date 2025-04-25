@@ -145,8 +145,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return JSON.stringify(data);
   };
 
-  const convertWeight = (weight: number) => weight;
-  const convertMeasurement = (value: number) => value;
+  const convertWeight = (weight: number, fromUnit: WeightUnit = 'kg', toUnit: WeightUnit = unitSystem.liftingWeightUnit) => {
+    if (fromUnit === toUnit) return weight;
+    
+    // Convert to kg first (as base unit)
+    let weightInKg = weight;
+    if (fromUnit === 'lbs') {
+      weightInKg = weight * 0.453592;
+    } else if (fromUnit === 'stone') {
+      weightInKg = weight * 6.35029;
+    }
+    
+    // Then convert from kg to target unit
+    if (toUnit === 'kg') {
+      return weightInKg;
+    } else if (toUnit === 'lbs') {
+      return weightInKg / 0.453592;
+    } else if (toUnit === 'stone') {
+      return weightInKg / 6.35029;
+    }
+    
+    return weight; // Fallback
+  };
+
+  const convertMeasurement = (value: number, fromUnit: MeasurementUnit = 'cm', toUnit: MeasurementUnit = unitSystem.bodyMeasurementUnit) => {
+    if (fromUnit === toUnit) return value;
+    
+    // Convert cm to inches or vice versa
+    if (fromUnit === 'cm' && toUnit === 'in') {
+      return value / 2.54;
+    } else if (fromUnit === 'in' && toUnit === 'cm') {
+      return value * 2.54;
+    }
+    
+    return value; // Fallback
+  };
+
   const getWeightUnitDisplay = () => unitSystem.liftingWeightUnit;
   const getMeasurementUnitDisplay = () => unitSystem.bodyMeasurementUnit;
   const updateUnitSystem = (update: Partial<UnitSystem>) => {
@@ -753,7 +787,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       getRecentProgressPhotos,
       addPRLift,
       updatePR,
-      deletePR
+      deletePR,
+      addCompound: addSteroidCompound,
+      updateCompound: updateSteroidCompound,
+      deleteCompound: deleteSteroidCompound,
+      deleteWorkoutTemplate,
+      deleteWeeklyRoutine: (id: string) => {
+        setWeeklyRoutines(weeklyRoutines.filter(r => r.id !== id));
+      },
+      duplicateWeeklyRoutine: (id: string) => {
+        const routine = weeklyRoutines.find(r => r.id === id);
+        if (routine) {
+          const newRoutine = { ...routine, id: uuidv4(), name: `${routine.name} (Copy)` };
+          setWeeklyRoutines([...weeklyRoutines, newRoutine]);
+        }
+      },
+      archiveWeeklyRoutine: (id: string, archived: boolean) => {
+        setWeeklyRoutines(weeklyRoutines.map(r => r.id === id ? { ...r, archived } : r));
+      }
     }),
     [
       workouts,
