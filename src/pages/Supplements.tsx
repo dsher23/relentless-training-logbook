@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { PillIcon, Plus, Lock, Edit, Trash2 } from "lucide-react";
@@ -15,7 +14,16 @@ import { SteroidCompound } from "@/types";
 import TabNavigation from "@/components/TabNavigation";
 
 const Supplements: React.FC = () => {
-  const { supplements, supplementLogs, steroidCycles, steroidCompounds, addCompound, updateCompound, deleteCompound } = useAppContext();
+  const { 
+    supplements, 
+    supplementLogs, 
+    steroidCycles, 
+    steroidCompounds, 
+    addCompound, 
+    updateCompound, 
+    deleteCompound 
+  } = useAppContext();
+  
   const [isSupplementFormOpen, setIsSupplementFormOpen] = useState(false);
   const [isCycleFormOpen, setIsCycleFormOpen] = useState(false);
   const [isCompoundFormOpen, setIsCompoundFormOpen] = useState(false);

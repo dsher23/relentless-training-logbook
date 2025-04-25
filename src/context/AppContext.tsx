@@ -34,6 +34,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     bodyMeasurementUnit: 'cm',
     liftingWeightUnit: 'kg',
   });
+  const [prLifts, setPRLifts] = useState<PR[]>([]);
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const id = additionalData.id || uuidv4();
@@ -324,337 +325,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const addSteroidCompound = (compound: SteroidCompound) => {
+  const addPRLift = (prData: Omit<PR, 'id'>) => {
+    const newPR: PR = {
+      ...prData,
+      id: uuidv4(),
+    };
+    setPRLifts([...prLifts, newPR]);
+  };
+
+  const updatePR = (prData: PR) => {
+    setPRLifts(prLifts.map(pr => pr.id === prData.id ? prData : pr));
+  };
+
+  const deletePR = (id: string) => {
+    setPRLifts(prLifts.filter(pr => pr.id !== id));
+  };
+
+  const addCompound = (compound: SteroidCompound) => {
     setSteroidCompounds([...steroidCompounds, compound]);
   };
 
-  const updateSteroidCompound = (updated: SteroidCompound) => {
-    setSteroidCompounds(steroidCompounds.map((c) => (c.id === updated.id ? updated : c)));
+  const updateCompound = (compound: SteroidCompound) => {
+    setSteroidCompounds(steroidCompounds.map(c => c.id === compound.id ? compound : c));
   };
 
-  const deleteSteroidCompound = (id: string) => {
-    setSteroidCompounds(steroidCompounds.filter((c) => c.id !== id));
-  };
-
-  const addCycleCompound = (compound: CycleCompound) => {
-    setCycleCompounds([...cycleCompounds, compound]);
-  };
-
-  const updateCycleCompound = (updated: CycleCompound) => {
-    setCycleCompounds(cycleCompounds.map((c) => (c.id === updated.id ? updated : c)));
-  };
-
-  const deleteCycleCompound = (id: string) => {
-    setCycleCompounds(cycleCompounds.filter((c) => c.id !== id));
-  };
-
-  const addProgressPhoto = (photo: ProgressPhoto) => {
-    setProgressPhotos([...progressPhotos, photo]);
-  };
-
-  const updateProgressPhoto = (updated: ProgressPhoto) => {
-    setProgressPhotos(progressPhotos.map((p) => (p.id === updated.id ? updated : p)));
-  };
-
-  const deleteProgressPhoto = (id: string) => {
-    setProgressPhotos(progressPhotos.filter((p) => p.id !== id));
-  };
-
-  const getWorkoutByDate = (date: Date) => {
-    return workouts.find((w) => new Date(w.date).toDateString() === date.toDateString());
-  };
-
-  const getWorkoutsByRange = (startDate: Date, endDate: Date) => {
-    return workouts.filter((w) => {
-      const workoutDate = new Date(w.date);
-      return workoutDate >= startDate && workoutDate <= endDate;
-    });
-  };
-
-  const getMeasurementsByRange = (startDate: Date, endDate: Date) => {
-    return measurements.filter((m) => {
-      const measurementDate = new Date(m.date);
-      return measurementDate >= startDate && measurementDate <= endDate;
-    });
-  };
-
-  const getBodyMeasurementsByRange = (startDate: Date, endDate: Date) => {
-    return bodyMeasurements.filter((m) => {
-      const measurementDate = new Date(m.date);
-      return measurementDate >= startDate && measurementDate <= endDate;
-    });
-  };
-
-  const getSupplementsByDate = (date: Date) => {
-    return supplements.filter((s) =>
-      s.history.some((h) => new Date(h.date).toDateString() === date.toDateString())
-    );
-  };
-
-  const getCyclesByRange = (startDate: Date, endDate: Date) => {
-    return cycles.filter((c) => {
-      const cycleStart = new Date(c.startDate);
-      const cycleEnd = new Date(c.endDate);
-      return cycleStart <= endDate && cycleEnd >= startDate;
-    });
-  };
-
-  const getSteroidCyclesByRange = (startDate: Date, endDate: Date) => {
-    return steroidCycles.filter((c) => {
-      const cycleStart = new Date(c.startDate);
-      const cycleEnd = new Date(c.endDate);
-      return cycleStart <= endDate && cycleEnd >= startDate;
-    });
-  };
-
-  const getSupplementLogsByRange = (startDate: Date, endDate: Date) => {
-    return supplementLogs.filter((log) => {
-      const logDate = new Date(log.date);
-      return logDate >= startDate && logDate <= endDate;
-    });
-  };
-
-  const getWeeklyRoutinesByRange = (startDate: Date, endDate: Date) => {
-    return weeklyRoutines.filter((r) => {
-      const routineStart = new Date(r.days[Object.keys(r.days)[0]]?.[0]?.scheduledTime || r.workoutDays?.[0]?.dayOfWeek || 0);
-      return routineStart >= startDate && routineStart <= endDate;
-    });
-  };
-
-  const getTrainingBlocksByRange = (startDate: Date, endDate: Date) => {
-    return trainingBlocks.filter((b) => {
-      const blockStart = new Date(b.startDate);
-      const blockEnd = new Date(b.endDate);
-      return blockStart <= endDate && blockEnd >= startDate;
-    });
-  };
-
-  const getWeakPointsByPriority = (priority: number) => {
-    return weakPoints.filter((wp) => wp.priority === priority);
-  };
-
-  const getMoodLogsByRange = (startDate: Date, endDate: Date) => {
-    return moodLogs.filter((m) => {
-      const moodDate = new Date(m.date);
-      return moodDate >= startDate && moodDate <= endDate;
-    });
-  };
-
-  const getRemindersByDate = (date: Date) => {
-    return reminders.filter((r) => {
-      const reminderDate = r.dueDate ? new Date(r.dueDate) : new Date(r.dateTime || 0);
-      return reminderDate.toDateString() === date.toDateString();
-    });
-  };
-
-  const getWorkoutTemplatesByCategory = (category: string) => {
-    return workoutTemplates.filter((t) => t.exercises.some((e) => e.category === category));
-  };
-
-  const getWorkoutPlansByStatus = (isActive: boolean) => {
-    return workoutPlans.filter((p) => p.isActive === isActive);
-  };
-
-  const getCycleCompoundsByCycleId = (cycleId: string) => {
-    return cycleCompounds.filter((c) => c.steroidCompoundId === cycleId);
-  };
-
-  const getProgressPhotosByRange = (startDate: Date, endDate: Date) => {
-    return progressPhotos.filter((p) => {
-      const photoDate = new Date(p.date);
-      return photoDate >= startDate && photoDate <= endDate;
-    });
-  };
-
-  const getExerciseById = (id: string) => {
-    return exercises.find((e) => e.id === id);
-  };
-
-  const getSupplementById = (id: string) => {
-    return supplements.find((s) => s.id === id);
-  };
-
-  const getCycleById = (id: string) => {
-    return cycles.find((c) => c.id === id);
-  };
-
-  const getSteroidCycleById = (id: string) => {
-    return steroidCycles.find((c) => c.id === id);
-  };
-
-  const getSteroidCompoundById = (id: string) => {
-    return steroidCompounds.find((c) => c.id === id);
-  };
-
-  const getSupplementLogById = (id: string) => {
-    return supplementLogs.find((log) => log.id === id);
-  };
-
-  const getWeeklyRoutineById = (id: string) => {
-    return weeklyRoutines.find((r) => r.id === id);
-  };
-
-  const getTrainingBlockById = (id: string) => {
-    return trainingBlocks.find((b) => b.id === id);
-  };
-
-  const getWeakPointById = (id: string) => {
-    return weakPoints.find((wp) => wp.id === id);
-  };
-
-  const getMoodLogById = (id: string) => {
-    return moodLogs.find((m) => m.id === id);
-  };
-
-  const getReminderById = (id: string) => {
-    return reminders.find((r) => r.id === id);
-  };
-
-  const getWorkoutTemplateById = (id: string) => {
-    return workoutTemplates.find((t) => t.id === id);
-  };
-
-  const getWorkoutPlanById = (id: string) => {
-    return workoutPlans.find((p) => p.id === id);
-  };
-
-  const getCycleCompoundById = (id: string) => {
-    return cycleCompounds.find((c) => c.id === id);
-  };
-
-  const getProgressPhotoById = (id: string) => {
-    return progressPhotos.find((p) => p.id === id);
-  };
-
-  const getActiveWorkoutPlan = () => {
-    return workoutPlans.find((p) => p.isActive);
-  };
-
-  const getActiveWeeklyRoutine = () => {
-    return weeklyRoutines.find((r) => !r.archived);
-  };
-
-  const getActiveTrainingBlock = () => {
-    const now = new Date();
-    return trainingBlocks.find((b) => {
-      const startDate = new Date(b.startDate);
-      const endDate = new Date(b.endDate);
-      return now >= startDate && now <= endDate;
-    });
-  };
-
-  const getRecentWorkouts = (limit: number) => {
-    return [...workouts]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentMeasurements = (limit: number) => {
-    return [...measurements]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentBodyMeasurements = (limit: number) => {
-    return [...bodyMeasurements]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentSupplements = (limit: number) => {
-    return [...supplements]
-      .sort((a, b) => {
-        const aDate = a.history[a.history.length - 1]?.date || new Date(0);
-        const bDate = b.history[b.history.length - 1]?.date || new Date(0);
-        return new Date(bDate).getTime() - new Date(aDate).getTime();
-      })
-      .slice(0, limit);
-  };
-
-  const getRecentCycles = (limit: number) => {
-    return [...cycles]
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentSteroidCycles = (limit: number) => {
-    return [...steroidCycles]
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentSupplementLogs = (limit: number) => {
-    return [...supplementLogs]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentWeeklyRoutines = (limit: number) => {
-    return [...weeklyRoutines]
-      .sort((a, b) => {
-        const aDate = a.days[Object.keys(a.days)[0]]?.[0]?.scheduledTime || 0;
-        const bDate = b.days[Object.keys(b.days)[0]]?.[0]?.scheduledTime || 0;
-        return new Date(bDate).getTime() - new Date(aDate).getTime();
-      })
-      .slice(0, limit);
-  };
-
-  const getRecentTrainingBlocks = (limit: number) => {
-    return [...trainingBlocks]
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentWeakPoints = (limit: number) => {
-    return [...weakPoints]
-      .sort((a, b) => (b.priority || 0) - (a.priority || 0))
-      .slice(0, limit);
-  };
-
-  const getRecentMoodLogs = (limit: number) => {
-    return [...moodLogs]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
-  };
-
-  const getRecentReminders = (limit: number) => {
-    return [...reminders]
-      .sort((a, b) => {
-        const aDate = a.dueDate ? new Date(a.dueDate) : new Date(a.dateTime || 0);
-        const bDate = b.dueDate ? new Date(b.dueDate) : new Date(b.dateTime || 0);
-        return bDate.getTime() - aDate.getTime();
-      })
-      .slice(0, limit);
-  };
-
-  const getRecentWorkoutTemplates = (limit: number) => {
-    return [...workoutTemplates]
-      .sort((a, b) => {
-        const aDate = new Date(a.scheduledTime || 0);
-        const bDate = new Date(b.scheduledTime || 0);
-        return bDate.getTime() - aDate.getTime();
-      })
-      .slice(0, limit);
-  };
-
-  const getRecentWorkoutPlans = (limit: number) => {
-    return [...workoutPlans]
-      .sort((a, b) => {
-        const aDate = a.routines[0]?.days[Object.keys(a.routines[0]?.days || {})[0]]?.[0]?.scheduledTime || 0;
-        const bDate = b.routines[0]?.days[Object.keys(b.routines[0]?.days || {})[0]]?.[0]?.scheduledTime || 0;
-        return new Date(bDate).getTime() - new Date(aDate).getTime();
-      })
-      .slice(0, limit);
-  };
-
-  const getRecentCycleCompounds = (limit: number) => {
-    return [...cycleCompounds].slice(0, limit);
-  };
-
-  const getRecentProgressPhotos = (limit: number) => {
-    return [...progressPhotos]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, limit);
+  const deleteCompound = (id: string) => {
+    setSteroidCompounds(steroidCompounds.filter(c => c.id !== id));
   };
 
   const value = useMemo(
@@ -804,7 +500,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       getRecentWorkoutTemplates,
       getRecentWorkoutPlans,
       getRecentCycleCompounds,
-      getRecentProgressPhotos
+      getRecentProgressPhotos,
+      addPRLift,
+      updatePR,
+      deletePR,
+      addCompound,
+      updateCompound,
+      deleteCompound
     }),
     [
       workouts,
@@ -825,7 +527,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       workoutPlans,
       cycleCompounds,
       progressPhotos,
-      unitSystem
+      unitSystem,
+      prLifts
     ]
   );
 

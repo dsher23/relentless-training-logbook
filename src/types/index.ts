@@ -332,4 +332,8 @@ export type AppContextType = {
   addPRLift: (prData: Omit<PR, 'id'>) => void;
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
+  
+  addCompound: (compound: SteroidCompound) => void;
+  updateCompound: (compound: SteroidCompound) => void;
+  deleteCompound: (id: string) => void;
 };
