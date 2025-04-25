@@ -229,3 +229,15 @@ export interface PRLift {
   workoutId?: string;
   isDirectEntry?: boolean;
 }
+
+export type AppContextType = {
+  workouts: Workout[];
+  setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
+  addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
+  updateWorkout: (updated: Workout) => void;
+  markWorkoutCompleted: (id: string) => void;
+  deleteWorkout: (id: string) => void;
+  getWorkoutById: (id: string) => Workout | undefined;
+  duplicateWorkout: (id: string) => void;
+  toggleDeloadMode: (id: string, isDeload: boolean) => void;
+};
