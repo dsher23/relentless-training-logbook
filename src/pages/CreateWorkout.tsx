@@ -86,7 +86,7 @@ const CreateWorkout: React.FC = () => {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</Label>
+                      <FormLabel>Notes</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Any specific goals for this workout?"
