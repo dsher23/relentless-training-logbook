@@ -1,14 +1,40 @@
+export interface Workout {
+  id: string;
+  name: string;
+  date: Date;
+  exercises?: Exercise[];
+  completed?: boolean;
+  deloadMode?: boolean;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  category: 'upper' | 'lower' | 'core' | 'other';
+}
+
+export interface Measurement {
+  id: string;
+  date: Date;
+  weight?: number;
+  bodyFat?: number;
+  photos?: string[];
+}
+
 export interface Supplement {
   id: string;
   name: string;
-  days: string[]; // e.g., ["Monday", "Tuesday"]
-  reminderTime?: string; // e.g., "08:00"
-  history: { date: Date; taken: boolean }[]; // Log of taken/not taken
+  days: string[];
+  reminderTime?: string;
+  history: { date: Date; taken: boolean }[];
 }
 
 export interface Cycle {
   id: string;
-  name: string; // e.g., "Testosterone Cycle"
+  name: string;
   supplements: Supplement[];
   startDate: Date;
   endDate: Date;
@@ -20,17 +46,26 @@ export interface AppContextType {
   setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
   measurements: Measurement[];
   setMeasurements: React.Dispatch<React.SetStateAction<Measurement[]>>;
-  supplements: Supplement[]; // Add
-  setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>; // Add
-  cycles: Cycle[]; // Add
-  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>; // Add
-  addSupplement: (supplement: Supplement) => void; // Add
-  updateSupplement: (updated: Supplement) => void; // Add
-  deleteSupplement: (id: string) => void; // Add
-  addCycle: (cycle: Cycle) => void; // Add
-  updateCycle: (updated: Cycle) => void; // Add
-  deleteCycle: (id: string) => void; // Add
-  markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void; // Add
-  markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void; // Add
-  // ... other properties (e.g., getWorkoutById)
+  supplements: Supplement[];
+  setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>;
+  cycles: Cycle[];
+  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>;
+  exercises: Exercise[];
+  setExercises: React.Dispatch<React.SetStateAction<Exercise[]>>;
+  addWorkout: (name: string, exercises?: Exercise[]) => string;
+  updateWorkout: (updated: Workout) => void;
+  markWorkoutCompleted: (id: string) => void;
+  deleteWorkout: (id: string) => void;
+  getWorkoutById: (id: string) => Workout | undefined;
+  duplicateWorkout: (id: string) => void;
+  toggleDeloadMode: (id: string) => void;
+  addSupplement: (supplement: Supplement) => void;
+  updateSupplement: (updated: Supplement) => void;
+  deleteSupplement: (id: string) => void;
+  addCycle: (cycle: Cycle) => void;
+  updateCycle: (updated: Cycle) => void;
+  deleteCycle: (id: string) => void;
+  markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void;
+  markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
+  addExercise: (exercise: Exercise) => void;
 }
