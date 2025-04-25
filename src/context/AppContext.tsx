@@ -1,4 +1,5 @@
 import React, { createContext, useState, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -25,8 +26,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   ]);
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
-    const id = uuidv4();
-    const newWorkout: Workout = { id, name, date: new Date(), exercises, ...additionalData };
+    const id = additionalData.id || uuidv4();
+    const newWorkout: Workout = { id, name, date: new Date(), exercises, completed: false, ...additionalData };
     setWorkouts([...workouts, newWorkout]);
     return id;
   };
