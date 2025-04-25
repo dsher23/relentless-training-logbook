@@ -1,5 +1,4 @@
-
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Save, Play } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -37,6 +36,8 @@ const CreateWorkout: React.FC = () => {
     try {
       // Generate a unique ID for the workout
       const workoutId = uuidv4();
+      // Add workout to context
+      addWorkout(values.name, [], { notes: values.notes, id: workoutId });
       // Pass workout data to builder, including ID for tracking
       navigate("/workouts/builder", {
         state: { 
