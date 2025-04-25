@@ -27,6 +27,7 @@ export interface Exercise {
   restTime?: number;
   notes?: string;
   prExerciseType?: string;
+  previousStats?: any; // Add this property
 }
 
 export interface Measurement {
@@ -111,7 +112,9 @@ export interface PR {
   exerciseId: string;
   weight: number;
   reps: number;
-  date: Date;
+  date: Date | string;
+  isDirectEntry?: boolean;
+  workoutId?: string;
 }
 
 export interface WorkoutDay {
@@ -153,8 +156,8 @@ export interface Reminder {
   type: 'supplement' | 'workout' | 'routineChange';
   time: string;
   days: string[];
-  dateTime?: Date;
-  dueDate?: Date;
+  dateTime?: Date | string;
+  dueDate?: Date | string;
   dismissed?: boolean;
   supplementId?: string;
   seen?: boolean;

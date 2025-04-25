@@ -1,122 +1,248 @@
-
-import React from "react";
-import { format } from "date-fns";
-import { Moon, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { BarChart, Sun, Moon, Activity, Smile, Meh, Frown } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
+import { MoodLog } from "@/types";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
-import MoodLogForm from "@/components/MoodLogForm";
-import { MoodLog, useAppContext } from "@/context/AppContext";
-
-const emojis = {
-  terrible: "😖",
-  bad: "😔",
-  neutral: "😐",
-  good: "😊",
-  great: "🤩"
-};
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 const Recovery: React.FC = () => {
-  const { moodLogs } = useAppContext();
-  const today = new Date();
-  const todayString = format(today, 'yyyy-MM-dd');
+  const { moodLogs, setMoodLogs } = useAppContext();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [mood, setMood] = useState<string | number>("");
+  const [notes, setNotes] = useState<string>("");
+  const [sleepQuality, setSleepQuality] = useState<number>(5);
+  const [sleep, setSleep] = useState<number>(8);
+  const [energyLevel, setEnergyLevel] = useState<number>(5);
+  const [stressLevel, setStressLevel] = useState<number>(5);
+  const { toast } = useToast();
   
-  // Sort logs by date (newest first)
-  const sortedLogs = [...moodLogs].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  useEffect(() => {
+    if (date) {
+      const existingLog = moodLogs.find(log => format(new Date(log.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
+      if (existingLog) {
+        setMood(existingLog.mood);
+        setNotes(existingLog.notes || "");
+        setSleepQuality(existingLog.sleepQuality || 5);
+        setSleep(existingLog.sleep || 8);
+        setEnergyLevel(existingLog.energyLevel || 5);
+        setStressLevel(existingLog.stressLevel || 5);
+      } else {
+        setMood("");
+        setNotes("");
+        setSleepQuality(5);
+        setSleep(8);
+        setEnergyLevel(5);
+        setStressLevel(5);
+      }
+    }
+  }, [date, moodLogs]);
   
-  // Check if we already have a log for today
-  const todayLog = sortedLogs.find(log => 
-    format(new Date(log.date), 'yyyy-MM-dd') === todayString
-  );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!date) {
+      toast({
+        title: "Missing Date",
+        description: "Please select a date for your mood log.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!mood) {
+      toast({
+        title: "Missing Mood",
+        description: "Please select a mood for the log.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const newLog: MoodLog = {
+      id: uuidv4(),
+      date: date,
+      mood: mood,
+      notes: notes,
+      sleepQuality: sleepQuality,
+      sleep: sleep,
+      energyLevel: energyLevel,
+      stressLevel: stressLevel
+    };
+    
+    setMoodLogs(prevLogs => {
+      const existingLogIndex = prevLogs.findIndex(log => format(new Date(log.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
+      if (existingLogIndex > -1) {
+        const updatedLogs = [...prevLogs];
+        updatedLogs[existingLogIndex] = newLog;
+        return updatedLogs;
+      } else {
+        return [...prevLogs, newLog];
+      }
+    });
+    
+    toast({
+      title: "Mood Log Saved",
+      description: "Your mood log has been saved successfully.",
+    });
+  };
   
   return (
-    <div className="app-container animate-fade-in">
-      <Header title="Recovery & Mood" />
-      
-      {!todayLog ? (
-        <div className="px-4 mb-8">
-          <MoodLogForm />
-        </div>
-      ) : (
-        <div className="px-4 mb-8">
-          <Button
-            className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple mb-4"
-            onClick={() => {}}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Recovery Log
-          </Button>
-          
-          <Card className="mb-6">
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between bg-secondary">
-              <div className="flex items-center space-x-2">
-                <Moon className="w-5 h-5 text-gym-purple" />
-                <CardTitle className="text-base font-medium">
-                  Today's Recovery Log
-                </CardTitle>
+    <div className="app-container animate-fade-in pb-8">
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Recovery &amp; Mood Tracking</h1>
+        
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Select Date</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border"
+            />
+            {date ? (
+              <p className="text-muted-foreground">
+                {format(date, 'PPP')}
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Please select a date.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Log Your Mood</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="mood" className="block text-sm font-medium text-gray-700">
+                  Mood
+                </label>
+                <div className="mt-1">
+                  <Select value={mood} onValueChange={setMood}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a mood" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">
+                        <Frown className="mr-2 h-4 w-4 inline-block align-middle" /> Awful
+                      </SelectItem>
+                      <SelectItem value="2">
+                        <Frown className="mr-2 h-4 w-4 inline-block align-middle" /> Bad
+                      </SelectItem>
+                      <SelectItem value="3">
+                        <Meh className="mr-2 h-4 w-4 inline-block align-middle" /> Okay
+                      </SelectItem>
+                      <SelectItem value="4">
+                        <Smile className="mr-2 h-4 w-4 inline-block align-middle" /> Good
+                      </SelectItem>
+                      <SelectItem value="5">
+                        <Smile className="mr-2 h-4 w-4 inline-block align-middle" /> Great
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Sleep</div>
-                  <div className="text-lg font-medium">{todayLog.sleepQuality || todayLog.sleep || 0}/10</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Energy</div>
-                  <div className="text-lg font-medium">{todayLog.energyLevel || todayLog.energy || 0}/10</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Mood</div>
-                  <div className="text-2xl">{emojis[todayLog.mood]}</div>
+              
+              <div>
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                  Notes
+                </label>
+                <div className="mt-1">
+                  <Textarea
+                    id="notes"
+                    rows={3}
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
                 </div>
               </div>
-              {todayLog.notes && (
-                <div className="mt-4 p-3 bg-secondary rounded-md">
-                  <p className="text-sm">{todayLog.notes}</p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="sleepQuality" className="block text-sm font-medium text-gray-700">
+                    Sleep Quality (1-10)
+                  </label>
+                  <Input
+                    type="number"
+                    id="sleepQuality"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={sleepQuality}
+                    onChange={(e) => setSleepQuality(Number(e.target.value))}
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      {sortedLogs.length > (todayLog ? 1 : 0) && (
-        <section className="px-4">
-          <h2 className="text-lg font-semibold mb-4">Recovery History</h2>
-          {sortedLogs
-            .filter(log => todayLog ? format(new Date(log.date), 'yyyy-MM-dd') !== todayString : true)
-            .map(log => (
-              <Card key={log.id} className="mb-4">
-                <CardHeader className="p-3 pb-2">
-                  <CardTitle className="text-sm font-medium flex justify-between">
-                    <span>{format(new Date(log.date), "MMMM d, yyyy")}</span>
-                    <span className="text-lg">{emojis[log.mood]}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Sleep:</span>
-                      <span>{log.sleepQuality || log.sleep || 0}/10</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Energy:</span>
-                      <span>{log.energyLevel || log.energy || 0}/10</span>
-                    </div>
-                  </div>
-                  {log.notes && (
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      {log.notes}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-        </section>
-      )}
+                
+                <div>
+                  <label htmlFor="sleep" className="block text-sm font-medium text-gray-700">
+                    Hours of Sleep
+                  </label>
+                  <Input
+                    type="number"
+                    id="sleep"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={sleep}
+                    onChange={(e) => setSleep(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="energyLevel" className="block text-sm font-medium text-gray-700">
+                    Energy Level (1-10)
+                  </label>
+                  <Input
+                    type="number"
+                    id="energyLevel"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={energyLevel}
+                    onChange={(e) => setEnergyLevel(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="stressLevel" className="block text-sm font-medium text-gray-700">
+                    Stress Level (1-10)
+                  </label>
+                  <Input
+                    type="number"
+                    id="stressLevel"
+                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"
+                    value={stressLevel}
+                    onChange={(e) => setStressLevel(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Button type="submit" className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple">
+                  Save Log
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

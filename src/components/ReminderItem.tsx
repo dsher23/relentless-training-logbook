@@ -3,7 +3,8 @@ import React from "react";
 import { format } from "date-fns";
 import { Bell, Calendar, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppContext, Reminder } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
+import { Reminder } from "@/types";
 
 interface ReminderItemProps {
   reminder: Reminder;

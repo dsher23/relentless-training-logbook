@@ -130,7 +130,7 @@ export const useLiveWorkout = () => {
                 prExerciseType: ex.prExerciseType
               }))
             };
-            addWorkout(workoutWithCompletedFlag);
+            addWorkout(workoutWithCompletedFlag.name, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
             foundWorkout = workoutWithCompletedFlag;
           }
         }

@@ -1,17 +1,6 @@
-
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Calendar, Copy, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppContext, WorkoutTemplate } from "@/context/AppContext";
-import Header from "@/components/Header";
-import StartWorkoutButton from "@/components/StartWorkoutButton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import React from "react";
+import { useAppContext } from "@/context/AppContext";
+import { WorkoutTemplate } from "@/types";
 
 const PlanDetail: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
@@ -106,7 +95,6 @@ const PlanDetail: React.FC = () => {
       description: `Created "${newTemplate.name}" in plan`,
     });
     
-    // Navigate to edit the new template
     navigate(`/exercise-plans/${plan.id}/days/${newTemplate.id}`);
   };
   

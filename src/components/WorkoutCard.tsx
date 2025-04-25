@@ -1,61 +1,58 @@
-
 import React from "react";
-import { format } from "date-fns";
-import { Dumbbell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Workout } from "@/context/AppContext";
+import { CalendarDays, CheckCircle, Dumbbell } from "lucide-react";
+import { format } from "date-fns";
+import StartWorkoutButton from "./StartWorkoutButton";
+import { useNavigate } from "react-router-dom";
+// Update import to use types from types directory
+import { useAppContext } from "@/context/AppContext";
+import { Workout } from "@/types";
 
 interface WorkoutCardProps {
   workout: Workout;
-  onClick?: () => void;
-  actionButton?: React.ReactNode;
 }
 
-const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onClick, actionButton }) => {
+const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout }) => {
+  const navigate = useNavigate();
+  const { markWorkoutCompleted } = useAppContext();
+
+  const handleWorkoutClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    navigate(`/workouts/${workout.id}`);
+  };
+
   return (
-    <Card 
-      className={`mb-4 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
-      onClick={onClick}
-    >
-      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between bg-secondary">
-        <div className="flex items-center space-x-2">
-          <Dumbbell className="w-5 h-5 text-gym-purple" />
-          <CardTitle className="text-lg font-medium">{workout.name}</CardTitle>
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {format(new Date(workout.date), "MMM d, yyyy")}
-        </span>
+    <Card className="bg-card/90 hover:bg-card/100 transition-colors cursor-pointer" onClick={handleWorkoutClick}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium tracking-tight">{workout.name}</CardTitle>
+        {workout.completed ? (
+          <CheckCircle className="h-4 w-4 text-green-500" />
+        ) : (
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        )}
       </CardHeader>
-      <CardContent className="p-4">
-        <div>
-          <div className="text-sm mb-2">
-            {workout.exercises.length} exercises · {workout.exercises.reduce(
-              (total, ex) => total + ex.sets.length, 0
-            )} total sets
+      <CardContent>
+        <div className="text-sm text-muted-foreground">
+          {workout.date && format(new Date(workout.date), "MMM dd, yyyy")}
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center gap-2">
+            <Dumbbell className="h-4 w-4" />
+            <span className="text-xs">{workout.exercises?.length || 0} Exercises</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {workout.exercises.slice(0, 3).map((exercise) => (
-              <span key={exercise.id} className="text-xs px-2 py-1 bg-secondary rounded-full">
-                {exercise.name}
-              </span>
-            ))}
-            {workout.exercises.length > 3 && (
-              <span className="text-xs px-2 py-1 bg-secondary rounded-full">
-                +{workout.exercises.length - 3} more
-              </span>
-            )}
-          </div>
-          {workout.notes && (
-            <div className="mt-4 text-sm text-muted-foreground border-t pt-2">
-              <p className="line-clamp-2">{workout.notes}</p>
-            </div>
+          {!workout.completed && (
+            <StartWorkoutButton workoutId={workout.id} className="ml-auto" compact />
           )}
-          
-          {/* Add action button if provided */}
-          {actionButton && (
-            <div className="mt-4 flex justify-end">
-              {actionButton}
-            </div>
+          {workout.completed && (
+            <button
+              className="ml-auto text-xs text-green-500 hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                markWorkoutCompleted(workout.id);
+              }}
+            >
+              Mark as Incomplete
+            </button>
           )}
         </div>
       </CardContent>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { AlertTriangle, Plus, Tag, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAppContext, WeakPoint } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
+import { WeakPoint } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 interface WeakPointFormProps {

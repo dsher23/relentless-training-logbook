@@ -1,13 +1,12 @@
-
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle, Trophy, Clock, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Exercise } from "@/context/AppContext";
+import { Exercise } from "@/types";
 import { formatDuration } from "date-fns";
 
-// Define an extended Exercise type if needed
+// Define an extended Exercise type with the properties we need
 interface ExtendedExercise extends Exercise {
   notes?: string;
 }
@@ -21,14 +20,14 @@ const WorkoutSummary = () => {
     previousStats: {} 
   };
 
-  const totalVolume = exercises.reduce((total: number, exercise: Exercise) => {
+  const totalVolume = exercises.reduce((total: number, exercise: ExtendedExercise) => {
     const exerciseVolume = exercise.sets.reduce((setTotal, set) => {
       return setTotal + (set.reps * set.weight);
     }, 0);
     return total + exerciseVolume;
   }, 0);
 
-  const prs = exercises.map((exercise: Exercise) => {
+  const prs = exercises.map((exercise: ExtendedExercise) => {
     const prevExerciseSets = previousStats[exercise.id];
     if (!prevExerciseSets) return null;
     

@@ -7,7 +7,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useAppContext, Reminder } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
+import { Reminder } from "@/types";
 import ReminderItem from "./ReminderItem";
 
 const NotificationCenter: React.FC = () => {

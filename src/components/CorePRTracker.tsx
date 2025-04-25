@@ -22,7 +22,7 @@ import { format } from "date-fns";
 import { ChevronDown, ExternalLink, Trophy, Plus } from "lucide-react";
 import { ProgressChart } from "@/components/ProgressChart";
 import { useExercises } from "@/hooks/useExercises";
-import { PR } from "@/types/pr";
+import { PR } from "@/types";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "ironlog_direct_prs";
@@ -88,7 +88,7 @@ const CorePRTracker: React.FC = () => {
     const newPR: PR = {
       exerciseId: selectedLift,
       weight: weightInKg, // Store in kg
-      date: new Date().toISOString(),
+      date: new Date().toISOString(), // Store as string instead of Date
       reps: 1,
       isDirectEntry: true
     };
@@ -106,7 +106,7 @@ const CorePRTracker: React.FC = () => {
     
     let bestOneRM = 0;
     let bestSet = null;
-    let bestWorkoutDate: Date | null = null;
+    let bestWorkoutDate: string | null = null; // Change to string instead of Date
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
@@ -120,7 +120,7 @@ const CorePRTracker: React.FC = () => {
         if (oneRM > bestOneRM) {
           bestOneRM = oneRM;
           bestSet = { weight: displayWeight, reps: pr.reps };
-          bestWorkoutDate = new Date(pr.date);
+          bestWorkoutDate = typeof pr.date === 'string' ? pr.date : pr.date.toISOString();
           bestWorkoutId = undefined;
         }
         
@@ -196,7 +196,7 @@ const CorePRTracker: React.FC = () => {
             if (oneRM > bestOneRM) {
               bestOneRM = oneRM;
               bestSet = bestSetInExercise;
-              bestWorkoutDate = workout.date;
+              bestWorkoutDate = typeof workout.date === 'string' ? workout.date : workout.date.toISOString();
               bestWorkoutId = workout.id;
             }
           }
@@ -212,7 +212,7 @@ const CorePRTracker: React.FC = () => {
         weight: Number(bestSet.weight),
         reps: Number(bestSet.reps),
         oneRM: bestOneRM,
-        date: format(bestWorkoutDate, "MMM d, yyyy"),
+        date: format(new Date(bestWorkoutDate), "MMM d, yyyy"),
         workoutId: bestWorkoutId
       });
     } else {

@@ -444,6 +444,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === id ? { ...r, archived } : r)));
   };
 
+  const deleteWorkoutTemplate = (id: string) => {
+    setWorkoutTemplates(workoutTemplates.filter(t => t.id !== id));
+  };
+
   const value = useMemo(
     () => ({
       workouts,
