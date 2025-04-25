@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Save, Play } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import Header from "@/components/Header";
+import { useAppContext } from "@/context/AppContext";
 
 interface CreateWorkoutFormValues {
   name: string;
@@ -17,6 +19,7 @@ interface CreateWorkoutFormValues {
 }
 
 const CreateWorkout: React.FC = () => {
+  const { addWorkout } = useAppContext();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
