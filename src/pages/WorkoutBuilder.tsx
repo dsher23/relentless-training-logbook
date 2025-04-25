@@ -19,12 +19,14 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/components/ui";
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
 
