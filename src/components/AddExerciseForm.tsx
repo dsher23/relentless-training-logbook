@@ -25,7 +25,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
     defaultValues: exercise || {
       id: "",
       name: "",
-      sets: [] as any, // Change from number to array to match Exercise type
+      sets: [] as any,
       reps: 10,
       weight: 0,
       restTime: 60,
@@ -36,10 +36,10 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
     },
   });
 
-  const [selectedExerciseId, setSelectedExerciseId] = React.useState<string>(exercise?.id || "");
+  const [selectedExerciseId, setSelectedExerciseId] = React.useState<string>(exercise?.id || "new-exercise");
 
   React.useEffect(() => {
-    if (selectedExerciseId) {
+    if (selectedExerciseId && selectedExerciseId !== "new-exercise") {
       const selected = exercises.find(ex => ex.id === selectedExerciseId);
       if (selected) {
         setValue("name", selected.name);
@@ -66,11 +66,13 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
     const newExercise: Exercise = {
       ...data,
       id: exercise?.id || uuidv4(),
-      name: selectedExerciseId ? exercises.find(ex => ex.id === selectedExerciseId)!.name : data.name,
+      name: selectedExerciseId && selectedExerciseId !== "new-exercise" ? 
+        exercises.find(ex => ex.id === selectedExerciseId)!.name : data.name,
       sets: setsArray,
-      category: selectedExerciseId ? exercises.find(ex => ex.id === selectedExerciseId)!.category : data.category,
+      category: selectedExerciseId && selectedExerciseId !== "new-exercise" ? 
+        exercises.find(ex => ex.id === selectedExerciseId)!.category : data.category,
     };
-    if (!selectedExerciseId) {
+    if (selectedExerciseId === "new-exercise") {
       addExercise(newExercise);
     }
     onSave(newExercise);
@@ -123,7 +125,7 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
               <SelectContent>
                 <SelectItem value="new-exercise">Type a new exercise</SelectItem>
                 {['upper', 'lower', 'core', 'other'].map((category) => (
-                  <optgroup key={category} label={category.toUpperCase()}>
+                  <React.Fragment key={category}>
                     {exercises
                       .filter((ex) => ex.category === category)
                       .map((ex) => (
@@ -131,11 +133,11 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
                           {ex.name}
                         </SelectItem>
                       ))}
-                  </optgroup>
+                  </React.Fragment>
                 ))}
               </SelectContent>
             </Select>
-            {(selectedExerciseId === "new-exercise" || !selectedExerciseId) && (
+            {selectedExerciseId === "new-exercise" && (
               <Input
                 id="name"
                 placeholder="e.g., Bench Press"
@@ -193,6 +195,25 @@ const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ isOpen, onClose, onSa
                 <SelectItem value="60">60 seconds</SelectItem>
                 <SelectItem value="90">90 seconds</SelectItem>
                 <SelectItem value="120">120 seconds</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Select
+              onValueChange={(value) => setValue("category", value as 'upper' | 'lower' | 'core' | 'other')}
+              defaultValue={exercise?.category || "other"}
+              disabled={selectedExerciseId !== "new-exercise"}
+            >
+              <SelectTrigger id="category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="upper">Upper Body</SelectItem>
+                <SelectItem value="lower">Lower Body</SelectItem>
+                <SelectItem value="core">Core</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import NavigationHeader from '@/components/NavigationHeader';
 
 const Settings = () => {
-  const { exportData, unitSystem, updateUnitSystem } = useAppContext();
+  const { exportData, unitSystem = { bodyWeightUnit: 'kg', bodyMeasurementUnit: 'cm', liftingWeightUnit: 'kg' }, updateUnitSystem = () => {} } = useAppContext();
   const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
@@ -60,7 +60,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Body Weight Unit</label>
             <Select 
-              value={unitSystem.bodyWeightUnit}
+              value={unitSystem.bodyWeightUnit || 'kg'}
               onValueChange={(value) => updateUnitSystem({ bodyWeightUnit: value as 'kg' | 'lbs' | 'stone' })}
             >
               <SelectTrigger>
@@ -77,7 +77,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Body Measurement Unit</label>
             <Select 
-              value={unitSystem.bodyMeasurementUnit}
+              value={unitSystem.bodyMeasurementUnit || 'cm'}
               onValueChange={(value) => updateUnitSystem({ bodyMeasurementUnit: value as 'cm' | 'in' })}
             >
               <SelectTrigger>
@@ -93,7 +93,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Lifting Weight Unit</label>
             <Select 
-              value={unitSystem.liftingWeightUnit}
+              value={unitSystem.liftingWeightUnit || 'kg'}
               onValueChange={(value) => updateUnitSystem({ liftingWeightUnit: value as 'kg' | 'lbs' })}
             >
               <SelectTrigger>

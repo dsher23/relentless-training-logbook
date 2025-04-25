@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -42,10 +43,10 @@ export interface BodyMeasurement extends Measurement {
   hips?: number;
   arms?: number;
   legs?: number;
-  forearms?: number; // Added for Measurements.tsx
-  thighs?: number; // Added for Measurements.tsx
-  calves?: number; // Added for Measurements.tsx
-  notes?: string; // Added for MeasurementForm.tsx
+  forearms?: number;
+  thighs?: number;
+  calves?: number;
+  notes?: string;
 }
 
 export interface Supplement {
@@ -57,8 +58,8 @@ export interface Supplement {
   dosage?: string;
   notes?: string;
   schedule?: string[];
-  times?: string[]; // Added for SupplementItem.tsx
-  workoutDays?: string[]; // Added for SupplementItem.tsx
+  times?: string[];
+  workoutDays?: string[];
 }
 
 export interface Cycle {
@@ -109,6 +110,7 @@ export interface PR {
 export interface WorkoutDay {
   dayOfWeek: number;
   workoutTemplateId?: string;
+  workoutName?: string;
 }
 
 export interface WeeklyRoutine {
@@ -135,21 +137,21 @@ export interface WorkoutPlan {
   workoutTemplates?: WorkoutTemplate[];
   isActive?: boolean;
   archived?: boolean;
-  description?: string; // Added for useWorkoutPlans.ts
+  description?: string;
 }
 
 export interface Reminder {
   id: string;
-  type: 'supplement' | 'workout' | 'routineChange'; // Added routineChange for ReminderItem.tsx
+  type: 'supplement' | 'workout' | 'routineChange';
   time: string;
   days: string[];
   dateTime?: Date;
   dueDate?: Date;
   dismissed?: boolean;
   supplementId?: string;
-  seen?: boolean; // Added for NotificationCenter.tsx
-  title?: string; // Added for ReminderItem.tsx
-  message?: string; // Added for ReminderItem.tsx
+  seen?: boolean;
+  title?: string;
+  message?: string;
 }
 
 export interface MoodLog {
@@ -157,11 +159,11 @@ export interface MoodLog {
   date: Date;
   mood: string;
   notes?: string;
-  sleepQuality?: number; // Added for MoodLogForm.tsx
-  sleep?: number; // Added for MoodLogForm.tsx
-  energyLevel?: number; // Added for MoodLogForm.tsx
-  energy?: number; // Added for MoodLogForm.tsx
-  stressLevel?: number; // Added for MoodLogForm.tsx
+  sleepQuality?: number;
+  sleep?: number;
+  energyLevel?: number;
+  energy?: number;
+  stressLevel?: number;
 }
 
 export interface TrainingBlock {
@@ -183,7 +185,7 @@ export interface WeakPoint {
   muscleGroup?: string;
   priority?: number;
   sessionsPerWeekGoal?: number;
-  name?: string; // Added for WeakPointTracker.tsx
+  name?: string;
 }
 
 export interface CycleCompound {
@@ -235,6 +237,16 @@ export interface AppContextType {
   setProgressPhotos: React.Dispatch<React.SetStateAction<ProgressPhoto[]>>;
   exercises: Exercise[];
   setExercises: React.Dispatch<React.SetStateAction<Exercise[]>>;
+  unitSystem: {
+    bodyWeightUnit: 'kg' | 'lbs' | 'stone';
+    bodyMeasurementUnit: 'cm' | 'in';
+    liftingWeightUnit: 'kg' | 'lbs';
+  };
+  updateUnitSystem: (updates: Partial<{
+    bodyWeightUnit: 'kg' | 'lbs' | 'stone';
+    bodyMeasurementUnit: 'cm' | 'in';
+    liftingWeightUnit: 'kg' | 'lbs';
+  }>) => void;
   addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
   updateWorkout: (updated: Workout) => void;
   markWorkoutCompleted: (id: string) => void;
@@ -252,10 +264,11 @@ export interface AppContextType {
   markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
   addExercise: (exercise: Exercise) => void;
   addSteroidCycle: (cycle: SteroidCycle) => void;
-  exportData: () => string;
-  unitSystem: string;
-  convertWeight: (weight: number) => number;
+  exportData: (type?: "workouts" | "measurements" | "supplements") => string;
+  convertWeight: (weight: number, from?: string, to?: string) => number;
+  convertMeasurement: (measurement: number, from?: string, to?: string) => number;
   getWeightUnitDisplay: () => string;
+  getMeasurementUnitDisplay: () => string;
   getDueReminders: () => Reminder[];
   markReminderAsSeen: (id: string) => void;
   dismissReminder: (id: string) => void;

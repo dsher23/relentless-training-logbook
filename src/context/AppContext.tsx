@@ -1,8 +1,14 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, SteroidCompound, CycleCompound, ProgressPhoto } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
+
+interface UnitSystem {
+  bodyWeightUnit: 'kg' | 'lbs' | 'stone';
+  bodyMeasurementUnit: 'cm' | 'in';
+  liftingWeightUnit: 'kg' | 'lbs';
+}
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -26,6 +32,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
+  const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>([]);
+  const [cycleCompounds, setCycleCompounds] = useState<CycleCompound[]>([]);
+  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
+  
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>({
+    bodyWeightUnit: 'kg',
+    bodyMeasurementUnit: 'cm',
+    liftingWeightUnit: 'kg'
+  });
+
+  const updateUnitSystem = (updates: Partial<UnitSystem>) => {
+    setUnitSystem(prev => ({
+      ...prev,
+      ...updates
+    }));
+  };
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const id = additionalData.id || uuidv4();
@@ -110,30 +132,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSteroidCycles([...steroidCycles, cycle]);
   };
 
-  const exportData = () => {
-    const data = {
-      workouts,
-      measurements,
-      bodyMeasurements,
-      supplements,
-      cycles,
-      exercises,
-      steroidCycles,
-      supplementLogs,
-      weeklyRoutines,
-      trainingBlocks,
-      weakPoints,
-      moodLogs,
-      reminders,
-      workoutTemplates,
-      workoutPlans,
-    };
-    return JSON.stringify(data);
+  const convertWeight = (weight: number, from?: string, to?: string): number => {
+    const sourceUnit = from || unitSystem.liftingWeightUnit;
+    const targetUnit = to || unitSystem.liftingWeightUnit;
+    
+    if (sourceUnit === targetUnit) return weight;
+    
+    if (sourceUnit === 'kg' && targetUnit === 'lbs') {
+      return weight * 2.20462;
+    } else if (sourceUnit === 'lbs' && targetUnit === 'kg') {
+      return weight / 2.20462;
+    }
+    
+    return weight;
   };
 
-  const unitSystem = 'metric';
-  const convertWeight = (weight: number) => weight;
-  const getWeightUnitDisplay = () => 'kg';
+  const convertMeasurement = (value: number, from?: string, to?: string): number => {
+    const sourceUnit = from || unitSystem.bodyMeasurementUnit;
+    const targetUnit = to || unitSystem.bodyMeasurementUnit;
+    
+    if (sourceUnit === targetUnit) return value;
+    
+    if (sourceUnit === 'cm' && targetUnit === 'in') {
+      return value * 0.393701;
+    } else if (sourceUnit === 'in' && targetUnit === 'cm') {
+      return value / 0.393701;
+    }
+    
+    return value;
+  };
+
+  const getWeightUnitDisplay = (): string => {
+    return unitSystem.liftingWeightUnit;
+  };
+
+  const getMeasurementUnitDisplay = (): string => {
+    return unitSystem.bodyMeasurementUnit;
+  };
+
+  const exportData = (type: "workouts" | "measurements" | "supplements" = "workouts"): string => {
+    let data = [];
+    switch (type) {
+      case "workouts":
+        data = workouts;
+        break;
+      case "measurements":
+        data = measurements;
+        break;
+      case "supplements":
+        data = supplements;
+        break;
+    }
+    return JSON.stringify(data);
+  };
 
   const getDueReminders = () => {
     return reminders.filter((reminder) => !reminder.dismissed);
@@ -276,6 +327,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkoutTemplates,
       workoutPlans,
       setWorkoutPlans,
+      steroidCompounds,
+      setSteroidCompounds,
+      cycleCompounds,
+      setCycleCompounds,
+      progressPhotos,
+      setProgressPhotos,
+      unitSystem,
+      updateUnitSystem,
       addWorkout,
       updateWorkout,
       markWorkoutCompleted,
@@ -294,9 +353,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addExercise,
       addSteroidCycle,
       exportData,
-      unitSystem,
       convertWeight,
+      convertMeasurement,
       getWeightUnitDisplay,
+      getMeasurementUnitDisplay,
       getDueReminders,
       markReminderAsSeen,
       dismissReminder,
@@ -320,7 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActivePlan,
       removeTemplateFromPlan,
     }),
-    [workouts, measurements, bodyMeasurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans]
+    [workouts, measurements, bodyMeasurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans, steroidCompounds, cycleCompounds, progressPhotos, unitSystem]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -334,4 +394,4 @@ export const useAppContext = () => {
   return context;
 };
 
-export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
+export { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
