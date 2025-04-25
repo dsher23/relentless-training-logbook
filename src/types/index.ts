@@ -1,182 +1,36 @@
-
-export interface Workout {
-  id: string;
-  name: string;
-  date: string | Date; // Support both Date objects and ISO strings
-  exercises: Exercise[];
-  notes?: string;
-  completed: boolean;
-  isDeload?: boolean;
-  scheduledTime?: string;
-  isTemplate?: boolean;
-}
-
-export interface Exercise {
-  id: string;
-  name: string;
-  sets: { reps: number; weight: number }[];
-  notes?: string;
-  lastProgressDate?: Date | string;
-  previousStats?: { reps: number; weight: number }[];
-  isWeakPoint?: boolean;
-  restTime?: number;
-  prExerciseType?: string;
-}
-
-export interface BodyMeasurement {
-  id: string;
-  date: Date | string;
-  weight: number;
-  bodyFat?: number;
-  muscleMass?: number;
-  arms?: number;
-  chest?: number;
-  waist?: number;
-  legs?: number;
-  forearms?: number;  // Added missing property
-  thighs?: number;    // Added missing property
-  calves?: number;    // Added missing property
-  notes?: string;
-  photoUrl?: string;
-  unit?: 'metric' | 'imperial';
-}
-
 export interface Supplement {
   id: string;
   name: string;
-  dosage: string;
-  notes?: string;
-  schedule?: {
-    times: string[];
-    workoutDays: boolean;
-  };
+  days: string[]; // e.g., ["Monday", "Tuesday"]
+  reminderTime?: string; // e.g., "08:00"
+  history: { date: Date; taken: boolean }[]; // Log of taken/not taken
 }
 
-export interface SupplementLog {
+export interface Cycle {
   id: string;
-  supplementId: string;
-  date: Date | string;
-  time?: Date | string;
-  dosageTaken: string;
-  taken: boolean;
-  notes?: string;
+  name: string; // e.g., "Testosterone Cycle"
+  supplements: Supplement[];
+  startDate: Date;
+  endDate: Date;
+  history: { date: Date; taken: boolean }[];
 }
 
-export interface MoodLog {
-  id: string;
-  date: Date | string;
-  mood: number;
-  energyLevel: number;
-  sleepQuality: number;
-  stressLevel: number;
-  notes?: string;
-  sleep?: number;
-  energy?: number;
-}
-
-export interface WeakPoint {
-  id: string;
-  name: string;
-  description?: string;
-  muscleGroup?: string;
-  priority?: number;
-  sessionsPerWeekGoal?: number;
-}
-
-export interface WorkoutTemplate {
-  id: string;
-  name: string;
-  dayName?: string;
-  exercises: Exercise[];
-  isFavorite?: boolean;
-  scheduledTime?: string;
-}
-
-export interface WeeklyRoutine {
-  id: string;
-  name: string;
-  workoutDays: WeeklyRoutineEntry[];
-  archived: boolean;
-}
-
-export interface WeeklyRoutineEntry {
-  id: string;
-  dayOfWeek: number;
-  workoutTemplateId: string | null;
-  workoutName: string;
-}
-
-export interface TrainingBlock {
-  id: string;
-  name: string;
-  startDate: Date | string;
-  durationWeeks: number;
-  goal: string;
-  notes?: string;
-  weeklyRoutineId?: string;
-}
-
-export interface Reminder {
-  id: string;
-  title: string;
-  description?: string;
-  dueDate: Date | string;
-  seen: boolean;
-  dismissed: boolean;
-  type?: string;
-  message?: string;
-  dateTime?: Date | string;
-  supplementId?: string;
-  referenceId?: string;
-}
-
-export interface SteroidCycle {
-  id: string;
-  name: string;
-  startDate: Date | string;
-  endDate: Date | string;
-  notes?: string;
-  compounds: CycleCompound[];
-  isPrivate?: boolean;
-  currentWeek?: number;
-  totalWeeks?: number;
-  startWeek?: number;
-}
-
-export interface CycleCompound {
-  id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
-}
-
-export interface SteroidCompound {
-  id: string;
-  cycleId: string;
-  name: string;
-  weeklyDosage: number;
-  dosageUnit: string;
-  frequency: string;
-  duration?: number;
-  notes?: string;
-  active?: boolean;
-}
-
-export interface WorkoutPlan {
-  id: string;
-  name: string;
-  description?: string;
-  workoutTemplates: WorkoutTemplate[];
-  isActive: boolean;
-  archived: boolean;
-}
-
-export interface ProgressPhoto {
-  id: string;
-  date: Date | string;
-  url: string;
-  notes?: string;
-  weight?: number;
-  isPrivate: boolean;
-  tags?: string[];
+export interface AppContextType {
+  workouts: Workout[];
+  setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
+  measurements: Measurement[];
+  setMeasurements: React.Dispatch<React.SetStateAction<Measurement[]>>;
+  supplements: Supplement[]; // Add
+  setSupplements: React.Dispatch<React.SetStateAction<Supplement[]>>; // Add
+  cycles: Cycle[]; // Add
+  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>; // Add
+  addSupplement: (supplement: Supplement) => void; // Add
+  updateSupplement: (updated: Supplement) => void; // Add
+  deleteSupplement: (id: string) => void; // Add
+  addCycle: (cycle: Cycle) => void; // Add
+  updateCycle: (updated: Cycle) => void; // Add
+  deleteCycle: (id: string) => void; // Add
+  markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void; // Add
+  markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void; // Add
+  // ... other properties (e.g., getWorkoutById)
 }
