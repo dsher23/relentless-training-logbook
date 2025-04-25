@@ -12,7 +12,7 @@ export const useLiveWorkout = () => {
   const [searchParams] = useSearchParams();
   const isTemplate = searchParams.get("isTemplate") === "true";
   const { toast } = useToast();
-  const { workouts, workoutTemplates, addWorkout, updateWorkout } = useAppContext();
+  const { workouts, workoutTemplates, addWorkout, updateWorkout, addPRLift } = useAppContext();
   
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -48,6 +48,35 @@ export const useLiveWorkout = () => {
     };
   }, []);
 
+  const checkForPRs = useCallback((exerciseId, name, prExerciseType, sets) => {
+    if (!prExerciseType || !sets || sets.length === 0) return;
+
+    // Find the set with the highest weight
+    const bestSet = [...sets].sort((a, b) => {
+      // First compare weight
+      if (b.weight !== a.weight) return b.weight - a.weight;
+      // If weight is the same, compare reps
+      return b.reps - a.reps;
+    })[0];
+
+    if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
+      // Add a new PR
+      addPRLift({
+        exerciseId,
+        weight: bestSet.weight,
+        reps: bestSet.reps,
+        date: new Date(),
+        workoutId: id,
+        isDirectEntry: false
+      });
+
+      toast({
+        title: "New PR Set!",
+        description: `${name}: ${bestSet.weight}kg for ${bestSet.reps} reps`,
+      });
+    }
+  }, [addPRLift, id, toast]);
+
   const finishWorkout = useCallback(() => {
     if (!workout) {
       toast({
@@ -64,6 +93,11 @@ export const useLiveWorkout = () => {
       const updatedExercises = workout.exercises?.map(exercise => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
+        
+        // Check for PRs before saving
+        if (exercise.prExerciseType) {
+          checkForPRs(exercise.id, exercise.name, exercise.prExerciseType, data.sets);
+        }
         
         return {
           ...exercise,
@@ -106,7 +140,7 @@ export const useLiveWorkout = () => {
         variant: "destructive"
       });
     }
-  }, [workout, exerciseData, updateWorkout, toast, navigate]);
+  }, [workout, exerciseData, updateWorkout, toast, navigate, checkForPRs]);
 
   const loadWorkout = useCallback(async () => {
     if (!id) return;

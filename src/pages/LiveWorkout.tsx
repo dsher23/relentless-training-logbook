@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronRight, ChevronLeft, Clock, Save, Info } from "lucide-react";
+import { ChevronRight, ChevronLeft, Clock, Save, Info, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 
 const LiveWorkout: React.FC = () => {
   const { id } = useParams();
@@ -26,7 +28,7 @@ const LiveWorkout: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isTemplate = searchParams.get("isTemplate") === "true";
   const { toast } = useToast();
-  const { workouts } = useAppContext();
+  const { workouts, prLifts } = useAppContext();
   
   const {
     workout,
@@ -92,6 +94,19 @@ const LiveWorkout: React.FC = () => {
   const toggleTimer = () => {
     setIsRunning(prev => !prev);
   };
+
+  const getPreviousPRForExercise = (exerciseId: string) => {
+    if (!prLifts || !prLifts.length) return null;
+    
+    const exercisePRs = prLifts.filter(pr => pr.exerciseId === exerciseId);
+    if (!exercisePRs.length) return null;
+    
+    // Sort by weight descending then reps descending
+    return [...exercisePRs].sort((a, b) => {
+      if (b.weight !== a.weight) return b.weight - a.weight;
+      return b.reps - a.reps;
+    })[0];
+  };
   
   if (!workout) {
     return (
@@ -129,6 +144,7 @@ const LiveWorkout: React.FC = () => {
     onUpdateNotes,
   }) => {
     const sets = exerciseData?.sets || [];
+    const previousPR = getPreviousPRForExercise(exercise.id);
 
     const handleSetChange = (setIndex: number, field: "reps" | "weight", value: number) => {
       onUpdateSet(setIndex, field, value);
@@ -143,7 +159,14 @@ const LiveWorkout: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">{exercise.name}</h3>
+          <h3 className="text-xl font-semibold flex items-center">
+            {exercise.name}
+            {exercise.prExerciseType && (
+              <Badge variant="default" className="ml-2 bg-yellow-500/10 text-yellow-600 border-yellow-500 flex items-center gap-1">
+                <Trophy className="h-3 w-3" /> PR Lift
+              </Badge>
+            )}
+          </h3>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm">
@@ -159,6 +182,22 @@ const LiveWorkout: React.FC = () => {
                 </SheetDescription>
               </SheetHeader>
               <div className="grid gap-4 py-4">
+                {previousPR && (
+                  <div className="border rounded-md p-3 bg-yellow-50 border-yellow-200">
+                    <h4 className="font-medium flex items-center mb-1">
+                      <Trophy className="h-4 w-4 mr-1 text-yellow-500" /> 
+                      Personal Record
+                    </h4>
+                    <p className="text-sm">
+                      {previousPR.weight} kg × {previousPR.reps} reps
+                      {previousPR.date && (
+                        <span className="ml-1 text-muted-foreground">
+                          ({new Date(previousPR.date).toLocaleDateString()})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="exercise-notes" className="text-right">
                     Notes
