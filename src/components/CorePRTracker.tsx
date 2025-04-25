@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,6 +87,7 @@ const CorePRTracker: React.FC = () => {
     const weightInKg = convertWeight(weight, unitSystem.liftingWeightUnit, "kg");
 
     const newPR: PR = {
+      id: crypto.randomUUID(), // Add the id property
       exerciseId: selectedLift,
       weight: weightInKg, // Store in kg
       date: new Date().toISOString(), // Store as string instead of Date

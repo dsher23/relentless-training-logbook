@@ -1,6 +1,24 @@
-import React from "react";
+
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { WorkoutTemplate } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Star, Calendar, Plus, Copy } from "lucide-react";
+import Header from "@/components/Header";
+import StartWorkoutButton from "@/components/StartWorkoutButton";
 
 const PlanDetail: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();

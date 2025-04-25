@@ -1,6 +1,12 @@
+
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Workout } from "@/types";
+import { format, isSameDay, startOfWeek, addDays } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 interface WeeklyCalendarProps {
   selectedDate: Date;
