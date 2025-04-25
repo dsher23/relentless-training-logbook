@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -203,6 +202,7 @@ export interface CycleCompound {
   id: string;
   steroidCompoundId: string;
   dosage: string;
+  name?: string; // Add name property
 }
 
 export interface ProgressPhoto {

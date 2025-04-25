@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 const Recovery: React.FC = () => {
   const { moodLogs, setMoodLogs } = useAppContext();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [mood, setMood] = useState<string | number>("");
+  const [mood, setMood] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [sleepQuality, setSleepQuality] = useState<number>(5);
   const [sleep, setSleep] = useState<number>(8);
@@ -138,7 +139,10 @@ const Recovery: React.FC = () => {
                   Mood
                 </label>
                 <div className="mt-1">
-                  <Select value={mood} onValueChange={setMood}>
+                  <Select 
+                    value={mood} 
+                    onValueChange={(value) => setMood(value)}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a mood" />
                     </SelectTrigger>
