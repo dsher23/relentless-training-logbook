@@ -1,13 +1,30 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement } from '@/types';
+
+export type { 
+  Workout, 
+  Measurement, 
+  BodyMeasurement, 
+  Supplement, 
+  Cycle, 
+  Exercise, 
+  Reminder, 
+  MoodLog, 
+  WeeklyRoutine, 
+  TrainingBlock, 
+  WeakPoint, 
+  SteroidCycle, 
+  SupplementLog, 
+  WorkoutTemplate, 
+  WorkoutPlan 
+} from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]); // Added
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([
@@ -114,7 +131,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const data = {
       workouts,
       measurements,
-      bodyMeasurements, // Added
+      bodyMeasurements,
       supplements,
       cycles,
       exercises,
@@ -250,8 +267,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkouts,
       measurements,
       setMeasurements,
-      bodyMeasurements, // Added
-      setBodyMeasurements, // Added
+      bodyMeasurements,
+      setBodyMeasurements,
       supplements,
       setSupplements,
       cycles,
@@ -333,5 +350,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };

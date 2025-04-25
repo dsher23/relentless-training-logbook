@@ -17,7 +17,7 @@ export interface Set {
 export interface Exercise {
   id: string;
   name: string;
-  sets: Set[];
+  sets: { reps: number; weight: number }[];
   reps: number;
   weight?: number;
   category: 'upper' | 'lower' | 'core' | 'other';
@@ -220,7 +220,7 @@ export interface AppContextType {
   deleteWorkout: (id: string) => void;
   getWorkoutById: (id: string) => Workout | undefined;
   duplicateWorkout: (id: string) => void;
-  toggleDeloadMode: (id: string, isDeload: boolean) => void; // Updated signature
+  toggleDeloadMode: (id: string, isDeload: boolean) => void;
   addSupplement: (supplement: Supplement) => void;
   updateSupplement: (updated: Supplement) => void;
   deleteSupplement: (id: string) => void;

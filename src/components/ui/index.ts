@@ -1,3 +1,4 @@
+
 export * from './accordion';
 export * from './alert-dialog';
 export * from './alert';
@@ -36,9 +37,11 @@ export * from './sheet';
 export * from './sidebar';
 export * from './skeleton';
 export * from './slider';
-export { toast } from './sonner'; // Explicitly export toast
-export { Toaster as SonnerToaster } from './sonner'; // Rename to avoid conflict
-export { Toaster } from './toaster'; // Export Toaster from toaster.tsx
+
+// Explicitly handle sonner exports to avoid ambiguity
+import { toast as sonnerToast, Toaster as SonnerToaster } from './sonner';
+export { sonnerToast, SonnerToaster };
+
 export * from './toggle-group';
 export * from './toggle';
 export * from './tooltip';
