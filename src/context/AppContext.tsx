@@ -1,6 +1,6 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, PR } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -35,6 +35,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     liftingWeightUnit: 'kg',
   });
 
+  // Define all methods before useMemo to avoid ReferenceError
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const id = additionalData.id || uuidv4();
     const newWorkout: Workout = { id, name, date: new Date(), exercises, completed: false, ...additionalData };
@@ -145,39 +146,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return JSON.stringify(data);
   };
 
-  const convertWeight = (weight: number, fromUnit: WeightUnit = 'kg', toUnit: WeightUnit = unitSystem.liftingWeightUnit) => {
-    if (fromUnit === toUnit) return weight;
-    
-    // Convert to kg first (as base unit)
-    let weightInKg = weight;
-    if (fromUnit === 'lbs') {
-      weightInKg = weight * 0.453592;
-    } else if (fromUnit === 'stone') {
-      weightInKg = weight * 6.35029;
+  const convertWeight = (weight: number, unit: 'kg' | 'lbs' | 'stone', unitSystem: UnitSystem) => {
+    if (unit === unitSystem.liftingWeightUnit || unit === unitSystem.bodyWeightUnit) {
+      return weight; // No conversion needed if units match
     }
-    
-    // Then convert from kg to target unit
-    if (toUnit === 'kg') {
-      return weightInKg;
-    } else if (toUnit === 'lbs') {
-      return weightInKg / 0.453592;
-    } else if (toUnit === 'stone') {
-      return weightInKg / 6.35029;
+
+    if (unit === 'kg') {
+      if (unitSystem.liftingWeightUnit === 'lbs' || unitSystem.bodyWeightUnit === 'lbs') {
+        return weight * 2.20462; // kg to lbs
+      }
+      if (unitSystem.bodyWeightUnit === 'stone') {
+        return weight * 0.157473; // kg to stone
+      }
+    } else if (unit === 'lbs') {
+      if (unitSystem.liftingWeightUnit === 'kg' || unitSystem.bodyWeightUnit === 'kg') {
+        return weight / 2.20462; // lbs to kg
+      }
+      if (unitSystem.bodyWeightUnit === 'stone') {
+        return weight / 14; // lbs to stone
+      }
+    } else if (unit === 'stone') {
+      if (unitSystem.bodyWeightUnit === 'kg') {
+        return weight / 0.157473; // stone to kg
+      }
+      if (unitSystem.bodyWeightUnit === 'lbs') {
+        return weight * 14; // stone to lbs
+      }
     }
-    
     return weight; // Fallback
   };
 
-  const convertMeasurement = (value: number, fromUnit: MeasurementUnit = 'cm', toUnit: MeasurementUnit = unitSystem.bodyMeasurementUnit) => {
-    if (fromUnit === toUnit) return value;
-    
-    // Convert cm to inches or vice versa
-    if (fromUnit === 'cm' && toUnit === 'in') {
-      return value / 2.54;
-    } else if (fromUnit === 'in' && toUnit === 'cm') {
-      return value * 2.54;
+  const convertMeasurement = (value: number, unit: 'cm' | 'in', unitSystem: UnitSystem) => {
+    if (unit === unitSystem.bodyMeasurementUnit) {
+      return value; // No conversion needed if units match
     }
-    
+
+    if (unit === 'cm') {
+      if (unitSystem.bodyMeasurementUnit === 'in') {
+        return value / 2.54; // cm to inches
+      }
+    } else if (unit === 'in') {
+      if (unitSystem.bodyMeasurementUnit === 'cm') {
+        return value * 2.54; // inches to cm
+      }
+    }
     return value; // Fallback
   };
 
@@ -227,6 +239,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === updated.id ? updated : r)));
   };
 
+  const deleteWeeklyRoutine = (id: string) => {
+    setWeeklyRoutines(weeklyRoutines.filter((r) => r.id !== id));
+  };
+
+  const duplicateWeeklyRoutine = (id: string) => {
+    const routine = weeklyRoutines.find((r) => r.id === id);
+    if (routine) {
+      const newRoutine = { ...routine, id: uuidv4(), name: `${routine.name} (Copy)` };
+      setWeeklyRoutines([...weeklyRoutines, newRoutine]);
+    }
+  };
+
+  const archiveWeeklyRoutine = (id: string) => {
+    setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === id ? { ...r, archived: true } : r)));
+  };
+
   const addWeakPoint = (weakPoint: WeakPoint) => {
     setWeakPoints([...weakPoints, weakPoint]);
   };
@@ -249,6 +277,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateWorkoutTemplate = (updated: WorkoutTemplate) => {
     setWorkoutTemplates(workoutTemplates.map((t) => (t.id === updated.id ? updated : t)));
+  };
+
+  const deleteWorkoutTemplate = (id: string) => {
+    setWorkoutTemplates(workoutTemplates.filter((t) => t.id !== id));
   };
 
   const addWorkoutPlan = (plan: WorkoutPlan) => {
@@ -629,18 +661,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .slice(0, limit);
   };
 
-  const addPRLift = (prData: Omit<PR, 'id'>) => {
-    console.log("Adding PR lift:", prData);
-  };
-
-  const updatePR = (prData: PR) => {
-    console.log("Updating PR:", prData);
-  };
-
-  const deletePR = (id: string) => {
-    console.log("Deleting PR:", id);
-  };
-
   const value = useMemo(
     () => ({
       workouts,
@@ -722,12 +742,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateTrainingBlock,
       addWeeklyRoutine,
       updateWeeklyRoutine,
+      deleteWeeklyRoutine,
+      duplicateWeeklyRoutine,
+      archiveWeeklyRoutine,
       addWeakPoint,
       deleteWeakPoint,
       addMoodLog,
       updateMoodLog,
       addWorkoutTemplate,
       updateWorkoutTemplate,
+      deleteWorkoutTemplate,
       addWorkoutPlan,
       updateWorkoutPlan,
       deleteWorkoutPlan,
@@ -784,27 +808,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       getRecentWorkoutTemplates,
       getRecentWorkoutPlans,
       getRecentCycleCompounds,
-      getRecentProgressPhotos,
-      addPRLift,
-      updatePR,
-      deletePR,
-      addCompound: addSteroidCompound,
-      updateCompound: updateSteroidCompound,
-      deleteCompound: deleteSteroidCompound,
-      deleteWorkoutTemplate,
-      deleteWeeklyRoutine: (id: string) => {
-        setWeeklyRoutines(weeklyRoutines.filter(r => r.id !== id));
-      },
-      duplicateWeeklyRoutine: (id: string) => {
-        const routine = weeklyRoutines.find(r => r.id === id);
-        if (routine) {
-          const newRoutine = { ...routine, id: uuidv4(), name: `${routine.name} (Copy)` };
-          setWeeklyRoutines([...weeklyRoutines, newRoutine]);
-        }
-      },
-      archiveWeeklyRoutine: (id: string, archived: boolean) => {
-        setWeeklyRoutines(weeklyRoutines.map(r => r.id === id ? { ...r, archived } : r));
-      }
+      getRecentProgressPhotos
     }),
     [
       workouts,
