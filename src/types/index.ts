@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -262,14 +263,11 @@ export type AppContextType = {
   steroidCycles: SteroidCycle[];
   steroidCompounds: SteroidCompound[];
   addSteroidCycle: (cycle: SteroidCycle) => void;
-  addSteroidCompound: (compound: SteroidCompound) => void;
-  updateSteroidCompound: (updated: SteroidCompound) => void;
-  deleteSteroidCompound: (id: string) => void;
+  addCompound: (compound: SteroidCompound) => void;
+  updateCompound: (compound: SteroidCompound) => void;
+  deleteCompound: (id: string) => void;
   
   cycleCompounds: CycleCompound[];
-  addCycleCompound: (compound: CycleCompound) => void;
-  updateCycleCompound: (updated: CycleCompound) => void;
-  deleteCycleCompound: (id: string) => void;
   
   supplementLogs: SupplementLog[];
   addSupplementLog: (log: SupplementLog) => void;
@@ -303,7 +301,6 @@ export type AppContextType = {
   workoutTemplates: WorkoutTemplate[];
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
-  duplicateWorkoutTemplate?: (id: string) => void;
   deleteWorkoutTemplate: (id: string) => void;
   
   workoutPlans: WorkoutPlan[];
@@ -312,13 +309,9 @@ export type AppContextType = {
   deleteWorkoutPlan: (id: string) => void;
   duplicateWorkoutPlan: (id: string) => void;
   setActivePlan: (id: string) => void;
-  addTemplateToPlan?: (planId: string, templateId: string) => void;
   removeTemplateFromPlan: (planId: string, templateId: string) => void;
   
   progressPhotos: ProgressPhoto[];
-  addProgressPhoto: (photo: ProgressPhoto) => void;
-  updateProgressPhoto: (updated: ProgressPhoto) => void;
-  deleteProgressPhoto: (id: string) => void;
   
   unitSystem: UnitSystem;
   convertWeight: (weight: number, fromUnit?: WeightUnit, toUnit?: WeightUnit) => number;
@@ -332,8 +325,5 @@ export type AppContextType = {
   addPRLift: (prData: Omit<PR, 'id'>) => void;
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
-  
-  addCompound: (compound: SteroidCompound) => void;
-  updateCompound: (compound: SteroidCompound) => void;
-  deleteCompound: (id: string) => void;
 };
+

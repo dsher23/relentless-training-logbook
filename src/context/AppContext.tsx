@@ -1,6 +1,7 @@
+
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, WeightUnit, MeasurementUnit } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, WeightUnit, MeasurementUnit, PR } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -248,8 +249,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const archiveWeeklyRoutine = (id: string) => {
-    setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === id ? { ...r, archived: true } : r)));
+  const archiveWeeklyRoutine = (id: string, archived: boolean) => {
+    setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === id ? { ...r, archived } : r)));
   };
 
   const addWeakPoint = (weakPoint: WeakPoint) => {
@@ -342,7 +343,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCompound = (compound: SteroidCompound) => {
-    setSteroidCompounds([...steroidCompounds, compound]);
+    setSteroidCompounds([...steroidCompounds, { ...compound, id: compound.id || uuidv4() }]);
   };
 
   const updateCompound = (compound: SteroidCompound) => {
@@ -358,39 +359,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       workouts,
       setWorkouts,
       measurements,
-      setMeasurements,
       bodyMeasurements,
-      setBodyMeasurements,
       supplements,
-      setSupplements,
       cycles,
-      setCycles,
       exercises,
-      setExercises,
       steroidCycles,
-      setSteroidCycles,
       steroidCompounds,
-      setSteroidCompounds,
       supplementLogs,
-      setSupplementLogs,
       weeklyRoutines,
-      setWeeklyRoutines,
       trainingBlocks,
-      setTrainingBlocks,
       weakPoints,
-      setWeakPoints,
       moodLogs,
-      setMoodLogs,
       reminders,
-      setReminders,
       workoutTemplates,
-      setWorkoutTemplates,
       workoutPlans,
-      setWorkoutPlans,
       cycleCompounds,
-      setCycleCompounds,
       progressPhotos,
-      setProgressPhotos,
       addWorkout,
       updateWorkout,
       markWorkoutCompleted,
@@ -408,15 +392,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       markCycleTaken,
       addExercise,
       addSteroidCycle,
-      addSteroidCompound,
-      updateSteroidCompound,
-      deleteSteroidCompound,
-      addCycleCompound,
-      updateCycleCompound,
-      deleteCycleCompound,
-      addProgressPhoto,
-      updateProgressPhoto,
-      deleteProgressPhoto,
+      addCompound,
+      updateCompound,
+      deleteCompound,
+      supplementLogs,
+      addSupplementLog,
+      updateSupplementLog,
       exportData,
       unitSystem,
       convertWeight,
@@ -427,8 +408,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       getDueReminders,
       markReminderAsSeen,
       dismissReminder,
-      addSupplementLog,
-      updateSupplementLog,
       addReminder,
       addTrainingBlock,
       updateTrainingBlock,
@@ -450,63 +429,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       duplicateWorkoutPlan,
       setActivePlan,
       removeTemplateFromPlan,
-      getWorkoutByDate,
-      getWorkoutsByRange,
-      getMeasurementsByRange,
-      getBodyMeasurementsByRange,
-      getSupplementsByDate,
-      getCyclesByRange,
-      getSteroidCyclesByRange,
-      getSupplementLogsByRange,
-      getWeeklyRoutinesByRange,
-      getTrainingBlocksByRange,
-      getWeakPointsByPriority,
-      getMoodLogsByRange,
-      getRemindersByDate,
-      getWorkoutTemplatesByCategory,
-      getWorkoutPlansByStatus,
-      getCycleCompoundsByCycleId,
-      getProgressPhotosByRange,
-      getExerciseById,
-      getSupplementById,
-      getCycleById,
-      getSteroidCycleById,
-      getSteroidCompoundById,
-      getSupplementLogById,
-      getWeeklyRoutineById,
-      getTrainingBlockById,
-      getWeakPointById,
-      getMoodLogById,
-      getReminderById,
-      getWorkoutTemplateById,
-      getWorkoutPlanById,
-      getCycleCompoundById,
-      getProgressPhotoById,
-      getActiveWorkoutPlan,
-      getActiveWeeklyRoutine,
-      getActiveTrainingBlock,
-      getRecentWorkouts,
-      getRecentMeasurements,
-      getRecentBodyMeasurements,
-      getRecentSupplements,
-      getRecentCycles,
-      getRecentSteroidCycles,
-      getRecentSupplementLogs,
-      getRecentWeeklyRoutines,
-      getRecentTrainingBlocks,
-      getRecentWeakPoints,
-      getRecentMoodLogs,
-      getRecentReminders,
-      getRecentWorkoutTemplates,
-      getRecentWorkoutPlans,
-      getRecentCycleCompounds,
-      getRecentProgressPhotos,
       addPRLift,
       updatePR,
-      deletePR,
-      addCompound,
-      updateCompound,
-      deleteCompound
+      deletePR
     }),
     [
       workouts,
@@ -544,3 +469,4 @@ export const useAppContext = () => {
 };
 
 export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
+
