@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -6,6 +5,7 @@ export interface Workout {
   exercises?: Exercise[];
   completed?: boolean;
   deloadMode?: boolean;
+  isDeload?: boolean;
   notes?: string;
   scheduledTime?: string;
 }
@@ -129,6 +129,13 @@ export interface WeeklyRoutine {
   archived?: boolean;
 }
 
+export interface WeeklyRoutineEntry {
+  id: string;
+  dayOfWeek: number;
+  workoutTemplateId?: string;
+  workoutName?: string;
+}
+
 export interface WorkoutTemplate {
   id: string;
   name: string;
@@ -178,8 +185,8 @@ export interface TrainingBlock {
   id: string;
   name: string;
   startDate: Date;
-  endDate: Date;
-  routines: WeeklyRoutine[];
+  endDate?: Date;
+  routines?: WeeklyRoutine[];
   weeklyRoutineId?: string;
   durationWeeks?: number;
   goal?: string;
@@ -188,8 +195,8 @@ export interface TrainingBlock {
 
 export interface WeakPoint {
   id: string;
-  exerciseId: string;
-  description: string;
+  exerciseId?: string;
+  description?: string;
   muscleGroup?: string;
   priority?: number;
   sessionsPerWeekGoal?: number;
@@ -299,7 +306,6 @@ export interface AppContextType {
   duplicateWorkoutPlan: (id: string) => void;
   setActivePlan: (id: string) => void;
   removeTemplateFromPlan: (planId: string, templateId: string) => void;
-  // Additional methods needed based on errors
   compounds?: SteroidCompound[];
   addCompound?: (compound: SteroidCompound) => void;
   updateCompound?: (compound: SteroidCompound) => void;

@@ -122,6 +122,7 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
         id: uuidv4(),
         name: "New Schedule",
         workoutDays: [],
+        days: {}, // Add this to fix the error
         archived: false
       };
     }
@@ -129,6 +130,7 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       id: uuidv4(),
       name: "New Schedule",
       workoutDays: [],
+      days: {}, // Add this to fix the error
       archived: false
     };
   });
@@ -163,10 +165,12 @@ const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({
       id: existingBlock?.id || uuidv4(),
       name: values.name,
       startDate: values.startDate,
+      endDate: new Date(values.startDate.getTime() + (values.durationWeeks * 7 * 24 * 60 * 60 * 1000)), // Add computed endDate
       durationWeeks: values.durationWeeks,
       weeklyRoutineId: weeklyRoutine.id,
       goal: values.goal || "Training Block",
-      notes: values.notes
+      notes: values.notes,
+      routines: [] // Add empty routines array to satisfy the type
     };
     
     if (existingBlock) {

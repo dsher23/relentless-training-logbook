@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +15,7 @@ import WeeklyRoutineBuilder from "@/components/WeeklyRoutineBuilder";
 import { useAppContext } from "@/context/AppContext";
 import DataExport from "@/components/DataExport";
 import { CalendarDays, Plus, MoreVertical, Edit, Trash2 } from "lucide-react";
-import { WeeklyRoutineEntry } from "@/types";
+import { WeeklyRoutine } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -174,7 +173,7 @@ const Routines: React.FC = () => {
                         </p>
                         <div className="text-xs text-muted-foreground mt-2">
                           <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
-                            {routine.workoutDays.map((day: WeeklyRoutineEntry) => (
+                            {routine.workoutDays.map((day: WeeklyRoutine) => (
                               <li key={day.id}>
                                 • {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.dayOfWeek]}: {day.workoutName || 'Rest'}
                               </li>

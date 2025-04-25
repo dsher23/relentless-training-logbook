@@ -1,160 +1,81 @@
+import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { Workout, Exercise } from '@/types';
 
-import { useState, useEffect, useCallback } from "react";
-import { v4 as uuid } from "uuid";
-import { Workout, Exercise } from "@/types";
-
-/* ----------  Type defs ---------- */
-
-export interface SetEntry {
-  weight: number;
-  reps: number;
-}
-
-// Ensure this matches the Workout type from types/index.ts
-export type { Workout, Exercise };
-
-/* ----------  Hook ---------- */
-
-const STORAGE_KEY = "ironlog_workouts";
-
-export function useWorkouts() {
+export const useWorkouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
-  /* Load once on mount */
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed: Workout[] = JSON.parse(raw);
-
-        // Force boolean for completed flag
-        parsed.forEach((w) => (w.completed = w.completed === true));
-
-        setWorkouts(parsed);
-      }
-    } catch (err) {
-      console.error("Failed to parse workouts from localStorage", err);
-    }
-  }, []);
-
-  /* Persist whenever workouts change */
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
-  }, [workouts]);
-
-  /* ----------  CRUD helpers ---------- */
-
-  /** Create a workout from provided workout object */
-  const addWorkout = useCallback(
-    (workout: Workout) => {
-      // Ensure date is an ISO string before storing
-      const dateValue = workout.date instanceof Date 
-        ? workout.date.toISOString() 
-        : workout.date || new Date().toISOString();
-        
-      const newWorkout: Workout = {
-        id: workout.id || uuid(),
-        name: workout.name,
-        date: dateValue,
-        completed: workout.completed === true,
-        exercises: workout.exercises || [],
-        isDeload: workout.isDeload
-      };
-      setWorkouts((prev) => [...prev, newWorkout]);
-      return newWorkout.id;
-    },
-    []
-  );
-
-  // Legacy version for backward compatibility
-  const addWorkoutByName = useCallback(
-    (name: string, exercises: Exercise[] = []) => {
-      const newWorkout: Workout = {
-        id: uuid(),
-        name,
-        date: new Date().toISOString(),
-        completed: false,
-        exercises,
-      };
-      setWorkouts((prev) => [...prev, newWorkout]);
-      return newWorkout.id;
-    },
-    []
-  );
-
-  /** Replace an existing workout (ensure boolean) */
-  const updateWorkout = useCallback((updated: Workout) => {
-    // Ensure date is an ISO string
-    const dateValue = updated.date instanceof Date 
-      ? updated.date.toISOString() 
-      : updated.date;
-      
-    updated.completed = updated.completed === true;
-    
-    setWorkouts((prev) => prev.map((w) => 
-      (w.id === updated.id ? {...updated, date: dateValue} : w)
-    ));
-  }, []);
-
-  /** Mark a workout finished */
-  const markWorkoutCompleted = useCallback((id: string) => {
-    setWorkouts((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, completed: true } : w))
-    );
-  }, []);
-
-  /** Delete by id */
-  const deleteWorkout = useCallback((id: string) => {
-    setWorkouts((prev) => prev.filter((w) => w.id !== id));
-  }, []);
-  
-  /** Get workout by id */
-  const getWorkoutById = useCallback((id: string) => {
-    return workouts.find(w => w.id === id) || { 
-      id: '', 
-      name: '', 
-      date: '', 
-      completed: false, 
-      exercises: [] 
+  const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
+    const newWorkout: Workout = {
+      id: uuidv4(),
+      name,
+      date: new Date(),
+      exercises,
+      completed: false,
+      ...additionalData
     };
-  }, [workouts]);
-  
-  /** Duplicate a workout */
-  const duplicateWorkout = useCallback((id: string) => {
-    const workoutToDuplicate = workouts.find(w => w.id === id);
+    setWorkouts([...workouts, newWorkout]);
+    return newWorkout.id;
+  };
+
+  const updateWorkout = (updated: Workout) => {
+    setWorkouts(workouts.map(workout => workout.id === updated.id ? updated : workout));
+  };
+
+  const markWorkoutCompleted = (id: string) => {
+    setWorkouts(
+      workouts.map(workout =>
+        workout.id === id ? { ...workout, completed: true } : workout
+      )
+    );
+  };
+
+  const deleteWorkout = (id: string) => {
+    setWorkouts(workouts.filter(workout => workout.id !== id));
+  };
+
+  const getWorkoutById = (id: string) => {
+    return workouts.find(workout => workout.id === id);
+  };
+
+  const duplicateWorkout = (id: string) => {
+    const workoutToDuplicate = workouts.find(workout => workout.id === id);
     if (workoutToDuplicate) {
-      const newWorkout = {
+      const newWorkout: Workout = {
         ...workoutToDuplicate,
-        id: uuid(),
+        id: uuidv4(),
         name: `${workoutToDuplicate.name} (Copy)`,
         completed: false,
-        date: new Date().toISOString()
+        date: new Date()
       };
-      setWorkouts(prev => [...prev, newWorkout]);
-      return newWorkout.id;
+      setWorkouts([...workouts, newWorkout]);
     }
-    return null;
-  }, [workouts]);
-  
-  /** Toggle deload mode for a workout */
-  const toggleDeloadMode = useCallback((id: string, isDeload: boolean) => {
-    setWorkouts(prev => 
-      prev.map(w => w.id === id ? { ...w, isDeload } : w)
-    );
-  }, []);
+  };
 
-  /* ----------  Expose API ---------- */
+  const toggleDeloadMode = (id: string, isDeload: boolean) => {
+    setWorkouts(
+      workouts.map(workout => {
+        if (workout.id === id) {
+          return {
+            ...workout,
+            deloadMode: isDeload,  // Use deloadMode property
+            isDeload               // Add isDeload property
+          };
+        }
+        return workout;
+      })
+    );
+  };
+
   return {
     workouts,
+    setWorkouts,
     addWorkout,
-    addWorkoutByName, // Backward compatibility
     updateWorkout,
     markWorkoutCompleted,
     deleteWorkout,
     getWorkoutById,
     duplicateWorkout,
-    toggleDeloadMode,
-    /* expose setter in case higher-level components need it */
-    setWorkouts,
+    toggleDeloadMode
   };
-}
+};

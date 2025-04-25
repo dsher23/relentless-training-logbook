@@ -52,6 +52,7 @@ const WeeklyPlanView: React.FC = () => {
     id: uuidv4(),
     name: "My Weekly Plan",
     workoutDays: [],
+    days: {},
     archived: false
   };
   
@@ -114,7 +115,8 @@ const WeeklyPlanView: React.FC = () => {
         updatedRoutine = {
           ...currentRoutine,
           workoutDays: updatedDays,
-          archived: false
+          archived: false,
+          days: currentRoutine.days || {}
         };
       } else if (selectedRoutineId) {
         updatedRoutine = {
@@ -128,13 +130,15 @@ const WeeklyPlanView: React.FC = () => {
               workoutName: workoutName 
             }
           ],
-          archived: false
+          archived: false,
+          days: currentRoutine.days || {}
         };
       } else {
         updatedRoutine = {
           ...currentRoutine,
           workoutDays: currentRoutine.workoutDays.filter(day => day.dayOfWeek !== selectedDayIndex),
-          archived: false
+          archived: false,
+          days: currentRoutine.days || {}
         };
       }
       

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { WeeklyRoutine, WeeklyRoutineEntry } from '@/types';
+import { WeeklyRoutine, WorkoutDay } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const useWeeklyRoutines = () => {
@@ -14,6 +14,7 @@ export const useWeeklyRoutines = () => {
       id: routine.id || uuidv4(),
       name: routine.name || "Weekly Plan",
       workoutDays: routine.workoutDays || [],
+      days: routine.days || {}, // Ensure days property is present
       archived: routine.archived || false
     };
     

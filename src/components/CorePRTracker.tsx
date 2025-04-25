@@ -107,7 +107,7 @@ const CorePRTracker: React.FC = () => {
     
     let bestOneRM = 0;
     let bestSet = null;
-    let bestWorkoutDate = null;
+    let bestWorkoutDate: Date | string | null = null;
     let bestWorkoutId = null;
     const historyData: any[] = [];
 

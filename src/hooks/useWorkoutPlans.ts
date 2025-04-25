@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { WorkoutPlan, WorkoutTemplate } from '@/types';
+import { WorkoutPlan, WorkoutTemplate, WeeklyRoutine } from '@/types';
 
 export const useWorkoutPlans = () => {
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
@@ -13,7 +13,8 @@ export const useWorkoutPlans = () => {
       description: plan.description || "",
       workoutTemplates: plan.workoutTemplates || [],
       isActive: plan.isActive !== undefined ? plan.isActive : true,
-      archived: plan.archived || false
+      archived: plan.archived || false,
+      routines: plan.routines || [] // Add empty routines array to satisfy the type
     };
     
     setWorkoutPlans([...workoutPlans, validatedPlan]);

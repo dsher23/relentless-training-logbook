@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from "react";
 import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
 import { useAppContext } from "@/context/AppContext";
@@ -47,6 +46,14 @@ export default function Measurements() {
 
   const weightUnit = getWeightUnitDisplay(unitSystem.bodyWeightUnit);
   const measureUnit = getMeasurementUnitDisplay(unitSystem.bodyMeasurementUnit);
+
+  const convertWeight = (weight: number) => {
+    return useAppContext().convertWeight(weight);
+  };
+  
+  const convertMeasurement = (measurement: number) => {
+    return useAppContext().convertMeasurement(measurement);
+  };
 
   const handleSave = () => {
     // Reset error

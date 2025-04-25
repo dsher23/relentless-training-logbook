@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, addWeeks, subWeeks } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar, Plus, Edit, Trash2 } from "lucide-react";
@@ -113,6 +112,7 @@ const WeeklyOverview: React.FC = () => {
           workoutTemplateId: selectedWorkoutId,
           workoutName
         }],
+        days: {},
         archived: false
       };
       
@@ -159,6 +159,19 @@ const WeeklyOverview: React.FC = () => {
   
   // Fix: Create a constant for the "rest day" option that doesn't use an empty string
   const REST_DAY_OPTION = "rest_day";
+
+  const handleCreateRoutine = () => {
+    const newRoutine: WeeklyRoutine = {
+      id: uuidv4(),
+      name: "New Weekly Schedule",
+      workoutDays: [],
+      days: {}, // Add this to fix the error
+      archived: false
+    };
+    
+    addWeeklyRoutine(newRoutine);
+    navigate(`/routines/${newRoutine.id}`);
+  };
   
   return (
     <div className="app-container animate-fade-in">
