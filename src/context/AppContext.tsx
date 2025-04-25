@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, WeightUnit, MeasurementUnit, PR } from '@/types';
@@ -281,6 +280,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkoutTemplates(workoutTemplates.filter(t => t.id !== id));
   };
 
+  const duplicateWorkoutTemplate = (id: string) => {
+    const template = workoutTemplates.find(t => t.id === id);
+    if (template) {
+      const newTemplate = { ...template, id: uuidv4(), name: `${template.name} (Copy)` };
+      setWorkoutTemplates([...workoutTemplates, newTemplate]);
+      return newTemplate.id;
+    }
+    return null;
+  };
+
   const addWorkoutPlan = (plan: WorkoutPlan) => {
     setWorkoutPlans([...workoutPlans, plan]);
   };
@@ -306,6 +315,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...p,
       isActive: p.id === id,
     })));
+  };
+
+  const addTemplateToPlan = (planId: string, templateId: string, day: string) => {
+    setWorkoutPlans(workoutPlans.map((plan) => {
+      if (plan.id !== planId) return plan;
+      
+      const template = workoutTemplates.find(t => t.id === templateId);
+      if (!template) return plan;
+      
+      const updatedRoutines = [...plan.routines];
+      
+      if (updatedRoutines.length > 0) {
+        const routine = {...updatedRoutines[0]};
+        
+        if (!routine.days[day]) {
+          routine.days[day] = [];
+        }
+        
+        routine.days[day] = [...routine.days[day], template];
+        
+        updatedRoutines[0] = routine;
+      }
+      
+      return {
+        ...plan,
+        routines: updatedRoutines,
+      };
+    }));
   };
 
   const removeTemplateFromPlan = (planId: string, templateId: string) => {
@@ -423,15 +460,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addWorkoutTemplate,
       updateWorkoutTemplate,
       deleteWorkoutTemplate,
+      duplicateWorkoutTemplate,
       addWorkoutPlan,
       updateWorkoutPlan,
       deleteWorkoutPlan,
       duplicateWorkoutPlan,
       setActivePlan,
+      addTemplateToPlan,
       removeTemplateFromPlan,
       addPRLift,
       updatePR,
-      deletePR
+      deletePR,
+      prLifts
     }),
     [
       workouts,
@@ -469,4 +509,3 @@ export const useAppContext = () => {
 };
 
 export type { Supplement, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, Workout, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan };
-

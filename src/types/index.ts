@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -302,6 +301,7 @@ export type AppContextType = {
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
   deleteWorkoutTemplate: (id: string) => void;
+  duplicateWorkoutTemplate: (id: string) => string | null;
   
   workoutPlans: WorkoutPlan[];
   addWorkoutPlan: (plan: WorkoutPlan) => void;
@@ -309,6 +309,7 @@ export type AppContextType = {
   deleteWorkoutPlan: (id: string) => void;
   duplicateWorkoutPlan: (id: string) => void;
   setActivePlan: (id: string) => void;
+  addTemplateToPlan: (planId: string, templateId: string, day: string) => void;
   removeTemplateFromPlan: (planId: string, templateId: string) => void;
   
   progressPhotos: ProgressPhoto[];
@@ -325,5 +326,5 @@ export type AppContextType = {
   addPRLift: (prData: Omit<PR, 'id'>) => void;
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
+  prLifts: PR[];
 };
-
