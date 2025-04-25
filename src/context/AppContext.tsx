@@ -1,12 +1,13 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]); // Added
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([
@@ -113,6 +114,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const data = {
       workouts,
       measurements,
+      bodyMeasurements, // Added
       supplements,
       cycles,
       exercises,
@@ -248,6 +250,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkouts,
       measurements,
       setMeasurements,
+      bodyMeasurements, // Added
+      setBodyMeasurements, // Added
       supplements,
       setSupplements,
       cycles,
@@ -316,7 +320,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActivePlan,
       removeTemplateFromPlan,
     }),
-    [workouts, measurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans]
+    [workouts, measurements, bodyMeasurements, supplements, cycles, exercises, steroidCycles, supplementLogs, weeklyRoutines, trainingBlocks, weakPoints, moodLogs, reminders, workoutTemplates, workoutPlans]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
