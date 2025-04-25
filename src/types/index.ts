@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -5,22 +6,22 @@ export interface Workout {
   exercises?: Exercise[];
   completed?: boolean;
   deloadMode?: boolean;
-  notes?: string; // Added for WorkoutCard.tsx, WorkoutDetailsCard.tsx
-  scheduledTime?: string; // Added for WeeklyCalendarView.tsx
+  notes?: string;
+  scheduledTime?: string;
 }
 
 export interface Exercise {
   id: string;
   name: string;
-  sets: number; // Fixed to number for AddExerciseForm.tsx
+  sets: number;
   reps: number;
   weight?: number;
   category: 'upper' | 'lower' | 'core' | 'other';
-  lastProgressDate?: Date; // Added for AddExerciseForm.tsx
-  isWeakPoint?: boolean; // Added for ExercisesList.tsx
-  restTime?: number; // Added for ExerciseDetailCard.tsx
-  notes?: string; // Added for ExerciseDetailCard.tsx
-  prExerciseType?: string; // Added for CorePRTracker.tsx
+  lastProgressDate?: Date;
+  isWeakPoint?: boolean;
+  restTime?: number;
+  notes?: string;
+  prExerciseType?: string;
 }
 
 export interface Measurement {
@@ -35,7 +36,12 @@ export interface BodyMeasurement extends Measurement {
   chest?: number;
   waist?: number;
   hips?: number;
-  // Added for MeasurementForm.tsx
+  arms?: number;
+  forearms?: number;
+  thighs?: number;
+  calves?: number;
+  notes?: string;
+  photoData?: string;
 }
 
 export interface Supplement {
@@ -44,9 +50,9 @@ export interface Supplement {
   days: string[];
   reminderTime?: string;
   history: { date: Date; taken: boolean }[];
-  dosage?: string; // Added for SupplementItem.tsx
-  notes?: string; // Added for SupplementItem.tsx
-  schedule?: string[]; // Added for SupplementItem.tsx
+  dosage?: string;
+  notes?: string;
+  schedule?: string[];
 }
 
 export interface Cycle {
@@ -63,7 +69,12 @@ export interface SteroidCompound {
   name: string;
   dosage?: string;
   frequency?: string;
-  // Added for AddCompoundForm.tsx
+  weeklyDosage?: number;
+  dosageUnit?: string;
+  duration?: number;
+  notes?: string;
+  cycleId?: string;
+  active?: boolean;
 }
 
 export interface SteroidCycle {
@@ -72,7 +83,6 @@ export interface SteroidCycle {
   compounds: SteroidCompound[];
   startDate: Date;
   endDate: Date;
-  // Added for AppContext.tsx
 }
 
 export interface SupplementLog {
@@ -80,36 +90,38 @@ export interface SupplementLog {
   supplementId: string;
   date: Date;
   taken: boolean;
-  // Added for AppContext.tsx
 }
 
 export interface PR {
   id: string;
   exerciseId: string;
-  weight: number; // Added for CorePRTracker.tsx
-  reps: number; // Added for CorePRTracker.tsx
-  date: Date; // Added for CorePRTracker.tsx
+  weight: number;
+  reps: number;
+  date: Date;
+  workoutId?: string;
+  isDirectEntry?: boolean;
 }
 
 export interface WeeklyRoutine {
   id: string;
   name: string;
   days: { [key: string]: WorkoutTemplate[] };
-  // Added for WeeklyPlanView.tsx
+  archived?: boolean;
+  workoutDays?: any[];
 }
 
 export interface WorkoutTemplate {
   id: string;
   name: string;
   exercises: Exercise[];
-  isFavorite?: boolean; // Added for WorkoutBuilder.tsx
+  isFavorite?: boolean;
+  scheduledTime?: string;
 }
 
 export interface WorkoutPlan {
   id: string;
   name: string;
   routines: WeeklyRoutine[];
-  // Added for WorkoutPlanList.tsx
 }
 
 export interface Reminder {
@@ -117,7 +129,7 @@ export interface Reminder {
   type: 'supplement' | 'workout';
   time: string;
   days: string[];
-  // Added for AppContext.tsx
+  seen?: boolean;
 }
 
 export interface MoodLog {
@@ -125,7 +137,6 @@ export interface MoodLog {
   date: Date;
   mood: string;
   notes?: string;
-  // Added for AppContext.tsx
 }
 
 export interface TrainingBlock {
@@ -134,28 +145,40 @@ export interface TrainingBlock {
   startDate: Date;
   endDate: Date;
   routines: WeeklyRoutine[];
-  // Added for AppContext.tsx
+  weeklyRoutineId?: string;
+  durationWeeks?: number;
+  goal?: string;
+  notes?: string;
 }
 
 export interface WeakPoint {
   id: string;
   exerciseId: string;
   description: string;
-  // Added for AppContext.tsx
+  muscleGroup?: string;
+  priority?: number;
+  sessionsPerWeekGoal?: number;
 }
 
 export interface CycleCompound {
   id: string;
   steroidCompoundId: string;
   dosage: string;
-  // Added for AppContext.tsx
 }
 
 export interface ProgressPhoto {
   id: string;
   date: Date;
   url: string;
-  // Added for AppContext.tsx
+}
+
+export type WeightUnit = 'kg' | 'lbs' | 'stone';
+export type MeasurementUnit = 'cm' | 'in';
+
+export interface UnitSystem {
+  bodyWeightUnit: WeightUnit;
+  bodyMeasurementUnit: MeasurementUnit;
+  liftingWeightUnit: WeightUnit;
 }
 
 export interface AppContextType {
@@ -193,6 +216,8 @@ export interface AppContextType {
   setCycleCompounds: React.Dispatch<React.SetStateAction<CycleCompound[]>>;
   progressPhotos: ProgressPhoto[];
   setProgressPhotos: React.Dispatch<React.SetStateAction<ProgressPhoto[]>>;
+  exercises: Exercise[];
+  setExercises: React.Dispatch<React.SetStateAction<Exercise[]>>;
   addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
   updateWorkout: (updated: Workout) => void;
   markWorkoutCompleted: (id: string) => void;
@@ -211,4 +236,24 @@ export interface AppContextType {
   addExercise: (exercise: Exercise) => void;
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (template: WorkoutTemplate) => void;
+  addSteroidCycle: (cycle: SteroidCycle) => void;
+  addSupplementLog: (log: SupplementLog) => void;
+  updateSupplementLog: (updated: SupplementLog) => void;
+  addReminder: (reminder: Reminder) => void;
+  dismissReminder: (id: string) => void;
+  markReminderAsSeen: (id: string) => void;
+  getDueReminders: () => Reminder[];
+  addTrainingBlock: (block: TrainingBlock) => void;
+  updateTrainingBlock: (updated: TrainingBlock) => void;
+  addWeakPoint: (weakPoint: WeakPoint) => void;
+  deleteWeakPoint: (id: string) => void;
+  addMoodLog: (log: MoodLog) => void;
+  updateMoodLog: (updated: MoodLog) => void;
+  addWeeklyRoutine: (routine: WeeklyRoutine) => void;
+  updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
+  unitSystem: UnitSystem;
+  setUnitSystem: React.Dispatch<React.SetStateAction<UnitSystem>>;
+  convertWeight: (weight: number, from: WeightUnit, to: WeightUnit) => number;
+  getWeightUnitDisplay: (unit: WeightUnit) => string;
+  exportData: () => any;
 }

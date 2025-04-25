@@ -1,3 +1,4 @@
+
 export type WeightUnit = 'kg' | 'lbs' | 'stone';
 export type MeasurementUnit = 'cm' | 'in';
 
@@ -8,7 +9,13 @@ export interface UnitSystem {
 }
 
 export interface PR {
+  id: string;
   exerciseId: string;
+  weight: number;
+  reps: number;
+  date: Date;
+  workoutId?: string;
+  isDirectEntry?: boolean;
 }
 
 export interface PRLift {

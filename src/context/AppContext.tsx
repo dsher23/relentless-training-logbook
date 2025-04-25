@@ -1,6 +1,27 @@
+
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise } from '@/types';
+import { 
+  AppContextType, 
+  Workout, 
+  Measurement, 
+  Supplement, 
+  Cycle, 
+  Exercise, 
+  WorkoutTemplate, 
+  PR,
+  BodyMeasurement,
+  Reminder,
+  MoodLog,
+  WeeklyRoutine,
+  TrainingBlock,
+  WeakPoint,
+  SteroidCompound,
+  SteroidCycle,
+  SupplementLog,
+  UnitSystem,
+  WeightUnit
+} from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -12,10 +33,15 @@ export const useAppContext = () => {
   return context;
 };
 
+// Export the provider for compatibility with code that might be using AppProvider
+export const AppProvider = AppContextProvider;
+
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
+  const [supplementLogs, setSupplementLogs] = useState<SupplementLog[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([
     { id: '1', name: 'Bench Press', category: 'upper', sets: 3, reps: 10, weight: 0 },
@@ -24,6 +50,24 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     { id: '4', name: 'Pull-Up', category: 'upper', sets: 3, reps: 8, weight: 0 },
     { id: '5', name: 'Plank', category: 'core', sets: 3, reps: 30, weight: 0 },
   ]);
+  const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>([]);
+  const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
+  const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
+  const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
+  const [weakPoints, setWeakPoints] = useState<WeakPoint[]>([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
+  const [workoutPlans, setWorkoutPlans] = useState<any[]>([]);
+  const [cycleCompounds, setCycleCompounds] = useState<any[]>([]);
+  const [progressPhotos, setProgressPhotos] = useState<any[]>([]);
+
+  // Default system of units
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>({
+    bodyWeightUnit: 'lbs' as WeightUnit,
+    bodyMeasurementUnit: 'in',
+    liftingWeightUnit: 'lbs' as WeightUnit
+  });
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const id = additionalData.id || uuidv4();
@@ -104,16 +148,152 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setExercises([...exercises, exercise]);
   };
 
+  // Add missing methods for TypeScript errors
+  const addSteroidCycle = (cycle: SteroidCycle) => {
+    setSteroidCycles([...steroidCycles, cycle]);
+  };
+
+  const addSupplementLog = (log: SupplementLog) => {
+    setSupplementLogs([...supplementLogs, log]);
+  };
+
+  const updateSupplementLog = (updated: SupplementLog) => {
+    setSupplementLogs(supplementLogs.map((l) => (l.id === updated.id ? updated : l)));
+  };
+
+  const addReminder = (reminder: Reminder) => {
+    setReminders([...reminders, reminder]);
+  };
+
+  const dismissReminder = (id: string) => {
+    setReminders(reminders.filter((r) => r.id !== id));
+  };
+
+  const markReminderAsSeen = (id: string) => {
+    setReminders(reminders.map((r) => (r.id === id ? { ...r, seen: true } : r)));
+  };
+
+  const getDueReminders = () => {
+    return reminders.filter((r) => !r.seen);
+  };
+
+  const addTrainingBlock = (block: TrainingBlock) => {
+    setTrainingBlocks([...trainingBlocks, block]);
+  };
+
+  const updateTrainingBlock = (updated: TrainingBlock) => {
+    setTrainingBlocks(trainingBlocks.map((b) => (b.id === updated.id ? updated : b)));
+  };
+
+  const addWeakPoint = (weakPoint: WeakPoint) => {
+    setWeakPoints([...weakPoints, weakPoint]);
+  };
+
+  const deleteWeakPoint = (id: string) => {
+    setWeakPoints(weakPoints.filter((wp) => wp.id !== id));
+  };
+
+  const addMoodLog = (log: MoodLog) => {
+    setMoodLogs([...moodLogs, log]);
+  };
+
+  const updateMoodLog = (updated: MoodLog) => {
+    setMoodLogs(moodLogs.map((l) => (l.id === updated.id ? updated : l)));
+  };
+
+  const addWorkoutTemplate = (template: WorkoutTemplate) => {
+    setWorkoutTemplates([...workoutTemplates, template]);
+  };
+
+  const updateWorkoutTemplate = (template: WorkoutTemplate) => {
+    setWorkoutTemplates(workoutTemplates.map((t) => (t.id === template.id ? template : t)));
+  };
+
+  const addWeeklyRoutine = (routine: WeeklyRoutine) => {
+    setWeeklyRoutines([...weeklyRoutines, routine]);
+  };
+
+  const updateWeeklyRoutine = (updated: WeeklyRoutine) => {
+    setWeeklyRoutines(weeklyRoutines.map((r) => (r.id === updated.id ? updated : r)));
+  };
+
+  // Weight conversion utilities
+  const convertWeight = (weight: number, from: WeightUnit, to: WeightUnit) => {
+    if (from === to) return weight;
+    if (from === 'kg' && to === 'lbs') return weight * 2.20462;
+    if (from === 'lbs' && to === 'kg') return weight / 2.20462;
+    if (from === 'stone' && to === 'kg') return weight * 6.35029;
+    if (from === 'kg' && to === 'stone') return weight / 6.35029;
+    if (from === 'stone' && to === 'lbs') return weight * 14;
+    if (from === 'lbs' && to === 'stone') return weight / 14;
+    return weight;
+  };
+
+  const getWeightUnitDisplay = (unit: WeightUnit) => {
+    switch(unit) {
+      case 'kg': return 'kg';
+      case 'lbs': return 'lb';
+      case 'stone': return 'st';
+      default: return 'kg';
+    }
+  };
+
+  const exportData = () => {
+    return {
+      workouts,
+      measurements,
+      supplements,
+      cycles,
+      exercises,
+      steroidCycles,
+      steroidCompounds,
+      reminders,
+      moodLogs,
+      weeklyRoutines,
+      trainingBlocks,
+      weakPoints,
+      workoutTemplates,
+      workoutPlans,
+      unitSystem
+    };
+  };
+
   const value = useMemo(
     () => ({
       workouts,
       setWorkouts,
       measurements,
       setMeasurements,
+      bodyMeasurements,
+      setBodyMeasurements,
       supplements,
       setSupplements,
+      supplementLogs,
+      setSupplementLogs,
       cycles,
       setCycles,
+      steroidCycles,
+      setSteroidCycles,
+      steroidCompounds,
+      setSteroidCompounds,
+      reminders,
+      setReminders,
+      moodLogs,
+      setMoodLogs,
+      weeklyRoutines,
+      setWeeklyRoutines,
+      trainingBlocks,
+      setTrainingBlocks,
+      weakPoints,
+      setWeakPoints,
+      workoutTemplates,
+      setWorkoutTemplates,
+      workoutPlans,
+      setWorkoutPlans,
+      cycleCompounds,
+      setCycleCompounds,
+      progressPhotos,
+      setProgressPhotos,
       exercises,
       setExercises,
       addWorkout,
@@ -132,8 +312,50 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       markSupplementTaken,
       markCycleTaken,
       addExercise,
+      addWorkoutTemplate,
+      updateWorkoutTemplate,
+      addSteroidCycle,
+      addSupplementLog,
+      updateSupplementLog,
+      addReminder,
+      dismissReminder,
+      markReminderAsSeen,
+      getDueReminders,
+      addTrainingBlock,
+      updateTrainingBlock,
+      addWeakPoint,
+      deleteWeakPoint,
+      addMoodLog,
+      updateMoodLog,
+      addWeeklyRoutine,
+      updateWeeklyRoutine,
+      unitSystem,
+      setUnitSystem,
+      convertWeight,
+      getWeightUnitDisplay,
+      exportData
     }),
-    [workouts, measurements, supplements, cycles, exercises]
+    [
+      workouts, 
+      measurements, 
+      supplements, 
+      cycles, 
+      exercises, 
+      steroidCycles,
+      steroidCompounds,
+      reminders,
+      moodLogs,
+      weeklyRoutines,
+      trainingBlocks,
+      weakPoints,
+      workoutTemplates,
+      workoutPlans,
+      bodyMeasurements,
+      supplementLogs,
+      cycleCompounds,
+      progressPhotos,
+      unitSystem
+    ]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
