@@ -1,6 +1,6 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto } from '@/types';
+import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, PR } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -595,6 +595,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .slice(0, limit);
   };
 
+  const addPRLift = (prData: Omit<PR, 'id'>) => {
+    console.log("Adding PR lift:", prData);
+  };
+
+  const updatePR = (prData: PR) => {
+    console.log("Updating PR:", prData);
+  };
+
+  const deletePR = (id: string) => {
+    console.log("Deleting PR:", id);
+  };
+
   const value = useMemo(
     () => ({
       workouts,
@@ -738,7 +750,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       getRecentWorkoutTemplates,
       getRecentWorkoutPlans,
       getRecentCycleCompounds,
-      getRecentProgressPhotos
+      getRecentProgressPhotos,
+      addPRLift,
+      updatePR,
+      deletePR
     }),
     [
       workouts,

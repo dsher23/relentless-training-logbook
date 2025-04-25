@@ -1,26 +1,25 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { useAppContext } from '@/context/AppContext';
 import { Workout, WorkoutTemplate } from '@/types';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper function to convert a template to a workout
 export const convertTemplateToWorkout = (template: WorkoutTemplate): Workout => {
   // Ensure we have all required fields for a valid Workout
   return {
-    id: uuidv4(), // Generate a new unique ID for the workout
+    id: uuidv4(),
     name: template.name,
-    date: new Date().toISOString(), // Convert to ISO string
+    date: new Date().toISOString(),
     completed: false,
-    notes: '', // Set a default empty string for notes since it's required in Workout
+    notes: '',
     exercises: template.exercises.map(exercise => ({
       ...exercise,
       sets: exercise.sets && exercise.sets.length > 0
-        ? exercise.sets.map(set => ({ ...set })) // Deep copy sets to avoid reference issues
-        : Array(3).fill({ reps: 0, weight: 0 }), // Default sets if none exist
-      lastProgressDate: new Date(), // Add last progress date
-      notes: exercise.notes || '' // Ensure notes exists
+        ? exercise.sets.map(set => ({ ...set }))
+        : Array(3).fill({ reps: 0, weight: 0 }),
+      lastProgressDate: new Date(),
+      notes: exercise.notes || ''
     })),
     scheduledTime: template.scheduledTime
   };
@@ -41,6 +40,23 @@ export const useWorkoutLoader = (id: string | undefined) => {
         return;
       }
       
+      console.log(`Loading workout with ID: ${id}, isTemplate: ${isTemplate}`);
+      
+      if (id === "new") {
+        console.log("Creating new workout template");
+        return {
+          workout: {
+            id: "new",
+            name: "",
+            exercises: [],
+            date: new Date(),
+            completed: false
+          },
+          isTemplate: false,
+          loadError: null
+        };
+      }
+      
       console.log("Attempting to load workout with ID:", id);
       
       try {
@@ -54,7 +70,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
           foundWorkout = {
             ...foundWorkout,
             notes: foundWorkout.notes || "",
-            date: foundWorkout.date || new Date().toISOString(), // Convert to ISO string if needed
+            date: foundWorkout.date || new Date().toISOString(),
             completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false,
             exercises: foundWorkout.exercises.map(ex => ({
               ...ex,
@@ -77,7 +93,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
           foundWorkout = {
             ...foundWorkout,
             notes: foundWorkout.notes || "",
-            date: foundWorkout.date || new Date().toISOString(), // Convert to ISO string if needed
+            date: foundWorkout.date || new Date().toISOString(),
             completed: typeof foundWorkout.completed === "boolean" ? foundWorkout.completed : false,
             exercises: foundWorkout.exercises.map(ex => ({
               ...ex,
@@ -122,7 +138,7 @@ export const useWorkoutLoader = (id: string | undefined) => {
     };
     
     setIsLoading(true);
-    setError(null); // Reset error state when loading a new workout
+    setError(null);
     loadWorkout();
   }, [id, getWorkoutById, workoutTemplates, workouts]);
 
