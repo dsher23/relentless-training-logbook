@@ -18,11 +18,7 @@ import {
   Cloud, 
   Lock, 
   Info, 
-  LogOut,
-  Mail,
-  Ruler,
-  Scale,
-  Dumbbell
+  Ruler
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NavigationHeader from '@/components/NavigationHeader';
@@ -60,7 +56,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Body Weight Unit</label>
             <Select 
-              value={unitSystem.bodyWeightUnit || 'kg'}
+              value={unitSystem.bodyWeightUnit}
               onValueChange={(value) => updateUnitSystem({ bodyWeightUnit: value as 'kg' | 'lbs' | 'stone' })}
             >
               <SelectTrigger>
@@ -77,7 +73,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Body Measurement Unit</label>
             <Select 
-              value={unitSystem.bodyMeasurementUnit || 'cm'}
+              value={unitSystem.bodyMeasurementUnit}
               onValueChange={(value) => updateUnitSystem({ bodyMeasurementUnit: value as 'cm' | 'in' })}
             >
               <SelectTrigger>
@@ -93,7 +89,7 @@ const Settings = () => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Lifting Weight Unit</label>
             <Select 
-              value={unitSystem.liftingWeightUnit || 'kg'}
+              value={unitSystem.liftingWeightUnit}
               onValueChange={(value) => updateUnitSystem({ liftingWeightUnit: value as 'kg' | 'lbs' })}
             >
               <SelectTrigger>

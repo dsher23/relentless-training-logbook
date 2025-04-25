@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -111,6 +110,7 @@ export interface WorkoutDay {
   dayOfWeek: number;
   workoutTemplateId?: string;
   workoutName?: string;
+  id?: string;
 }
 
 export interface WeeklyRoutine {
@@ -157,7 +157,7 @@ export interface Reminder {
 export interface MoodLog {
   id: string;
   date: Date;
-  mood: string;
+  mood: string | number;
   notes?: string;
   sleepQuality?: number;
   sleep?: number;

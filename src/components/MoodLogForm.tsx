@@ -1,11 +1,11 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { MoodLog, useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/AppContext";
+import { MoodLog } from "@/types";
 
 const emojis = ["😖", "😔", "😐", "😊", "🤩"];
 
@@ -18,27 +18,26 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
   const { addMoodLog, updateMoodLog } = useAppContext();
   const [sleep, setSleep] = useState(existingLog?.sleepQuality || existingLog?.sleep || 7);
   const [energy, setEnergy] = useState(existingLog?.energyLevel || existingLog?.energy || 7);
-  const [mood, setMood] = useState<number>(existingLog?.mood || 3); // Use number for mood, default to 3 (neutral)
+  const [mood, setMood] = useState(existingLog?.mood ? Number(existingLog.mood) : 3);
   const [notes, setNotes] = useState(existingLog?.notes || "");
 
   const handleSave = () => {
-    const newLog = {
+    const newLog: MoodLog = {
       id: existingLog?.id || crypto.randomUUID(),
       date: existingLog?.date || new Date(),
       sleepQuality: sleep,
       energyLevel: energy,
-      mood,
+      mood: mood,
       notes,
-      stressLevel: existingLog?.stressLevel || 5, // Default stress level
-      // Add compatibility fields
+      stressLevel: existingLog?.stressLevel || 5,
       sleep,
       energy
     };
     
     if (existingLog) {
-      updateMoodLog(newLog as MoodLog);
+      updateMoodLog(newLog);
     } else {
-      addMoodLog(newLog as MoodLog);
+      addMoodLog(newLog);
     }
     
     if (onSave) onSave();
@@ -99,7 +98,7 @@ const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
             {emojis.map((emoji, index) => (
               <button
                 key={index}
-                onClick={() => setMood(index + 1)} // Set mood as number 1-5
+                onClick={() => setMood(index + 1)}
                 className={`p-2 rounded-full text-2xl ${
                   mood === index + 1 ? "bg-secondary" : ""
                 }`}
