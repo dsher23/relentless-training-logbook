@@ -13,7 +13,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {
         id: "ac565875-3781-46ee-a4b2-f1cc492af01f",
         name: "Bench Press",
-        sets: 3,
+        sets: 3, // This should now match the type (number)
         reps: 10,
         weight: 0,
         prExerciseType: "Bench Press",
@@ -60,68 +60,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     initializeState('workouts', []).then(data => setWorkouts(data));
-    initializeState('workoutTemplates', [defaultTemplate]).then(data => setWorkoutTemplates(data));
-  }, []);
-
-  // Modified saveToStorage function with error handling for quota exceeded
-  const saveToStorage = async (key: string, data: any) => {
-    try {
-      await localForage.setItem(key, data);
-    } catch (error) {
-      console.error(`Failed to save ${key} to storage:`, error);
-      
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.warn(`Storage quota exceeded for ${key}. Clearing up space...`);
-        
-        // Try to clear some space by removing non-essential data
-        try {
-          // Only keep the last 20 workouts
-          if (key !== 'workouts') {
-            const existingWorkouts = await localForage.getItem<Workout[]>('workouts') || [];
-            if (existingWorkouts.length > 20) {
-              const reducedWorkouts = existingWorkouts.slice(-20);
-              await localForage.setItem('workouts', reducedWorkouts);
-            }
-          }
-          
-          // Try again after clearing space
-          await localForage.setItem(key, data);
-        } catch (retryError) {
-          console.error(`Still failed to save ${key} after clearing space:`, retryError);
-          
-          // Last resort: try to save only the most essential data
-          if (key === 'workoutTemplates') {
-            try {
-              // Keep only the latest 5 templates
-              const essentialTemplates = Array.isArray(data) ? data.slice(-5) : [];
-              await localForage.setItem(key, essentialTemplates);
-            } catch (finalError) {
-              console.error(`Could not save even reduced ${key} data:`, finalError);
-            }
-          }
-        }
+    initializeState('workoutTemplates', []).then(data => {
+      if (!data.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
+        setWorkoutTemplates([defaultTemplate, ...data]);
+      } else {
+        setWorkoutTemplates(data);
       }
-    }
-  };
-
-  useEffect(() => {
-    saveToStorage('workouts', workouts);
-  }, [workouts]);
-
-  useEffect(() => {
-    saveToStorage('workoutTemplates', workoutTemplates);
-  }, [workoutTemplates]);
+    });
+  }, []);
 
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([
-    { id: '1', name: 'Bench Press', category: 'upper', sets: [{ reps: 10, weight: 0 }], reps: 10, weight: 0 },
-    { id: '2', name: 'Squat', category: 'lower', sets: [{ reps: 8, weight: 0 }], reps: 8, weight: 0 },
-    { id: '3', name: 'Deadlift', category: 'lower', sets: [{ reps: 6, weight: 0 }], reps: 6, weight: 0 },
-    { id: '4', name: 'Pull-Up', category: 'upper', sets: [{ reps: 8, weight: 0 }], reps: 8, weight: 0 },
-    { id: '5', name: 'Plank', category: 'core', sets: [{ reps: 30, weight: 0 }], reps: 30, weight: 0 },
+    {
+      id: '1',
+      name: 'Bench Press',
+      category: 'upper',
+      sets: 1, // Adjusted to match type (number)
+      reps: 10,
+      weight: 0
+    },
+    {
+      id: '2',
+      name: 'Squat',
+      category: 'lower',
+      sets: 1,
+      reps: 8,
+      weight: 0
+    },
+    {
+      id: '3',
+      name: 'Deadlift',
+      category: 'lower',
+      sets: 1,
+      reps: 6,
+      weight: 0
+    },
+    {
+      id: '4',
+      name: 'Pull-Up',
+      category: 'upper',
+      sets: 1,
+      reps: 8,
+      weight: 0
+    },
+    {
+      id: '5',
+      name: 'Plank',
+      category: 'core',
+      sets: 1,
+      reps: 30,
+      weight: 0
+    },
   ]);
   const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>([]);
   const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>([]);
