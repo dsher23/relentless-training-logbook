@@ -60,14 +60,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     initializeState('workouts', []).then(data => setWorkouts(data));
-    initializeState('workoutTemplates', []).then(data => {
-      if (!data.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
-        setWorkoutTemplates([defaultTemplate, ...data]);
-      } else {
-        setWorkoutTemplates(data);
-      }
-    });
+    initializeState('workoutTemplates', [defaultTemplate]).then(data => setWorkoutTemplates(data));
   }, []);
+
+  // Modified saveToStorage function with error handling for quota exceeded
+  const saveToStorage = async (key: string, data: any) => {
+    try {
+      await localForage.setItem(key, data);
+    } catch (error) {
+      console.error(`Failed to save ${key} to storage:`, error);
+      
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        console.warn(`Storage quota exceeded for ${key}. Clearing up space...`);
+        
+        // Try to clear some space by removing non-essential data
+        try {
+          // Only keep the last 20 workouts
+          if (key !== 'workouts') {
+            const existingWorkouts = await localForage.getItem<Workout[]>('workouts') || [];
+            if (existingWorkouts.length > 20) {
+              const reducedWorkouts = existingWorkouts.slice(-20);
+              await localForage.setItem('workouts', reducedWorkouts);
+            }
+          }
+          
+          // Try again after clearing space
+          await localForage.setItem(key, data);
+        } catch (retryError) {
+          console.error(`Still failed to save ${key} after clearing space:`, retryError);
+          
+          // Last resort: try to save only the most essential data
+          if (key === 'workoutTemplates') {
+            try {
+              // Keep only the latest 5 templates
+              const essentialTemplates = Array.isArray(data) ? data.slice(-5) : [];
+              await localForage.setItem(key, essentialTemplates);
+            } catch (finalError) {
+              console.error(`Could not save even reduced ${key} data:`, finalError);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    saveToStorage('workouts', workouts);
+  }, [workouts]);
+
+  useEffect(() => {
+    saveToStorage('workoutTemplates', workoutTemplates);
+  }, [workoutTemplates]);
 
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);

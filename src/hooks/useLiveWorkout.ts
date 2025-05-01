@@ -20,6 +20,7 @@ export const useLiveWorkout = () => {
   const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // Save workout progress to localStorage with proper error handling
   useEffect(() => {
     if (workout && Object.keys(exerciseData).length > 0) {
       const progressData = {
@@ -27,22 +28,64 @@ export const useLiveWorkout = () => {
         exerciseData,
         currentExerciseIndex
       };
+      
       try {
-        localStorage.setItem('workout_in_progress', JSON.stringify(progressData));
+        // Try to save the full workout progress
+        const progressDataString = JSON.stringify(progressData);
+        
+        // Check if the data might exceed the localStorage quota (rough estimate)
+        if (progressDataString.length > 2000000) { // ~2MB is a safe limit
+          console.warn("Workout progress data is very large, truncating...");
+          
+          // Create a reduced version with just the current exercise
+          const currentExerciseId = workout.exercises[currentExerciseIndex]?.id;
+          const reducedData = {
+            workoutId: workout.id,
+            exerciseData: currentExerciseId ? { 
+              [currentExerciseId]: exerciseData[currentExerciseId] 
+            } : {},
+            currentExerciseIndex
+          };
+          
+          localStorage.setItem('workout_in_progress', JSON.stringify(reducedData));
+          console.log("Saved reduced workout progress to localStorage");
+        } else {
+          localStorage.setItem('workout_in_progress', progressDataString);
+          console.log("Saved full workout progress to localStorage");
+        }
       } catch (error: any) {
         console.error("Error saving workout progress to localStorage:", error);
+        
         if (error.name === "QuotaExceededError") {
+          // Clear existing data to make space
           console.warn("localStorage quota exceeded. Clearing workout_in_progress...");
           localStorage.removeItem('workout_in_progress');
-          toast({
-            title: "Storage Limit Reached",
-            description: "Cleared workout progress to free up space. Please try again.",
-            variant: "destructive",
-          });
+          
+          try {
+            // Try to save just minimal data - current exercise index and workout ID
+            const minimalData = {
+              workoutId: workout.id,
+              currentExerciseIndex
+            };
+            localStorage.setItem('workout_minimal_progress', JSON.stringify(minimalData));
+            
+            toast({
+              title: "Storage Limit Reached",
+              description: "Saved minimal workout progress due to storage constraints.",
+              variant: "warning",
+            });
+          } catch (innerError) {
+            console.error("Failed to save even minimal workout progress:", innerError);
+            toast({
+              title: "Storage Error",
+              description: "Unable to save workout progress due to storage constraints.",
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Error",
-            description: "Failed to save workout progress. Please try again.",
+            description: "Failed to save workout progress. Please continue with caution.",
             variant: "destructive",
           });
         }
@@ -142,7 +185,9 @@ export const useLiveWorkout = () => {
       
       updateWorkout(completedWorkout);
       
+      // Clean up all related localStorage entries
       localStorage.removeItem('workout_in_progress');
+      localStorage.removeItem('workout_minimal_progress');
       
       toast({
         title: "Workout Completed!",
