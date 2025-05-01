@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
 import NavigationHeader from "@/components/NavigationHeader";
-import WorkoutBuilder from "./WorkoutBuilder"; // Adjust path as needed
+import WorkoutBuilder from "./WorkoutBuilder";
 
 const Workouts: React.FC = () => {
   const navigate = useNavigate();
@@ -40,7 +40,15 @@ const Workouts: React.FC = () => {
           </CardHeader>
           <CardContent>
             {workoutTemplates.length === 0 ? (
-              <p className="text-muted-foreground">No workout templates available.</p>
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">No workout templates available.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/workouts/new")}
+                >
+                  Create Your First Workout
+                </Button>
+              </div>
             ) : (
               workoutTemplates.map((template) => (
                 <Card key={template.id} className="mb-2">
@@ -118,7 +126,9 @@ const NewWorkoutForm: React.FC = () => {
       });
 
       // Redirect to Workout Builder to add exercises
-      navigate(`/workouts/builder/${newWorkout.id}?isTemplate=true`);
+      setTimeout(() => {
+        navigate(`/workouts/builder/${newWorkout.id}?isTemplate=true`);
+      }, 500);
     } catch (error) {
       console.error("Error creating workout:", error);
       toast({
@@ -127,7 +137,9 @@ const NewWorkoutForm: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false);
+      setTimeout(() => {
+        setIsSaving(false);
+      }, 500);
     }
   };
 
@@ -149,10 +161,15 @@ const NewWorkoutForm: React.FC = () => {
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
                   placeholder="e.g., Chest Day"
+                  disabled={isSaving}
                 />
               </div>
-              <Button onClick={handleCreateWorkout} disabled={isSaving} className="w-full">
-                {isSaving ? "Saving..." : "Create Workout"}
+              <Button 
+                onClick={handleCreateWorkout} 
+                disabled={isSaving} 
+                className="w-full"
+              >
+                {isSaving ? "Creating..." : "Create Workout"}
               </Button>
             </div>
           </CardContent>
