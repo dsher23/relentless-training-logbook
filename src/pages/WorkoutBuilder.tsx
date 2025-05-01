@@ -162,7 +162,7 @@ const WorkoutBuilder: React.FC = () => {
       toast({
         title: "Workout not found",
         description: "The workout you're trying to edit does not exist.",
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsLoading(false);
     }
@@ -208,8 +208,7 @@ const WorkoutBuilder: React.FC = () => {
   const handleEditExercise = (id: string) => {
     const exercise = selectedExercises.find(ex => ex.id === id);
     if (exercise) {
-      setEditingExercise(exercise);
-      setShowExerciseForm(true);
+      navigate(`/workouts/builder/edit-exercise/${id}`, { state: { exercise, selectedExercises } });
     }
   };
 
@@ -225,7 +224,7 @@ const WorkoutBuilder: React.FC = () => {
     setExerciseToDelete(null);
     toast({
       title: "Exercise deleted",
-      description: "The exercise has been removed from this workout."
+      description: "The exercise has been removed from this workout.",
     });
   };
 
@@ -281,7 +280,10 @@ const WorkoutBuilder: React.FC = () => {
           completed: originalWorkout?.completed || false,
           notes: originalWorkout?.notes || location.state?.notes || "",
         };
+        console.log("Workouts before saving (regular):", workouts);
+        console.log("Saving regular workout:", updatedWorkout);
         updateWorkout(updatedWorkout);
+        console.log("Workouts after saving (regular):", workouts);
         toast({
           title: "Success",
           description: "Your workout has been updated successfully.",
@@ -296,15 +298,18 @@ const WorkoutBuilder: React.FC = () => {
           exercises: selectedExercises,
           isFavorite: originalTemplate?.isFavorite || false,
         };
-
+        console.log("Templates before saving:", workoutTemplates);
+        console.log("Saving template:", newWorkoutTemplate);
         if (id) {
           updateWorkoutTemplate(newWorkoutTemplate);
+          console.log("Templates after updating:", workoutTemplates);
           toast({
             title: "Template Updated",
             description: "Your workout template has been updated successfully.",
           });
         } else {
           addWorkoutTemplate(newWorkoutTemplate);
+          console.log("Templates after adding:", workoutTemplates);
           toast({
             title: "Template Created",
             description: "Your workout template has been saved successfully.",
@@ -312,13 +317,13 @@ const WorkoutBuilder: React.FC = () => {
         }
 
         if (startAfterCreation) {
-          navigate(`/live-workout/${workoutId}?isTemplate=true`);
+          navigate(`/workouts/start/${workoutId}?isTemplate=true`);
         } else {
           navigate("/workouts");
         }
       }
     } catch (error) {
-      console.error("Error creating workout:", error);
+      console.error("Error saving workout:", error);
       toast({
         title: "Error",
         description: "Failed to save workout. Please try again.",
@@ -440,87 +445,4 @@ const WorkoutBuilder: React.FC = () => {
 
           {selectedExercises.length === 0 ? (
             <Card className="bg-secondary/60 border-border/30">
-              <CardContent className="text-center p-5 text-muted-foreground">
-                <p>No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <SortableContext
-              items={selectedExercises.map(exercise => exercise.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {selectedExercises.map((exercise, index) => (
-                <ExerciseItem
-                  key={exercise.id}
-                  exercise={exercise}
-                  index={index}
-                  onEdit={handleEditExercise}
-                  onDelete={promptDeleteExercise}
-                />
-              ))}
-            </SortableContext>
-          )}
-
-          <div className="flex justify-end space-x-3 mt-6">
-            <Button variant="outline" onClick={handleCancelClick} className="border-muted-foreground text-muted-foreground">
-              Cancel
-            </Button>
-            
-            <div className="flex space-x-2">
-              {id && !isRegularWorkout && (
-                <StartWorkoutButton workoutId={id} isTemplate={true} />
-              )}
-              
-              <Button 
-                onClick={handleComplete}
-                className="bg-gym-blue hover:bg-gym-blue/90"
-              >
-                {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start" : "Save Workout")}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Exercise</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this exercise? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmDeleteExercise(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteExercise}>
-                Delete Exercise
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cancel Workout Creation</DialogTitle>
-              <DialogDescription>
-                You have unsaved changes. Are you sure you want to cancel?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmCancel(false)}>
-                Continue Editing
-              </Button>
-              <Button variant="destructive" onClick={() => navigate("/workouts")}>
-                Discard Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </DndContext>
-  );
-};
-
-export default WorkoutBuilder;
+              <CardContent className="text-center p-5 text
