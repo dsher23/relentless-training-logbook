@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +37,13 @@ const CorePRTracker: React.FC = () => {
     throw new Error("CorePRTracker must be used within an AppProvider");
   }
 
-  const { workouts, unitSystem, convertWeight, getWeightUnitDisplay } = context;
+  const { workouts, unitSystem, convertWeight } = context;
+  
+  // Get the weight unit safely, default to "kg" if getWeightUnitDisplay is not available
+  const weightUnit = typeof context.getWeightUnitDisplay === "function" 
+    ? context.getWeightUnitDisplay() 
+    : unitSystem?.liftingWeightUnit || "kg";
+    
   const { customExercises } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -51,9 +58,6 @@ const CorePRTracker: React.FC = () => {
     workoutId: string;
   } | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
-
-  // Safely get the weight unit, default to "kg" if getWeightUnitDisplay is not a function
-  const weightUnit = typeof getWeightUnitDisplay === "function" ? getWeightUnitDisplay() : "kg";
 
   const prExerciseOptions = [
     ...CORE_LIFTS,
