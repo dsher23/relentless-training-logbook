@@ -1,18 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
-import Header from '@/components/Header';
+import NavigationHeader from '@/components/NavigationHeader';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
-import WorkoutCard from '@/components/WorkoutCard';
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import CorePRTracker from '@/components/CorePRTracker';
 
 interface GroupedWorkout {
   name: string;
@@ -85,38 +84,20 @@ const WorkoutHistory: React.FC = () => {
   };
 
   return (
-    <div className="app-container animate-fade-in">
-      <Header title="Workout History">
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/dashboard')}
-            aria-label="Home"
-          >
-            <span className="text-xs font-medium">Home</span>
-          </Button>
-        </div>
-      </Header>
+    <div className="app-container animate-fade-in pb-16">
+      <NavigationHeader title="Workout History" showBack={true} showHome={true} showProfile={false} />
       
-      <div className="p-4">
+      <div className="px-4 pt-4">
+        <CorePRTracker />
+
         {groupedWorkouts.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 No completed workouts logged yet. Start and complete a workout from the Dashboard.
               </p>
               <Button 
                 variant="outline"
-                className="mt-4"
                 onClick={() => navigate('/training')}
               >
                 Start a Workout
