@@ -29,7 +29,14 @@ const STORAGE_KEY = "ironlog_direct_prs";
 
 const CorePRTracker: React.FC = () => {
   const navigate = useNavigate();
-  const { workouts, unitSystem, convertWeight, getWeightUnitDisplay } = useAppContext();
+  const context = useAppContext();
+
+  // Check if context is available
+  if (!context) {
+    throw new Error("CorePRTracker must be used within an AppProvider");
+  }
+
+  const { workouts, unitSystem, convertWeight, getWeightUnitDisplay } = context;
   const { customExercises } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,7 +52,8 @@ const CorePRTracker: React.FC = () => {
   } | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
 
-  const weightUnit = getWeightUnitDisplay();
+  // Safely get the weight unit, default to "kg" if getWeightUnitDisplay is not a function
+  const weightUnit = typeof getWeightUnitDisplay === "function" ? getWeightUnitDisplay() : "kg";
 
   const prExerciseOptions = [
     ...CORE_LIFTS,
@@ -83,10 +91,10 @@ const CorePRTracker: React.FC = () => {
     const weightInKg = convertWeight(weight, unitSystem.liftingWeightUnit, "kg");
 
     const newPR: PR = {
-      id: crypto.randomUUID(), // Add the id property
+      id: crypto.randomUUID(),
       exerciseId: selectedLift,
-      weight: weightInKg, // Store in kg
-      date: new Date().toISOString(), // Store as string instead of Date
+      weight: weightInKg,
+      date: new Date().toISOString(),
       reps: 1,
       isDirectEntry: true
     };
@@ -104,7 +112,7 @@ const CorePRTracker: React.FC = () => {
     
     let bestOneRM = 0;
     let bestSet = null;
-    let bestWorkoutDate: string | null = null; // Change to string instead of Date
+    let bestWorkoutDate: string | null = null;
     let bestWorkoutId = null;
     const historyData: any[] = [];
 
