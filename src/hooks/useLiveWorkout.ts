@@ -205,7 +205,7 @@ export const useLiveWorkout = () => {
           throw new Error("Failed to convert template to workout");
         }
         
-        const workoutWithCompletedFlag = {
+        foundWorkout = {
           ...convertedWorkout,
           completed: false,
           exercises: convertedWorkout.exercises.map(ex => ({
@@ -213,15 +213,11 @@ export const useLiveWorkout = () => {
             prExerciseType: ex.prExerciseType
           }))
         };
-        
-        console.log("Adding workout from template:", workoutWithCompletedFlag);
-        addWorkout(workoutWithCompletedFlag.name, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
-        foundWorkout = workoutWithCompletedFlag;
       } else {
         console.log("Loading regular workout with ID:", id);
         foundWorkout = workouts.find(w => w.id === id);
         if (!foundWorkout) {
-          throw new Error(` Näät with ID ${id} not found`);
+          throw new Error(`Workout with ID ${id} not found`);
         }
         console.log("Found workout:", foundWorkout);
       }
@@ -252,13 +248,13 @@ export const useLiveWorkout = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, initializeExerciseData]);
+  }, [id, workoutTemplates, isTemplate, navigate, toast, initializeExerciseData]);
 
   useEffect(() => {
     loadWorkout().catch(error => {
       console.error("Error in useEffect loadWorkout:", error);
     });
-  }, [loadWorkout]);
+  }, [id, isTemplate, loadWorkout]); // Only re-run if id or isTemplate changes
 
   const nextExercise = useCallback(() => {
     if (!workout) return;
