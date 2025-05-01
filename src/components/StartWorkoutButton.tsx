@@ -47,9 +47,9 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
     <Button
       size={compact ? "sm" : "default"}
       onClick={handleStartWorkout}
-      className={cn("bg-gym-blue hover:bg-gym-blue/90 text-white", className)}
+      className={cn("bg-gym-blue hover:bg-gym-blue/90 text-white font-medium", className)}
     >
-      <Play className="h-4 w-4 mr-1" /> {compact ? "" : "Start"}
+      <Play className="h-4 w-4 mr-1" /> {compact ? "" : "Start Workout"}
     </Button>
   );
 };

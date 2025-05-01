@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useExercises, CustomExercise } from "@/hooks/useExercises";
+import { useExercises, CustomExercise, CORE_LIFTS } from "@/hooks/useExercises";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Select,
@@ -161,15 +161,15 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between bg-secondary/80 border-border/50"
           >
             {selectedExercise
               ? selectedExercise
-              : "Select an exercise..."}
+              : "Choose Exercise or Add New"}
             <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0 bg-secondary border-border/30" align="start">
           <Command shouldFilter={false}>
             <CommandInput 
               placeholder="Search exercises..." 
@@ -251,9 +251,9 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
       </Popover>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-secondary border-border/30">
           <DialogHeader>
-            <DialogTitle>Add New Exercise</DialogTitle>
+            <DialogTitle className="text-white">Add New Exercise</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -263,6 +263,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                 placeholder="e.g., Lat Pulldown" 
                 value={newExerciseName}
                 onChange={(e) => setNewExerciseName(e.target.value)}
+                className="bg-muted"
               />
             </div>
             
@@ -278,11 +279,24 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
             {isPrRelevant && (
               <div className="space-y-2">
                 <Label htmlFor="pr-type">PR Category</Label>
-                <Select value={prExerciseType} onValueChange={setPrExerciseType}>
-                  <SelectTrigger id="pr-type">
+                <Select 
+                  value={prExerciseType} 
+                  onValueChange={(value) => {
+                    setPrExerciseType(value);
+                    
+                    // Auto-populate exercise name when selecting a core lift
+                    if (value !== "custom") {
+                      const selectedLift = CORE_LIFTS.find(lift => lift.id === value);
+                      if (selectedLift) {
+                        setNewExerciseName(selectedLift.name);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger id="pr-type" className="bg-muted">
                     <SelectValue placeholder="Select PR category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-secondary border-border/30">
                     <SelectItem value="bench-press">Bench Press</SelectItem>
                     <SelectItem value="deadlift">Deadlift</SelectItem>
                     <SelectItem value="squat">Squat</SelectItem>
@@ -300,7 +314,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddNewExercise}>
+            <Button onClick={handleAddNewExercise} className="bg-gym-blue hover:bg-gym-blue/90">
               Add Exercise
             </Button>
           </DialogFooter>

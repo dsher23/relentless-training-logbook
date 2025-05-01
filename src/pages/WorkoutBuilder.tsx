@@ -71,7 +71,7 @@ const ExerciseItem = ({
     <Card
       ref={setNodeRef}
       id={`exercise-${exercise.id}`}
-      className="mb-2 cursor-move"
+      className="mb-3 cursor-move bg-secondary/80 border-border/30 shadow"
       style={style}
       {...attributes}
       {...listeners}
@@ -80,10 +80,10 @@ const ExerciseItem = ({
         <div>
           <div className="flex items-center gap-2">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold">{exercise.name}</span>
+            <span className="font-medium text-white">{exercise.name}</span>
             {exercise.prExerciseType && (
               <div className="flex items-center" title={`${prExerciseName} PR`}>
-                <Trophy className="h-3 w-3 text-yellow-500" />
+                <Trophy className="h-3.5 w-3.5 text-yellow-500" />
               </div>
             )}
             <span className="ml-2 text-xs text-muted-foreground">
@@ -375,27 +375,27 @@ const WorkoutBuilder: React.FC = () => {
             placeholder="Workout Name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
-            className="w-full p-2 border rounded mb-4"
+            className="w-full p-2 border rounded mb-4 bg-secondary/75 text-white font-semibold text-lg"
           />
 
-          <Card className="mb-4">
+          <Card className="mb-4 bg-secondary/30 border-border/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Exercises</h2>
+                <h2 className="text-lg font-semibold text-white">Exercises</h2>
                 <div className="flex items-center gap-2">
                   <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select Exercise" />
+                    <SelectTrigger className="w-[220px] bg-secondary/80 border-border/50">
+                      <SelectValue placeholder="Choose Exercise or Add New" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-secondary border-border/30">
                       {exercises.length > 0 ? (
                         ['upper', 'lower', 'core', 'other'].map((category) => (
                           <React.Fragment key={category}>
-                            <SelectItem value={`category-${category}`} disabled>{category.toUpperCase()}</SelectItem>
+                            <SelectItem value={`category-${category}`} disabled className="text-muted-foreground">{category.toUpperCase()}</SelectItem>
                             {exercises
                               .filter((ex) => ex.category === category)
                               .map((ex) => (
-                                <SelectItem key={ex.id} value={ex.id}>
+                                <SelectItem key={ex.id} value={ex.id} className="text-white">
                                   {ex.name}
                                 </SelectItem>
                               ))}
@@ -406,10 +406,19 @@ const WorkoutBuilder: React.FC = () => {
                       )}
                     </SelectContent>
                   </Select>
-                  <Button size="sm" onClick={handleSelectExercise} disabled={!selectedExerciseId}>
+                  <Button 
+                    size="sm" 
+                    onClick={handleSelectExercise} 
+                    disabled={!selectedExerciseId} 
+                    className="bg-gym-blue hover:bg-gym-blue/90"
+                  >
                     Add
                   </Button>
-                  <Button size="sm" onClick={handleAddExerciseClick}>
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddExerciseClick}
+                    className="bg-gym-blue hover:bg-gym-blue/90"
+                  >
                     <Plus className="h-4 w-4 mr-2" /> New Exercise
                   </Button>
                 </div>
@@ -427,8 +436,8 @@ const WorkoutBuilder: React.FC = () => {
           )}
 
           {selectedExercises.length === 0 ? (
-            <Card>
-              <CardContent className="text-center p-5">
+            <Card className="bg-secondary/60 border-border/30">
+              <CardContent className="text-center p-5 text-muted-foreground">
                 No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.
               </CardContent>
             </Card>
@@ -449,11 +458,14 @@ const WorkoutBuilder: React.FC = () => {
             </SortableContext>
           )}
 
-          <div className="flex justify-end space-x-2 mt-4">
-            <Button variant="outline" onClick={handleCancelClick}>
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button variant="outline" onClick={handleCancelClick} className="border-muted-foreground text-muted-foreground">
               Cancel
             </Button>
-            <Button onClick={handleComplete}>
+            <Button 
+              onClick={handleComplete}
+              className="bg-gym-blue hover:bg-gym-blue/90"
+            >
               {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start Workout" : "Save Workout")}
             </Button>
           </div>
