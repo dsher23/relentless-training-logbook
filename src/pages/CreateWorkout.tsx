@@ -52,6 +52,12 @@ const CreateWorkout: React.FC = () => {
       // Add workout to context with initial data
       addWorkout(values.name, [], { id: workoutId, notes: values.notes });
       
+      // Show confirmation toast
+      toast({
+        title: "Workout created",
+        description: `'${values.name}' has been created. Add exercises to complete your workout.`
+      });
+      
       // Pass workout data to builder
       navigate("/workouts/builder", {
         state: { 
@@ -60,11 +66,6 @@ const CreateWorkout: React.FC = () => {
           notes: values.notes,
           startAfterCreation: startWorkout 
         }
-      });
-      
-      toast({
-        title: "Workout created",
-        description: `'${values.name}' has been created. Add exercises to complete your workout.`
       });
     } catch (error) {
       console.error("Error creating workout:", error);
@@ -88,14 +89,14 @@ const CreateWorkout: React.FC = () => {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const values = form.getValues();
-                handleSave(values, false); // Default to just saving without starting
+                handleSave(values, false);
               }} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white font-semibold">Workout Name</FormLabel>
+                      <FormLabel className="text-white font-semibold text-base">Workout Name</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="e.g., Push Day, Leg Day" 
