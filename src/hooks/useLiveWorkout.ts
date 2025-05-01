@@ -91,7 +91,7 @@ export const useLiveWorkout = () => {
         exercise: exerciseId, // Use 'exercise' instead of 'exerciseId'
         weight: bestSet.weight,
         reps: bestSet.reps,
-        date: new Date().toISOString(), // Convert Date to string
+        date: new Date().toISOString(), // Ensure we're passing a string
         workoutId: id,
         isDirectEntry: false
       });

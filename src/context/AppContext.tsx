@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
@@ -168,9 +167,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         ...prLift,
         id: prLift.id || uuidv4(),
         // Handle the case where date might be null by providing a default value
-        date: typeof prLift.date === 'object' && prLift.date 
-          ? prLift.date.toISOString() 
-          : prLift.date || new Date().toISOString(),
+        date: typeof prLift.date === 'string' 
+          ? prLift.date 
+          : new Date().toISOString(),
         isDirectEntry: prLift.isDirectEntry || false,
       };
       
