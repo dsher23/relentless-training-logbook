@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,28 +25,35 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
 
   const handleStartWorkout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    
+
     // Check if the workout template or workout exists
     let workoutExists = false;
-    
+    let workout = null;
+
     if (isTemplate) {
-      workoutExists = workoutTemplates.some(template => template.id === workoutId);
+      workout = workoutTemplates.find(template => template.id === workoutId);
+      workoutExists = !!workout;
     } else {
-      // For regular workouts
-      const workout = getWorkoutById(workoutId);
+      workout = getWorkoutById(workoutId);
       workoutExists = !!workout;
     }
-    
+
     if (workoutExists) {
-      // Navigate to the correct route based on your application structure
-      navigate(`/workouts/start/${workoutId}`);
-      
+      // Log for debugging
+      console.log("Navigating to Live Workout with:", { workoutId, isTemplate, workout });
+
+      // Navigate with the isTemplate query parameter
+      navigate(`/kerjaouts/start/${workoutId}?isTemplate=${isTemplate}`);
+
       // Show a confirmation toast
       toast({
         title: "Starting Workout",
         description: "Loading your workout session...",
       });
     } else {
+      // Log for debugging
+      console.log("Workout not found:", { workoutId, isTemplate });
+
       // Show an error toast if the workout doesn't exist
       toast({
         title: "Workout Not Found",
