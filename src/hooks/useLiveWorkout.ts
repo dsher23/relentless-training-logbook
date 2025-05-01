@@ -56,16 +56,12 @@ export const useLiveWorkout = () => {
   const checkForPRs = useCallback((exerciseId, name, prExerciseType, sets) => {
     if (!prExerciseType || !sets || sets.length === 0) return;
 
-    // Find the set with the highest weight
     const bestSet = [...sets].sort((a, b) => {
-      // First compare weight
       if (b.weight !== a.weight) return b.weight - a.weight;
-      // If weight is the same, compare reps
       return b.reps - a.reps;
     })[0];
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
-      // Add a new PR
       addPRLift({
         exerciseId,
         weight: bestSet.weight,
@@ -99,7 +95,6 @@ export const useLiveWorkout = () => {
         const data = exerciseData[exercise.id];
         if (!data) return exercise;
         
-        // Check for PRs before saving
         if (exercise.prExerciseType) {
           checkForPRs(exercise.id, exercise.name, exercise.prExerciseType, data.sets);
         }
@@ -144,6 +139,7 @@ export const useLiveWorkout = () => {
         description: "There was a problem saving your workout. Please try again.",
         variant: "destructive"
       });
+      setHasAttemptedSave(false);
     }
   }, [workout, exerciseData, updateWorkout, toast, navigate, checkForPRs]);
 
@@ -151,11 +147,15 @@ export const useLiveWorkout = () => {
     setIsLoading(true);
     
     if (!id) {
+      console.error("No workout ID provided");
       setIsLoading(false);
       return;
     }
     
     try {
+      console.log("Workouts available:", workouts);
+      console.log("Workout templates available:", workoutTemplates);
+      
       const savedProgress = localStorage.getItem('workout_in_progress');
       let initialExerciseData = {};
       let initialExerciseIndex = 0;
@@ -171,57 +171,59 @@ export const useLiveWorkout = () => {
       let foundWorkout;
       
       if (isTemplate) {
-        console.log("Loading from template:", id);
+        console.log("Loading template with ID:", id);
         const template = workoutTemplates.find(t => t.id === id);
         
-        if (template) {
-          console.log("Found template:", template);
-          const convertedWorkout = convertTemplateToWorkout(template);
-          
-          if (convertedWorkout) {
-            const workoutWithCompletedFlag = {
-              ...convertedWorkout,
-              completed: false,
-              exercises: convertedWorkout.exercises.map(ex => ({
-                ...ex,
-                prExerciseType: ex.prExerciseType
-              }))
-            };
-            
-            console.log("Adding workout from template:", workoutWithCompletedFlag);
-            addWorkout(workoutWithCompletedFlag.name, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
-            foundWorkout = workoutWithCompletedFlag;
-          }
+        if (!template) {
+          throw new Error(`Template with ID ${id} not found`);
         }
+        
+        console.log("Found template:", template);
+        const convertedWorkout = convertTemplateToWorkout(template);
+        
+        if (!convertedWorkout) {
+          throw new Error("Failed to convert template to workout");
+        }
+        
+        const workoutWithCompletedFlag = {
+          ...convertedWorkout,
+          completed: false,
+          exercises: convertedWorkout.exercises.map(ex => ({
+            ...ex,
+            prExerciseType: ex.prExerciseType
+          }))
+        };
+        
+        console.log("Adding workout from template:", workoutWithCompletedFlag);
+        addWorkout(workoutWithCompletedFlag.name, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
+        foundWorkout = workoutWithCompletedFlag;
       } else {
-        console.log("Loading regular workout:", id);
+        console.log("Loading regular workout with ID:", id);
         foundWorkout = workouts.find(w => w.id === id);
+        if (!foundWorkout) {
+          throw new Error(`Workout with ID ${id} not found`);
+        }
         console.log("Found workout:", foundWorkout);
       }
       
-      if (foundWorkout) {
-        console.log("Setting workout:", foundWorkout);
-        setWorkout(foundWorkout);
-        setCurrentExerciseIndex(initialExerciseIndex);
-        
-        // Initialize exercise data
-        const newExerciseData = {...initialExerciseData};
-        
-        foundWorkout.exercises.forEach(exercise => {
-          if (!newExerciseData[exercise.id]) {
-            newExerciseData[exercise.id] = initializeExerciseData(exercise);
-          }
-        });
-        
-        setExerciseData(newExerciseData);
-      } else {
-        throw new Error("Workout not found");
-      }
+      console.log("Setting workout:", foundWorkout);
+      setWorkout(foundWorkout);
+      setCurrentExerciseIndex(initialExerciseIndex);
+      
+      const newExerciseData = {...initialExerciseData};
+      
+      foundWorkout.exercises.forEach(exercise => {
+        if (!newExerciseData[exercise.id]) {
+          newExerciseData[exercise.id] = initializeExerciseData(exercise);
+        }
+      });
+      
+      setExerciseData(newExerciseData);
     } catch (error) {
-      console.error("Error loading workout:", error);
+      console.error("Error loading workout:", error.message);
       toast({
         title: "Workout Not Found",
-        description: "The requested workout could not be loaded. Returning to workouts.",
+        description: `The requested workout could not be loaded: ${error.message}. Returning to workouts.`,
         variant: "destructive",
       });
       setTimeout(() => navigate("/workouts"), 500);
