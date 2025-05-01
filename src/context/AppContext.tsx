@@ -13,7 +13,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       {
         id: "ac565875-3781-46ee-a4b2-f1cc492af01f",
         name: "Bench Press",
-        sets: 3, // This should now match the type (number)
+        sets: 3,
         reps: 10,
         weight: 0,
         prExerciseType: "Bench Press",
@@ -78,7 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: '1',
       name: 'Bench Press',
       category: 'upper',
-      sets: 1, // Adjusted to match type (number)
+      sets: 1,
       reps: 10,
       weight: 0
     },
@@ -164,7 +164,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateWorkout = (updated: Workout) => {
     setWorkouts(prevWorkouts => {
-      const updatedWorkouts = prevWorkouts.map(workout => workout.id === updated.id ? updated : workout);
+      // Check if the workout exists in the array (for updates)
+      const existingWorkoutIndex = prevWorkouts.findIndex(w => w.id === updated.id);
+      let updatedWorkouts;
+      if (existingWorkoutIndex !== -1) {
+        // Update existing workout
+        updatedWorkouts = [...prevWorkouts];
+        updatedWorkouts[existingWorkoutIndex] = updated;
+      } else {
+        // Add new workout (e.g., when finishing a workout from a template)
+        updatedWorkouts = [...prevWorkouts, updated];
+      }
       console.log("Updated workouts:", updatedWorkouts);
       return updatedWorkouts;
     });
