@@ -44,16 +44,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isFavorite: false
   };
 
-  const [workouts, setWorkouts] = useState<Workout[]>(() => {
-    const savedWorkouts = localStorage.getItem('workouts');
-    return savedWorkouts ? JSON.parse(savedWorkouts) : [];
-  });
+  const initializeState = <T,>(key: string, defaultValue: T): T => {
+    try {
+      const savedData = localStorage.getItem(key);
+      return savedData ? JSON.parse(savedData) : defaultValue;
+    } catch (error) {
+      console.error(`Failed to load ${key} from localStorage:`, error);
+      return defaultValue;
+    }
+  };
 
+  const [workouts, setWorkouts] = useState<Workout[]>(initializeState('workouts', []));
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(() => {
-    const savedTemplates = localStorage.getItem('workoutTemplates');
-    let templates = savedTemplates ? JSON.parse(savedTemplates) : [];
+    const templates = initializeState('workoutTemplates', []);
     if (!templates.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
-      templates = [defaultTemplate, ...templates];
+      return [defaultTemplate, ...templates];
     }
     return templates;
   });
@@ -87,26 +92,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [prLifts, setPRLifts] = useState<PR[]>([]);
 
-  useEffect(() => {
+  const saveToLocalStorage = (key: string, data: any) => {
     try {
-      localStorage.setItem('workouts', JSON.stringify(workouts));
+      localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
-      console.error("Failed to save workouts to localStorage:", error);
+      console.error(`Failed to save ${key} to localStorage:`, error);
       localStorage.clear();
-      setWorkouts([]);
-      setWorkoutTemplates([defaultTemplate]);
+      if (key === 'workouts') setWorkouts([]);
+      if (key === 'workoutTemplates') setWorkoutTemplates([defaultTemplate]);
     }
+  };
+
+  useEffect(() => {
+    saveToLocalStorage('workouts', workouts);
   }, [workouts]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
-    } catch (error) {
-      console.error("Failed to save workoutTemplates to localStorage:", error);
-      localStorage.clear();
-      setWorkouts([]);
-      setWorkoutTemplates([defaultTemplate]);
-    }
+    saveToLocalStorage('workoutTemplates', workoutTemplates);
   }, [workoutTemplates]);
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
