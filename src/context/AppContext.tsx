@@ -167,7 +167,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const newPRLift = {
         ...prLift,
         id: prLift.id || uuidv4(),
-        date: typeof prLift.date === 'object' ? prLift.date.toISOString() : prLift.date || new Date().toISOString(),
+        // Handle the case where date might be null by providing a default value
+        date: typeof prLift.date === 'object' && prLift.date 
+          ? prLift.date.toISOString() 
+          : prLift.date || new Date().toISOString(),
         isDirectEntry: prLift.isDirectEntry || false,
       };
       
