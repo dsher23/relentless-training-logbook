@@ -63,12 +63,14 @@ export const useLiveWorkout = () => {
         }))
       : [{ reps: exercise.reps || 0, weight: exercise.weight || 0 }];
       
-    return {
+    const initializedData = {
       sets: initialSets,
       notes: exercise.notes || "",
       previousStats: exercise.previousStats,
       prExerciseType: exercise.prExerciseType
     };
+    console.log(`Initialized exerciseData for ${exercise.id}:`, initializedData);
+    return initializedData;
   }, []);
 
   const checkForPRs = useCallback((exerciseId, name, prExerciseType, sets) => {
@@ -219,7 +221,7 @@ export const useLiveWorkout = () => {
         console.log("Loading regular workout with ID:", id);
         foundWorkout = workouts.find(w => w.id === id);
         if (!foundWorkout) {
-          throw new Error(`Workout with ID ${id} not found`);
+          throw new Error(` Näät with ID ${id} not found`);
         }
         console.log("Found workout:", foundWorkout);
       }
@@ -236,6 +238,7 @@ export const useLiveWorkout = () => {
         }
       });
       
+      console.log("Initial exerciseData:", newExerciseData);
       setExerciseData(newExerciseData);
     } catch (error) {
       console.error("Error loading workout:", error.message);
@@ -265,10 +268,12 @@ export const useLiveWorkout = () => {
       const nextExerciseId = nextExercise.id;
       
       setExerciseData(prev => {
-        return {
+        const updatedData = {
           ...prev,
-          [nextExerciseId]: initializeExerciseData(nextExercise)
+          [nextExerciseId]: prev[nextExerciseId] || initializeExerciseData(nextExercise)
         };
+        console.log("Updated exerciseData (nextExercise):", updatedData);
+        return updatedData;
       });
       
       setCurrentExerciseIndex(nextIndex);
@@ -279,29 +284,52 @@ export const useLiveWorkout = () => {
 
   const previousExercise = useCallback(() => {
     if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex(prev => prev - 1);
+      const prevIndex = currentExerciseIndex - 1;
+      const prevExercise = workout!.exercises[prevIndex];
+      const prevExerciseId = prevExercise.id;
+      
+      setExerciseData(prev => {
+        const updatedData = {
+          ...prev,
+          [prevExerciseId]: prev[prevExerciseId] || initializeExerciseData(prevExercise)
+        };
+        console.log("Updated exerciseData (previousExercise):", updatedData);
+        return updatedData;
+      });
+      
+      setCurrentExerciseIndex(prevIndex);
+      
+      console.log(`Moving to exercise ${prevIndex + 1}: ${prevExercise.name}`);
     }
-  }, [currentExerciseIndex]);
+  }, [currentExerciseIndex, workout, initializeExerciseData]);
 
   const handleUpdateNotes = useCallback((exerciseId: string, notes: string) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
-      if (!exercise) return prev;
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
       
-      return {
+      const updatedData = {
         ...prev,
         [exerciseId]: {
           ...exercise,
           notes
         }
       };
+      console.log("Updated exerciseData (handleUpdateNotes):", updatedData);
+      return updatedData;
     });
   }, []);
 
   const handleSetUpdate = useCallback((exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
-      if (!exercise) return prev;
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
       
       const updatedSets = [...exercise.sets];
       
@@ -316,46 +344,58 @@ export const useLiveWorkout = () => {
       
       console.log(`Updating set ${setIndex} ${field} to ${value}`);
       
-      return {
+      const updatedData = {
         ...prev,
         [exerciseId]: {
           ...exercise,
           sets: updatedSets
         }
       };
+      console.log("Updated exerciseData (handleSetUpdate):", updatedData);
+      return updatedData;
     });
   }, []);
 
   const handleAddSet = useCallback((exerciseId: string) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
-      if (!exercise) return prev;
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
       
-      return {
+      const updatedData = {
         ...prev,
         [exerciseId]: {
           ...exercise,
           sets: [...exercise.sets, { reps: 0, weight: 0 }]
         }
       };
+      console.log("Updated exerciseData (handleAddSet):", updatedData);
+      return updatedData;
     });
   }, []);
 
   const handleRemoveSet = useCallback((exerciseId: string, setIndex: number) => {
     setExerciseData(prev => {
       const exercise = prev[exerciseId];
-      if (!exercise) return prev;
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
       
       const updatedSets = [...exercise.sets];
       updatedSets.splice(setIndex, 1);
       
-      return {
+      const updatedData = {
         ...prev,
         [exerciseId]: {
           ...exercise,
           sets: updatedSets
         }
       };
+      console.log("Updated exerciseData (handleRemoveSet):", updatedData);
+      return updatedData;
     });
   }, []);
 
