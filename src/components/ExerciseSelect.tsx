@@ -142,6 +142,19 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
     }
   };
   
+  // Auto-populate exercise name when selecting a core lift
+  const handlePrTypeChange = (value: string) => {
+    setPrExerciseType(value);
+    
+    // Auto-populate exercise name when selecting a core lift
+    if (value !== "custom") {
+      const selectedLift = CORE_LIFTS.find(lift => lift.id === value);
+      if (selectedLift) {
+        setNewExerciseName(selectedLift.name);
+      }
+    }
+  };
+  
   // Remove duplicates from filteredExerciseNames
   const uniqueFilteredExerciseNames = useMemo(() => {
     const uniqueNames = new Set<string>();
@@ -210,7 +223,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                         selectedExercise === exercise ? "bg-accent text-accent-foreground" : ""
                       }`}
                     >
-                      <span>{exercise}</span>
+                      <span className="font-medium">{exercise}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -238,7 +251,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full"
+                  className="w-full bg-gym-blue hover:bg-gym-blue/90 text-white border-none"
                   onClick={() => setIsAddDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -251,7 +264,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
       </Popover>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="bg-secondary border-border/30">
+        <DialogContent className="bg-secondary border-border/30 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Add New Exercise</DialogTitle>
           </DialogHeader>
@@ -281,17 +294,7 @@ export const ExerciseSelect: React.FC<ExerciseSelectProps> = ({
                 <Label htmlFor="pr-type">PR Category</Label>
                 <Select 
                   value={prExerciseType} 
-                  onValueChange={(value) => {
-                    setPrExerciseType(value);
-                    
-                    // Auto-populate exercise name when selecting a core lift
-                    if (value !== "custom") {
-                      const selectedLift = CORE_LIFTS.find(lift => lift.id === value);
-                      if (selectedLift) {
-                        setNewExerciseName(selectedLift.name);
-                      }
-                    }
-                  }}
+                  onValueChange={handlePrTypeChange}
                 >
                   <SelectTrigger id="pr-type" className="bg-muted">
                     <SelectValue placeholder="Select PR category" />

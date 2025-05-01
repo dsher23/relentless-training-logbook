@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
+import StartWorkoutButton from "@/components/StartWorkoutButton";
 
 const ExerciseItem = ({
   exercise,
@@ -299,14 +299,17 @@ const WorkoutBuilder: React.FC = () => {
 
         if (id) {
           updateWorkoutTemplate(newWorkoutTemplate);
+          toast({
+            title: "Template Updated",
+            description: "Your workout template has been updated successfully.",
+          });
         } else {
           addWorkoutTemplate(newWorkoutTemplate);
+          toast({
+            title: "Template Created",
+            description: "Your workout template has been saved successfully.",
+          });
         }
-
-        toast({
-          title: "Success",
-          description: "Your workout has been saved successfully.",
-        });
 
         if (startAfterCreation) {
           navigate(`/live-workout/${workoutId}?isTemplate=true`);
@@ -382,10 +385,10 @@ const WorkoutBuilder: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-white">Exercises</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
                     <SelectTrigger className="w-[220px] bg-secondary/80 border-border/50">
-                      <SelectValue placeholder="Choose Exercise or Add New" />
+                      <SelectValue placeholder="Choose Exercise" />
                     </SelectTrigger>
                     <SelectContent className="bg-secondary border-border/30">
                       {exercises.length > 0 ? (
@@ -406,21 +409,21 @@ const WorkoutBuilder: React.FC = () => {
                       )}
                     </SelectContent>
                   </Select>
-                  <Button 
-                    size="sm" 
-                    onClick={handleSelectExercise} 
-                    disabled={!selectedExerciseId} 
-                    className="bg-gym-blue hover:bg-gym-blue/90"
-                  >
-                    Add
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={handleAddExerciseClick}
-                    className="bg-gym-blue hover:bg-gym-blue/90"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> New Exercise
-                  </Button>
+                  <div className="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+                    <Button 
+                      onClick={handleSelectExercise} 
+                      disabled={!selectedExerciseId} 
+                      className="bg-gym-blue hover:bg-gym-blue/90 w-1/2 sm:w-auto"
+                    >
+                      Add
+                    </Button>
+                    <Button 
+                      onClick={handleAddExerciseClick}
+                      className="bg-gym-blue hover:bg-gym-blue/90 w-1/2 sm:w-auto"
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> New Exercise
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -438,7 +441,7 @@ const WorkoutBuilder: React.FC = () => {
           {selectedExercises.length === 0 ? (
             <Card className="bg-secondary/60 border-border/30">
               <CardContent className="text-center p-5 text-muted-foreground">
-                No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.
+                <p>No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.</p>
               </CardContent>
             </Card>
           ) : (
@@ -462,12 +465,19 @@ const WorkoutBuilder: React.FC = () => {
             <Button variant="outline" onClick={handleCancelClick} className="border-muted-foreground text-muted-foreground">
               Cancel
             </Button>
-            <Button 
-              onClick={handleComplete}
-              className="bg-gym-blue hover:bg-gym-blue/90"
-            >
-              {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start Workout" : "Save Workout")}
-            </Button>
+            
+            <div className="flex space-x-2">
+              {id && !isRegularWorkout && (
+                <StartWorkoutButton workoutId={id} isTemplate={true} />
+              )}
+              
+              <Button 
+                onClick={handleComplete}
+                className="bg-gym-blue hover:bg-gym-blue/90"
+              >
+                {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start" : "Save Workout")}
+              </Button>
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +18,7 @@ export const useLiveWorkout = () => {
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   // Save workout progress to localStorage
   useEffect(() => {
@@ -33,12 +33,17 @@ export const useLiveWorkout = () => {
   }, [workout, exerciseData, currentExerciseIndex]);
 
   const initializeExerciseData = useCallback((exercise) => {
-    const initialSets = exercise.sets?.length > 0 
+    if (!exercise) {
+      console.error("Tried to initialize undefined exercise");
+      return { sets: [{ reps: 0, weight: 0 }], notes: "" };
+    }
+    
+    const initialSets = Array.isArray(exercise.sets) && exercise.sets.length > 0 
       ? exercise.sets.map(set => ({ 
           reps: set.reps || 0, 
           weight: set.weight || 0 
         }))
-      : [{ reps: 0, weight: 0 }];
+      : [{ reps: exercise.reps || 0, weight: exercise.weight || 0 }];
       
     return {
       sets: initialSets,
@@ -143,23 +148,34 @@ export const useLiveWorkout = () => {
   }, [workout, exerciseData, updateWorkout, toast, navigate, checkForPRs]);
 
   const loadWorkout = useCallback(async () => {
-    if (!id) return;
+    setIsLoading(true);
+    
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const savedProgress = localStorage.getItem('workout_in_progress');
+      let initialExerciseData = {};
+      let initialExerciseIndex = 0;
+      
       if (savedProgress) {
         const progressData = JSON.parse(savedProgress);
         if (progressData.workoutId === id) {
-          setExerciseData(progressData.exerciseData || {});
-          setCurrentExerciseIndex(progressData.currentExerciseIndex || 0);
+          initialExerciseData = progressData.exerciseData || {};
+          initialExerciseIndex = progressData.currentExerciseIndex || 0;
         }
       }
       
       let foundWorkout;
       
       if (isTemplate) {
+        console.log("Loading from template:", id);
         const template = workoutTemplates.find(t => t.id === id);
+        
         if (template) {
+          console.log("Found template:", template);
           const convertedWorkout = convertTemplateToWorkout(template);
           
           if (convertedWorkout) {
@@ -171,25 +187,33 @@ export const useLiveWorkout = () => {
                 prExerciseType: ex.prExerciseType
               }))
             };
-            addWorkout(workoutWithCompletedFlag.id, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
+            
+            console.log("Adding workout from template:", workoutWithCompletedFlag);
+            addWorkout(workoutWithCompletedFlag.name, workoutWithCompletedFlag.exercises, workoutWithCompletedFlag);
             foundWorkout = workoutWithCompletedFlag;
           }
         }
       } else {
+        console.log("Loading regular workout:", id);
         foundWorkout = workouts.find(w => w.id === id);
+        console.log("Found workout:", foundWorkout);
       }
       
       if (foundWorkout) {
+        console.log("Setting workout:", foundWorkout);
         setWorkout(foundWorkout);
+        setCurrentExerciseIndex(initialExerciseIndex);
+        
+        // Initialize exercise data
+        const newExerciseData = {...initialExerciseData};
         
         foundWorkout.exercises.forEach(exercise => {
-          if (!exerciseData[exercise.id]) {
-            setExerciseData(prev => ({
-              ...prev,
-              [exercise.id]: initializeExerciseData(exercise)
-            }));
+          if (!newExerciseData[exercise.id]) {
+            newExerciseData[exercise.id] = initializeExerciseData(exercise);
           }
         });
+        
+        setExerciseData(newExerciseData);
       } else {
         throw new Error("Workout not found");
       }
@@ -201,8 +225,14 @@ export const useLiveWorkout = () => {
         variant: "destructive",
       });
       setTimeout(() => navigate("/workouts"), 500);
+    } finally {
+      setIsLoading(false);
     }
-  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, exerciseData, initializeExerciseData]);
+  }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, initializeExerciseData]);
+
+  useEffect(() => {
+    loadWorkout();
+  }, [loadWorkout]);
 
   const nextExercise = useCallback(() => {
     if (!workout) return;
@@ -318,6 +348,7 @@ export const useLiveWorkout = () => {
     setExerciseData,
     finishWorkout,
     loadWorkout,
+    isLoading,
     nextExercise,
     previousExercise,
     handleUpdateNotes,
@@ -326,3 +357,5 @@ export const useLiveWorkout = () => {
     handleRemoveSet
   };
 };
+
+export default useLiveWorkout;

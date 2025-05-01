@@ -22,13 +22,21 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { workoutTemplates } = useAppContext();
+  const { workoutTemplates, getWorkoutById } = useAppContext();
 
   const handleStartWorkout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     
-    // Check if the workout template exists
-    const workoutExists = workoutTemplates.some(template => template.id === workoutId);
+    // Check if the workout template or workout exists
+    let workoutExists = false;
+    
+    if (isTemplate) {
+      workoutExists = workoutTemplates.some(template => template.id === workoutId);
+    } else {
+      // For regular workouts
+      const workout = getWorkoutById(workoutId);
+      workoutExists = !!workout;
+    }
     
     if (workoutExists) {
       // Navigate to the live workout page with the workout ID

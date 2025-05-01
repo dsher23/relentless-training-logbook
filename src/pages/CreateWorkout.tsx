@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Save, Play } from "lucide-react";
@@ -34,10 +35,23 @@ const CreateWorkout: React.FC = () => {
     setSubmitting(true);
     
     try {
+      // Validate input
+      if (!values.name.trim()) {
+        toast({
+          title: "Workout name required",
+          description: "Please enter a name for your workout.",
+          variant: "destructive"
+        });
+        setSubmitting(false);
+        return;
+      }
+
       // Generate a unique ID for the workout
       const workoutId = uuidv4();
+      
       // Add workout to context with initial data
       addWorkout(values.name, [], { id: workoutId, notes: values.notes });
+      
       // Pass workout data to builder
       navigate("/workouts/builder", {
         state: { 
@@ -46,6 +60,11 @@ const CreateWorkout: React.FC = () => {
           notes: values.notes,
           startAfterCreation: startWorkout 
         }
+      });
+      
+      toast({
+        title: "Workout created",
+        description: `'${values.name}' has been created. Add exercises to complete your workout.`
       });
     } catch (error) {
       console.error("Error creating workout:", error);
@@ -63,7 +82,7 @@ const CreateWorkout: React.FC = () => {
       <Header title="Create Workout" />
       
       <div className="p-4">
-        <Card>
+        <Card className="bg-secondary/20 border-border/30">
           <CardContent className="pt-6">
             <Form {...form}>
               <form onSubmit={(e) => {
@@ -76,9 +95,13 @@ const CreateWorkout: React.FC = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Workout Name</FormLabel>
+                      <FormLabel className="text-white font-semibold">Workout Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Push Day, Leg Day" {...field} />
+                        <Input 
+                          placeholder="e.g., Push Day, Leg Day" 
+                          {...field} 
+                          className="bg-secondary/75 text-white font-medium"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -90,11 +113,11 @@ const CreateWorkout: React.FC = () => {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel className="text-white">Notes</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Any specific goals for this workout?"
-                          className="min-h-[100px]"
+                          className="min-h-[100px] bg-secondary/50 text-white"
                           {...field}
                         />
                       </FormControl>
@@ -103,19 +126,28 @@ const CreateWorkout: React.FC = () => {
                   )}
                 />
                 
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="border-muted-foreground text-muted-foreground order-2 sm:order-1"
+                    disabled={submitting}
+                    onClick={() => navigate("/workouts")}
+                  >
+                    Cancel
+                  </Button>
                   <Button 
                     type="submit" 
-                    className="bg-gym-blue hover:bg-gym-blue/90"
+                    className="bg-gym-blue hover:bg-gym-blue/90 order-1 sm:order-2"
                     disabled={submitting}
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    Save Workout
+                    Create Workout
                   </Button>
                   
                   <Button 
                     type="button"
-                    className="bg-gym-purple hover:bg-gym-purple/90"
+                    className="bg-gym-purple hover:bg-gym-purple/90 order-3"
                     disabled={submitting}
                     onClick={() => {
                       const values = form.getValues();
@@ -123,7 +155,7 @@ const CreateWorkout: React.FC = () => {
                     }}
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    Start Workout
+                    Create & Start
                   </Button>
                 </div>
               </form>
