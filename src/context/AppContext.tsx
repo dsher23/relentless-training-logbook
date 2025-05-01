@@ -155,7 +155,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const addPRLift = (prLift: PRLift) => {
     // Find existing PR lifts for the same exercise
     const existingPRs = prLifts.filter(
-      pr => pr.exerciseId === prLift.exerciseId
+      pr => pr.exercise === prLift.exercise
     );
     
     // If this is better than existing PRs, add it
@@ -167,11 +167,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const newPRLift = {
         ...prLift,
         id: prLift.id || uuidv4(),
-        date: prLift.date || new Date(),
+        date: typeof prLift.date === 'object' ? prLift.date.toISOString() : prLift.date || new Date().toISOString(),
         isDirectEntry: prLift.isDirectEntry || false,
       };
       
-      setPRLifts(prev => [...prev, newPRLift]);
+      setPRLifts(prev => [...prev, newPRLift] as PRLift[]);
       
       if (!prLift.isDirectEntry) {
         toast({
@@ -218,4 +218,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useAppContext = () => useContext(AppContext);
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useAppContext must be used within AppProvider');
+  }
+  return context;
+};

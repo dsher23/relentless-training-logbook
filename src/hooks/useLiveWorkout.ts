@@ -88,10 +88,10 @@ export const useLiveWorkout = () => {
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
       addPRLift({
-        exerciseId,
+        exercise: exerciseId, // Use 'exercise' instead of 'exerciseId'
         weight: bestSet.weight,
         reps: bestSet.reps,
-        date: new Date(),
+        date: new Date().toISOString(), // Convert Date to string
         workoutId: id,
         isDirectEntry: false
       });
