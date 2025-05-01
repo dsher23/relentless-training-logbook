@@ -48,6 +48,7 @@ const LiveWorkout: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     if (!id) {
@@ -62,7 +63,10 @@ const LiveWorkout: React.FC = () => {
     }
     
     console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
-    loadWorkout();
+    loadWorkout().catch((err: Error) => {
+      console.error("Error in loadWorkout:", err);
+      setError(`Failed to load workout: ${err.message}`);
+    });
   }, [id, loadWorkout, navigate, toast, isTemplate]);
   
   useEffect(() => {
@@ -117,6 +121,20 @@ const LiveWorkout: React.FC = () => {
     );
   }
   
+  if (error) {
+    return (
+      <>
+        <NavigationHeader title="Error" showBack={true} />
+        <div className="p-4 text-white">
+          <p>{error}</p>
+          <Button onClick={() => navigate("/workouts")} className="mt-4">
+            Back to Workouts
+          </Button>
+        </div>
+      </>
+    );
+  }
+
   if (!workout) {
     return (
       <>
@@ -165,15 +183,16 @@ const LiveWorkout: React.FC = () => {
     const sets = exerciseData?.sets || [];
     const previousPR = getPreviousPRForExercise(exercise.id);
 
-    const handleSetChange = (setIndex: number, field: "reps" | "weight", value: number) => {
-      onUpdateSet(setIndex, field, value);
+    const handleSetChange = (setIndex: number, field: "reps" | "weight", value: string) => {
+      const numValue = Number(value);
+      if (!isNaN(numValue)) {
+        onUpdateSet(setIndex, field, numValue);
+      }
     };
 
     const handleNotesChange = (notes: string) => {
       onUpdateNotes(notes);
     };
-
-    const previousStats = exercise.previousStats || {};
 
     return (
       <div className="space-y-4">
@@ -242,8 +261,8 @@ const LiveWorkout: React.FC = () => {
                   type="number"
                   id={`reps-${index}`}
                   placeholder="0"
-                  value={set?.reps || ""}
-                  onChange={(e) => handleSetChange(index, "reps", Number(e.target.value))}
+                  value={set?.reps ?? ""}
+                  onChange={(e) => handleSetChange(index, "reps", e.target.value)}
                 />
               </div>
               <div className="flex-1">
@@ -252,8 +271,8 @@ const LiveWorkout: React.FC = () => {
                   type="number"
                   id={`weight-${index}`}
                   placeholder="0"
-                  value={set?.weight || ""}
-                  onChange={(e) => handleSetChange(index, "weight", Number(e.target.value))}
+                  value={set?.weight ?? ""}
+                  onChange={(e) => handleSetChange(index, "weight", e.target.value)}
                 />
               </div>
               <Button
