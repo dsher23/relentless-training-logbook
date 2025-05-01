@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, ChevronLeft, Clock, Save, Info, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
-import { Exercise } from "@/types";
 import { useLiveWorkout } from "@/hooks/useLiveWorkout";
 import { Textarea } from "@/components/ui/textarea";
 import NavigationHeader from "@/components/NavigationHeader";
@@ -37,12 +35,13 @@ const LiveWorkout: React.FC = () => {
     exerciseData,
     finishWorkout,
     loadWorkout,
+    isLoading,
     nextExercise,
     previousExercise,
     handleUpdateNotes,
     handleSetUpdate,
     handleAddSet,
-    handleRemoveSet
+    handleRemoveSet,
   } = useLiveWorkout();
   
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -52,17 +51,19 @@ const LiveWorkout: React.FC = () => {
   
   useEffect(() => {
     if (!id) {
+      console.error("Workout ID is missing");
       toast({
         title: "Error",
         description: "Workout ID is missing.",
-        variant: "destructive"
+        variant: "destructive",
       });
       navigate("/workouts");
       return;
     }
     
+    console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
     loadWorkout();
-  }, [id, loadWorkout, navigate, toast]);
+  }, [id, loadWorkout, navigate, toast, isTemplate]);
   
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -101,18 +102,31 @@ const LiveWorkout: React.FC = () => {
     const exercisePRs = prLifts.filter(pr => pr.exerciseId === exerciseId);
     if (!exercisePRs.length) return null;
     
-    // Sort by weight descending then reps descending
     return [...exercisePRs].sort((a, b) => {
       if (b.weight !== a.weight) return b.weight - a.weight;
       return b.reps - a.reps;
     })[0];
   };
   
-  if (!workout) {
+  if (isLoading) {
     return (
       <>
         <NavigationHeader title="Loading" showBack={true} />
-        <div className="p-4">Loading workout...</div>
+        <div className="p-4 text-white">Loading workout...</div>
+      </>
+    );
+  }
+  
+  if (!workout) {
+    return (
+      <>
+        <NavigationHeader title="Error" showBack={true} />
+        <div className="p-4 text-white">
+          <p>Failed to load workout. It may not exist or there was an error.</p>
+          <Button onClick={() => navigate("/workouts")} className="mt-4">
+            Back to Workouts
+          </Button>
+        </div>
       </>
     );
   }
@@ -123,13 +137,18 @@ const LiveWorkout: React.FC = () => {
     return (
       <>
         <NavigationHeader title={workout.name} showBack={true} />
-        <div className="p-4">No exercises found in this workout.</div>
+        <div className="p-4 text-white">
+          <p>No exercises found in this workout.</p>
+          <Button onClick={() => navigate("/workouts")} className="mt-4">
+            Back to Workouts
+          </Button>
+        </div>
       </>
     );
   }
 
   const ExerciseBlock: React.FC<{
-    exercise: Exercise;
+    exercise: any;
     exerciseData: any;
     onAddSet: () => void;
     onRemoveSet: (index: number) => void;
@@ -272,7 +291,7 @@ const LiveWorkout: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsRunning(prev => !prev)}>
+            <Button variant="outline" onClick={toggleTimer}>
               <Clock className="h-4 w-4 mr-2" />
               {isRunning ? "Pause" : "Start"}
             </Button>
