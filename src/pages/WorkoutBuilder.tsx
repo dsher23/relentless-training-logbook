@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { useAppContext } from "@/context/AppContext";
 import NavigationHeader from "@/components/NavigationHeader";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DndContext, closestCenter, DndContextProps } from "@dnd-kit/core";
+import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import StartWorkoutButton from "@/components/StartWorkoutButton";
 
@@ -163,7 +162,7 @@ const WorkoutBuilder: React.FC = () => {
       // Auto-save the workout after adding exercise
       const updatedWorkout = {
         ...workout,
-        exercises: [...workout.exercises, newExercise],
+        exercises: [...(workout?.exercises || []), newExercise],
       };
       updateWorkoutTemplate(updatedWorkout);
   
@@ -206,7 +205,7 @@ const WorkoutBuilder: React.FC = () => {
   
       const updatedWorkout = {
         ...workout,
-        exercises: [...workout.exercises, { ...exerciseToAdd }],
+        exercises: [...(workout?.exercises || []), { ...exerciseToAdd }],
       };
   
       setWorkout(updatedWorkout);
@@ -235,8 +234,8 @@ const WorkoutBuilder: React.FC = () => {
     navigate(`/workouts/builder/edit-exercise/${exerciseId}`, {
       state: {
         exercise,
-        selectedExercises: workout.exercises
-      }
+        selectedExercises: workout.exercises,
+      },
     });
   };
 
@@ -245,7 +244,7 @@ const WorkoutBuilder: React.FC = () => {
       const updatedExercises = workout.exercises.filter((ex: any) => ex.id !== exerciseId);
       const updatedWorkout = {
         ...workout,
-        exercises: updatedExercises
+        exercises: updatedExercises,
       };
       
       setWorkout(updatedWorkout);
@@ -413,6 +412,7 @@ const WorkoutBuilder: React.FC = () => {
                   value={customExerciseName}
                   onChange={(e) => setCustomExerciseName(e.target.value)}
                   placeholder="e.g., Push-Up"
+                  disabled={isSaving}
                 />
               </div>
               <div>
@@ -422,9 +422,10 @@ const WorkoutBuilder: React.FC = () => {
                   value={customExerciseCategory}
                   onChange={(e) => setCustomExerciseCategory(e.target.value)}
                   placeholder="e.g., upper"
+                  disabled={isSaving}
                 />
               </div>
-              <Button onClick={handleAddCustomExercise}>
+              <Button onClick={handleAddCustomExercise} disabled={isSaving}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Custom Exercise
               </Button>
@@ -446,6 +447,7 @@ const WorkoutBuilder: React.FC = () => {
                   value={selectedExerciseId}
                   onChange={(e) => setSelectedExerciseId(e.target.value)}
                   className="w-full p-2 border rounded-md bg-background"
+                  disabled={isSaving}
                 >
                   <option value="">Select an exercise</option>
                   {exercises.map((exercise) => (
@@ -455,7 +457,7 @@ const WorkoutBuilder: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <Button onClick={handleAddExerciseToWorkout}>
+              <Button onClick={handleAddExerciseToWorkout} disabled={isSaving}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Exercise
               </Button>
@@ -470,7 +472,15 @@ const WorkoutBuilder: React.FC = () => {
           </CardHeader>
           <CardContent>
             {workout && workout.exercises && workout.exercises.length === 0 ? (
-              <p className="text-muted-foreground">No exercises added yet.</p>
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">No exercises added yet.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("custom-exercise-name")?.focus()}
+                >
+                  Add an Exercise
+                </Button>
+              </div>
             ) : workout ? (
               <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext
