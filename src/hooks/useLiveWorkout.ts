@@ -37,7 +37,7 @@ export const useLiveWorkout = () => {
           toast({
             title: "Storage Limit Reached",
             description: "Cleared workout progress to free up space. Please try again.",
-            variant: "destructive", // Changed from "warning" to "destructive"
+            variant: "destructive",
           });
         } else {
           toast({
@@ -140,7 +140,13 @@ export const useLiveWorkout = () => {
       
       console.log("Saving completed workout:", completedWorkout);
       
-      updateWorkout(completedWorkout);
+      // Since this is a new workout from a template, use addWorkout instead of updateWorkout
+      addWorkout(completedWorkout.name, completedWorkout.exercises, {
+        id: completedWorkout.id,
+        completed: true,
+        date: completedWorkout.date,
+        notes: completedWorkout.notes,
+      });
       
       localStorage.removeItem('workout_in_progress');
       
@@ -153,7 +159,7 @@ export const useLiveWorkout = () => {
         navigate("/workout-history");
       }, 1000);
     } catch (error) {
-      console.error("Error saving workout:", error);
+      console.error("Error in finishWorkout:", error);
       toast({
         title: "Save Error",
         description: "There was a problem saving your workout. Please try again.",
@@ -161,7 +167,7 @@ export const useLiveWorkout = () => {
       });
       setHasAttemptedSave(false);
     }
-  }, [workout, exerciseData, updateWorkout, toast, navigate, checkForPRs]);
+  }, [workout, exerciseData, addWorkout, toast, navigate, checkForPRs]);
 
   const loadWorkout = useCallback(async () => {
     setIsLoading(true);
