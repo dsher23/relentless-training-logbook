@@ -34,7 +34,7 @@ const CreateWorkout: React.FC = () => {
 
     try {
       const newWorkout = {
-        id: crypto.randomUUID(), // Generate a unique ID
+        id: crypto.randomUUID(),
         name: workoutName,
         exercises,
         completed: false,
