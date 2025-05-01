@@ -54,7 +54,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let templates = savedTemplates ? JSON.parse(savedTemplates) : [];
     if (!templates.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
       templates = [defaultTemplate, ...templates];
-      localStorage.setItem('workoutTemplates', JSON.stringify(templates));
+      try {
+        localStorage.setItem('workoutTemplates', JSON.stringify(templates));
+      } catch (error) {
+        console.error("Failed to save workoutTemplates to localStorage:", error);
+        localStorage.clear(); // Clear localStorage to free space
+        localStorage.setItem('workoutTemplates', JSON.stringify(templates));
+      }
     }
     return templates;
   });
@@ -89,11 +95,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [prLifts, setPRLifts] = useState<PR[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('workouts', JSON.stringify(workouts));
+    try {
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+    } catch (error) {
+      console.error("Failed to save workouts to localStorage:", error);
+      localStorage.clear(); // Clear localStorage to free space
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+    }
   }, [workouts]);
 
   useEffect(() => {
-    localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
+    try {
+      localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
+    } catch (error) {
+      console.error("Failed to save workoutTemplates to localStorage:", error);
+      localStorage.clear(); // Clear localStorage to free space
+      localStorage.setItem('workoutTemplates', JSON.stringify(workoutTemplates));
+    }
   }, [workoutTemplates]);
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
