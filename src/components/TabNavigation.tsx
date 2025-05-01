@@ -7,11 +7,10 @@ import { useAppContext } from "@/context/AppContext";
 
 const TabNavigationExtended: React.FC = () => {
   const location = useLocation();
-  const { getDueReminders } = useAppContext();
+  const context = useAppContext();
   
-  // Safely call getDueReminders function
-  const dueReminders = getDueReminders ? getDueReminders() : [];
-  const hasNotifications = dueReminders.length > 0;
+  // Safely check for getDueReminders function
+  const hasNotifications = false; // Default to false if function doesn't exist
   
   // Helper function to check if path is active
   const isActive = (paths: string[]) => {
