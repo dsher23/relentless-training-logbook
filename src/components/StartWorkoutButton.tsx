@@ -39,9 +39,8 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
     }
     
     if (workoutExists) {
-      // Navigate to the live workout page with the workout ID
-      // Fix the route to match the expected route in the application
-      navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
+      // Navigate to the correct route based on your application structure
+      navigate(`/workouts/start/${workoutId}`);
       
       // Show a confirmation toast
       toast({
