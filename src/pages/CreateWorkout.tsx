@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ const CreateWorkout: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addWorkout } = useAppContext();
+  const { addWorkoutTemplate } = useAppContext();
   const [workoutName, setWorkoutName] = useState("");
   const [exercises, setExercises] = useState<any[]>([]);
 
@@ -33,25 +34,24 @@ const CreateWorkout: React.FC = () => {
     }
 
     try {
-      const newWorkout = {
-        id: crypto.randomUUID(),
+      const newTemplate = {
+        id: uuidv4(),
         name: workoutName,
         exercises,
-        completed: false,
-        date: new Date(),
+        isFavorite: false,
       };
-      console.log("Saving new workout:", newWorkout);
-      addWorkout(workoutName, exercises, newWorkout);
+      console.log("Saving new workout template:", newTemplate);
+      addWorkoutTemplate(newTemplate);
       toast({
-        title: "Workout Saved",
-        description: "Your workout has been saved successfully.",
+        title: "Template Saved",
+        description: "Your workout template has been saved successfully.",
       });
       navigate("/workouts");
     } catch (error) {
-      console.error("Error saving workout:", error);
+      console.error("Error saving workout template:", error);
       toast({
         title: "Error",
-        description: "Failed to save the workout. Please try again.",
+        description: "Failed to save the workout template. Please try again.",
         variant: "destructive",
       });
     }
@@ -70,7 +70,6 @@ const CreateWorkout: React.FC = () => {
             className="mt-1"
           />
         </div>
-        {/* Add exercise selection UI here */}
         <div className="flex justify-center gap-2 mt-4">
           <Button onClick={() => navigate("/workouts")} variant="outline">
             Cancel
