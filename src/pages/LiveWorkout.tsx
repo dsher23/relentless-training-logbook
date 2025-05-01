@@ -20,6 +20,15 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 
+// Debounce utility function
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
 const LiveWorkout: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -183,10 +192,15 @@ const LiveWorkout: React.FC = () => {
     const sets = exerciseData?.sets || [];
     const previousPR = getPreviousPRForExercise(exercise.id);
 
+    // Debounced version of onUpdateSet
+    const debouncedUpdateSet = debounce((setIndex: number, field: "reps" | "weight", value: number) => {
+      onUpdateSet(setIndex, field, value);
+    }, 300);
+
     const handleSetChange = (setIndex: number, field: "reps" | "weight", value: string) => {
       const numValue = Number(value);
       if (!isNaN(numValue)) {
-        onUpdateSet(setIndex, field, numValue);
+        debouncedUpdateSet(setIndex, field, numValue);
       }
     };
 
