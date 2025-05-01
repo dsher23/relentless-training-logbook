@@ -127,7 +127,7 @@ const WorkoutBuilder: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout, getWorkoutById, exercises } = useAppContext();
-  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>(location.state?.selectedExercises || []);
   const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | undefined>(undefined);
@@ -142,7 +142,7 @@ const WorkoutBuilder: React.FC = () => {
   const { workout: loadedWorkout, isTemplate } = useWorkoutLoader(id);
 
   useEffect(() => {
-    if (!id) {
+    if (!id && !location.state?.selectedExercises) {
       setIsLoading(false);
       return;
     }
@@ -156,7 +156,7 @@ const WorkoutBuilder: React.FC = () => {
       return;
     }
 
-    if (!isLoading && !loadedWorkout) {
+    if (!isLoading && !loadedWorkout && !location.state?.selectedExercises) {
       console.error("WorkoutBuilder: Failed to load workout", id);
       setLoadError("The workout you're trying to edit could not be found.");
       toast({
@@ -166,7 +166,12 @@ const WorkoutBuilder: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [id, loadedWorkout, isTemplate, isLoading, toast]);
+
+    if (location.state?.selectedExercises) {
+      setSelectedExercises(location.state.selectedExercises);
+      setIsLoading(false);
+    }
+  }, [id, loadedWorkout, isTemplate, isLoading, toast, location.state]);
 
   const { startAfterCreation } = location.state || {};
 
@@ -445,4 +450,87 @@ const WorkoutBuilder: React.FC = () => {
 
           {selectedExercises.length === 0 ? (
             <Card className="bg-secondary/60 border-border/30">
-              <CardContent className="text-center p-5 text
+              <CardContent className="text-center p-5 text-muted-foreground">
+                <p>No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <SortableContext
+              items={selectedExercises.map(exercise => exercise.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {selectedExercises.map((exercise, index) => (
+                <ExerciseItem
+                  key={exercise.id}
+                  exercise={exercise}
+                  index={index}
+                  onEdit={handleEditExercise}
+                  onDelete={promptDeleteExercise}
+                />
+              ))}
+            </SortableContext>
+          )}
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button variant="outline" onClick={handleCancelClick} className="border-muted-foreground text-muted-foreground">
+              Cancel
+            </Button>
+            
+            <div className="flex space-x-2">
+              {id && !isRegularWorkout && (
+                <StartWorkoutButton workoutId={id} isTemplate={true} />
+              )}
+              
+              <Button 
+                onClick={handleComplete}
+                className="bg-gym-blue hover:bg-gym-blue/90"
+              >
+                {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start" : "Save Workout")}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Exercise</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this exercise? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDeleteExercise(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteExercise}>
+                Delete Exercise
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancel Workout Creation</DialogTitle>
+              <DialogDescription>
+                You have unsaved changes. Are you sure you want to cancel?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmCancel(false)}>
+                Continue Editing
+              </Button>
+              <Button variant="destructive" onClick={() => navigate("/workouts")}>
+                Discard Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DndContext>
+  );
+};
+
+export default WorkoutBuilder;
