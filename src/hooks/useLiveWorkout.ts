@@ -155,6 +155,7 @@ export const useLiveWorkout = () => {
     try {
       console.log("Workouts available:", workouts);
       console.log("Workout templates available:", workoutTemplates);
+      console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
       
       const savedProgress = localStorage.getItem('workout_in_progress');
       let initialExerciseData = {};

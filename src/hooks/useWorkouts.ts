@@ -7,14 +7,31 @@ export const useWorkouts = () => {
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
     const newWorkout: Workout = {
-      id: uuidv4(),
+      id: additionalData.id || uuidv4(),
       name,
       date: new Date(),
       exercises,
       completed: false,
       ...additionalData
     };
-    setWorkouts([...workouts, newWorkout]);
+    
+    console.log("Adding new workout:", newWorkout);
+    
+    setWorkouts(prevWorkouts => {
+      // Check if workout with this ID already exists
+      const existingIndex = prevWorkouts.findIndex(w => w.id === newWorkout.id);
+      
+      if (existingIndex >= 0) {
+        // Replace existing workout
+        const updatedWorkouts = [...prevWorkouts];
+        updatedWorkouts[existingIndex] = newWorkout;
+        return updatedWorkouts;
+      }
+      
+      // Add new workout
+      return [...prevWorkouts, newWorkout];
+    });
+    
     return newWorkout.id;
   };
 
@@ -35,7 +52,9 @@ export const useWorkouts = () => {
   };
 
   const getWorkoutById = (id: string) => {
-    return workouts.find(workout => workout.id === id);
+    const workout = workouts.find(workout => workout.id === id);
+    console.log(`getWorkoutById: Looking for workout with ID ${id}, found:`, workout);
+    return workout;
   };
 
   const duplicateWorkout = (id: string) => {

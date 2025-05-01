@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,8 +43,8 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
       // Log for debugging
       console.log("Navigating to Live Workout with:", { workoutId, isTemplate, workout });
 
-      // Navigate with the isTemplate query parameter
-      navigate(`/kerjaouts/start/${workoutId}?isTemplate=${isTemplate}`);
+      // Navigate to the live-workout route (changed from kerjaouts/start to live-workout)
+      navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
 
       // Show a confirmation toast
       toast({
