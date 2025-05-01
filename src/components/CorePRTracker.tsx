@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,10 +38,8 @@ const CorePRTracker: React.FC = () => {
 
   const { workouts, unitSystem, convertWeight } = context;
   
-  // Get the weight unit safely, default to "kg" if getWeightUnitDisplay is not available
-  const weightUnit = typeof context.getWeightUnitDisplay === "function" 
-    ? context.getWeightUnitDisplay() 
-    : unitSystem?.liftingWeightUnit || "kg";
+  // Get the weight unit safely from unitSystem directly
+  const weightUnit = unitSystem?.liftingWeightUnit || "kg";
     
   const { customExercises } = useExercises();
   const [selectedLift, setSelectedLift] = useState<string>("bench-press");
@@ -92,7 +89,9 @@ const CorePRTracker: React.FC = () => {
     }
 
     // Convert weight to kg for storage (our standard unit)
-    const weightInKg = convertWeight(weight, unitSystem.liftingWeightUnit, "kg");
+    const weightInKg = convertWeight 
+      ? convertWeight(weight, unitSystem.liftingWeightUnit, "kg") 
+      : weight; // Fallback if convertWeight function is missing
 
     const newPR: PR = {
       id: crypto.randomUUID(),
@@ -124,7 +123,9 @@ const CorePRTracker: React.FC = () => {
     directPRs.forEach(pr => {
       if (pr.exerciseId === selectedLift) {
         // Convert stored weight (kg) to display unit
-        const displayWeight = convertWeight(Number(pr.weight), "kg", unitSystem.liftingWeightUnit);
+        const displayWeight = convertWeight && typeof convertWeight === 'function'
+          ? convertWeight(Number(pr.weight), "kg", unitSystem.liftingWeightUnit)
+          : Number(pr.weight);
         
         const oneRM = calculateOneRepMax(displayWeight, pr.reps);
         if (oneRM > bestOneRM) {
@@ -150,69 +151,74 @@ const CorePRTracker: React.FC = () => {
       }
     });
 
-    // Process workout PRs
-    (completedWorkouts || []).forEach(workout => {
-      if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
-      
-      workout.exercises.forEach(exercise => {
-        const isCustomPR = selectedLift.startsWith('custom-');
-        const customExerciseName = isCustomPR ? selectedLift.replace('custom-', '') : '';
+    // Process workout PRs with safety checks
+    if (completedWorkouts && Array.isArray(completedWorkouts)) {
+      completedWorkouts.forEach(workout => {
+        if (!workout?.exercises || !Array.isArray(workout.exercises)) return;
         
-        const isPRMatch = (exercise.prExerciseType === selectedLift) || 
-          (!exercise.prExerciseType && 
-           exercise.name.toLowerCase().includes(
-             (prExerciseOptions.find(l => l.id === selectedLift)?.name || "").toLowerCase()
-           )) ||
-           (isCustomPR && exercise.name === customExerciseName);
-        
-        if (isPRMatch) {
-          let bestSetInExercise = null;
-          let bestOneRMInExercise = 0;
+        workout.exercises.forEach(exercise => {
+          const isCustomPR = selectedLift.startsWith('custom-');
+          const customExerciseName = isCustomPR ? selectedLift.replace('custom-', '') : '';
           
-          if (!exercise?.sets || !Array.isArray(exercise.sets)) return;
+          const isPRMatch = (exercise.prExerciseType === selectedLift) || 
+            (!exercise.prExerciseType && 
+            exercise.name.toLowerCase().includes(
+              (prExerciseOptions.find(l => l.id === selectedLift)?.name || "").toLowerCase()
+            )) ||
+            (isCustomPR && exercise.name === customExerciseName);
           
-          exercise.sets.forEach(set => {
-            // Convert weights to display unit
-            const weight = set?.weight ? convertWeight(Number(set.weight), "kg", unitSystem.liftingWeightUnit) : 0;
-            const reps = Number(set?.reps);
-            const oneRM = calculateOneRepMax(weight, reps);
+          if (isPRMatch) {
+            let bestSetInExercise = null;
+            let bestOneRMInExercise = 0;
             
-            if (oneRM > bestOneRMInExercise) {
-              bestOneRMInExercise = oneRM;
-              bestSetInExercise = { ...set, weight };
-            }
-          });
-          
-          if (bestSetInExercise) {
-            const weight = Number(bestSetInExercise.weight);
-            const reps = Number(bestSetInExercise.reps);
-            const oneRM = calculateOneRepMax(weight, reps);
+            if (!exercise?.sets || !Array.isArray(exercise.sets)) return;
             
-            historyData.push({
-              date: format(new Date(workout.date), "MM/dd/yy"),
-              fullData: {
-                weight: weight,
-                reps: reps,
-                volume: weight * reps,
-                notes: exercise.notes || ""
-              },
-              "Top Set": weight,
-              "Reps": reps,
-              "Volume": weight * reps,
-              estimatedOneRM: oneRM,
-              workoutId: workout.id
+            exercise.sets.forEach(set => {
+              // Convert weights to display unit with safety check
+              const weight = set?.weight && convertWeight && typeof convertWeight === 'function'
+                ? convertWeight(Number(set.weight), "kg", unitSystem.liftingWeightUnit)
+                : (set?.weight || 0);
+              
+              const reps = Number(set?.reps);
+              const oneRM = calculateOneRepMax(weight, reps);
+              
+              if (oneRM > bestOneRMInExercise) {
+                bestOneRMInExercise = oneRM;
+                bestSetInExercise = { ...set, weight };
+              }
             });
             
-            if (oneRM > bestOneRM) {
-              bestOneRM = oneRM;
-              bestSet = bestSetInExercise;
-              bestWorkoutDate = typeof workout.date === 'string' ? workout.date : workout.date.toISOString();
-              bestWorkoutId = workout.id;
+            if (bestSetInExercise) {
+              const weight = Number(bestSetInExercise.weight);
+              const reps = Number(bestSetInExercise.reps);
+              const oneRM = calculateOneRepMax(weight, reps);
+              
+              historyData.push({
+                date: format(new Date(workout.date), "MM/dd/yy"),
+                fullData: {
+                  weight: weight,
+                  reps: reps,
+                  volume: weight * reps,
+                  notes: exercise.notes || ""
+                },
+                "Top Set": weight,
+                "Reps": reps,
+                "Volume": weight * reps,
+                estimatedOneRM: oneRM,
+                workoutId: workout.id
+              });
+              
+              if (oneRM > bestOneRM) {
+                bestOneRM = oneRM;
+                bestSet = bestSetInExercise;
+                bestWorkoutDate = typeof workout.date === 'string' ? workout.date : workout.date.toISOString();
+                bestWorkoutId = workout.id;
+              }
             }
           }
-        }
+        });
       });
-    });
+    }
 
     historyData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setChartData(historyData);
@@ -228,7 +234,7 @@ const CorePRTracker: React.FC = () => {
     } else {
       setPrData(null);
     }
-  }, [workouts, selectedLift, directPRs, unitSystem, convertWeight]);
+  }, [workouts, selectedLift, directPRs, unitSystem, convertWeight, prExerciseOptions]);
 
   return (
     <Card className="overflow-hidden">

@@ -1,10 +1,18 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
 import { useToast } from '@/hooks/use-toast';
-import { Exercise, Workout, WorkoutTemplate, PRLift } from '@/types';
+import { Exercise, Workout, WorkoutTemplate, PRLift, WeightUnit, MeasurementUnit, UnitSystem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+
+// Define default unit system
+const DEFAULT_UNIT_SYSTEM: UnitSystem = {
+  bodyWeightUnit: 'kg',
+  bodyMeasurementUnit: 'cm',
+  liftingWeightUnit: 'kg'
+};
 
 const AppContext = createContext<any>({});
 
@@ -88,6 +96,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [prLifts, setPRLifts] = useState<PRLift[]>([]);
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(DEFAULT_UNIT_SYSTEM);
+  const [reminders, setReminders] = useState([]);
 
   useEffect(() => {
     // Load data from localStorage on component mount
@@ -97,12 +107,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const storedPlans = safeLocalStorage.getItem('workoutPlans', []);
       const storedExercises = safeLocalStorage.getItem('exercises', []);
       const storedPRs = safeLocalStorage.getItem('prLifts', []);
+      const storedUnitSystem = safeLocalStorage.getItem('unitSystem', DEFAULT_UNIT_SYSTEM);
+      const storedReminders = safeLocalStorage.getItem('reminders', []);
       
       setWorkouts(storedWorkouts);
       setWorkoutTemplates(storedTemplates);
       setWorkoutPlans(storedPlans);
       setExercises(storedExercises);
       setPRLifts(storedPRs);
+      setUnitSystem(storedUnitSystem);
+      setReminders(storedReminders);
     } catch (error) {
       console.error("Error loading data from localStorage:", error);
       toast({
@@ -143,6 +157,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       safeLocalStorage.setItem('prLifts', prLifts);
     }
   }, [prLifts]);
+  
+  useEffect(() => {
+    safeLocalStorage.setItem('unitSystem', unitSystem);
+  }, [unitSystem]);
+  
+  useEffect(() => {
+    if (reminders && reminders.length > 0) {
+      safeLocalStorage.setItem('reminders', reminders);
+    }
+  }, [reminders]);
   
   const addExercise = (exercise: Exercise) => {
     setExercises((prevExercises) => {
@@ -189,6 +213,63 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return false;
   };
   
+  // Weight conversion functions
+  const convertWeight = (weight: number, fromUnit: WeightUnit = 'kg', toUnit: WeightUnit = 'kg'): number => {
+    if (fromUnit === toUnit) return weight;
+    
+    // Convert to kg first
+    let weightInKg = weight;
+    if (fromUnit === 'lbs') {
+      weightInKg = weight * 0.453592;
+    } else if (fromUnit === 'stone') {
+      weightInKg = weight * 6.35029;
+    }
+    
+    // Convert from kg to target unit
+    if (toUnit === 'lbs') {
+      return weightInKg * 2.20462;
+    } else if (toUnit === 'stone') {
+      return weightInKg * 0.157473;
+    }
+    
+    return weightInKg;
+  };
+  
+  // Measurement conversion function
+  const convertMeasurement = (value: number, fromUnit: MeasurementUnit = 'cm', toUnit: MeasurementUnit = 'cm'): number => {
+    if (fromUnit === toUnit) return value;
+    
+    if (fromUnit === 'cm' && toUnit === 'in') {
+      return value * 0.393701;
+    } else if (fromUnit === 'in' && toUnit === 'cm') {
+      return value * 2.54;
+    }
+    
+    return value;
+  };
+  
+  // Unit display functions
+  const getWeightUnitDisplay = () => {
+    return unitSystem?.liftingWeightUnit || 'kg';
+  };
+  
+  const getMeasurementUnitDisplay = () => {
+    return unitSystem?.bodyMeasurementUnit || 'cm';
+  };
+  
+  // Update unit system
+  const updateUnitSystem = (update: Partial<UnitSystem>) => {
+    setUnitSystem(prev => ({
+      ...prev,
+      ...update
+    }));
+  };
+
+  // Empty implementation of getDueReminders for compatibility
+  const getDueReminders = () => {
+    return [];
+  };
+  
   const value = {
     workouts,
     addWorkout,
@@ -215,6 +296,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     prLifts,
     setPRLifts,
     addPRLift,
+    unitSystem,
+    convertWeight,
+    convertMeasurement,
+    getWeightUnitDisplay,
+    getMeasurementUnitDisplay,
+    updateUnitSystem,
+    reminders,
+    setReminders,
+    getDueReminders,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

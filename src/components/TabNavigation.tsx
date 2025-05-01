@@ -1,16 +1,11 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays, Settings as SettingsIcon } from "lucide-react";
+import { Calendar, BarChart, Dumbbell, Heart, PillIcon, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/AppContext";
 
 const TabNavigationExtended: React.FC = () => {
   const location = useLocation();
-  const context = useAppContext();
-  
-  // Safely check for getDueReminders function
-  const hasNotifications = false; // Default to false if function doesn't exist
   
   // Helper function to check if path is active
   const isActive = (paths: string[]) => {
@@ -57,7 +52,7 @@ const TabNavigationExtended: React.FC = () => {
       label: "Supplements",
       icon: <PillIcon className="w-5 h-5" />,
       isActive: isActive(["/supplements"]),
-      hasNotification: hasNotifications,
+      hasNotification: false,
     },
     {
       path: "/recovery",
