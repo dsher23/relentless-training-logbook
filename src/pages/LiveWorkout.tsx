@@ -192,12 +192,28 @@ const LiveWorkout: React.FC = () => {
     const sets = exerciseData?.sets || [];
     const previousPR = getPreviousPRForExercise(exercise.id);
 
+    // Local state to hold input values for each set and field
+    const [inputValues, setInputValues] = useState<Record<string, string>>(
+      sets.reduce((acc: Record<string, string>, set: any, index: number) => {
+        acc[`reps-${index}`] = set?.reps?.toString() ?? "0";
+        acc[`weight-${index}`] = set?.weight?.toString() ?? "0";
+        return acc;
+      }, {})
+    );
+
     // Debounced version of onUpdateSet
     const debouncedUpdateSet = debounce((setIndex: number, field: "reps" | "weight", value: number) => {
       onUpdateSet(setIndex, field, value);
-    }, 300);
+    }, 500);
 
     const handleSetChange = (setIndex: number, field: "reps" | "weight", value: string) => {
+      // Update local state immediately for smooth UI feedback
+      setInputValues(prev => ({
+        ...prev,
+        [`${field}-${setIndex}`]: value,
+      }));
+
+      // Parse the value and update the global state (debounced)
       const numValue = Number(value);
       if (!isNaN(numValue)) {
         debouncedUpdateSet(setIndex, field, numValue);
@@ -275,7 +291,7 @@ const LiveWorkout: React.FC = () => {
                   type="number"
                   id={`reps-${index}`}
                   placeholder="0"
-                  value={set?.reps ?? ""}
+                  value={inputValues[`reps-${index}`] ?? ""}
                   onChange={(e) => handleSetChange(index, "reps", e.target.value)}
                 />
               </div>
@@ -285,7 +301,7 @@ const LiveWorkout: React.FC = () => {
                   type="number"
                   id={`weight-${index}`}
                   placeholder="0"
-                  value={set?.weight ?? ""}
+                  value={inputValues[`weight-${index}`] ?? ""}
                   onChange={(e) => handleSetChange(index, "weight", e.target.value)}
                 />
               </div>
@@ -293,13 +309,32 @@ const LiveWorkout: React.FC = () => {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => onRemoveSet(index)}
+                onClick={() => {
+                  onRemoveSet(index);
+                  setInputValues(prev => {
+                    const newValues = { ...prev };
+                    delete newValues[`reps-${index}`];
+                    delete newValues[`weight-${index}`];
+                    return newValues;
+                  });
+                }}
               >
                 <Clock className="h-4 w-4" />
               </Button>
             </div>
           ))}
-          <Button onClick={onAddSet} variant="secondary" size="sm">
+          <Button
+            onClick={() => {
+              onAddSet();
+              setInputValues(prev => ({
+                ...prev,
+                [`reps-${sets.length}`]: "0",
+                [`weight-${sets.length}`]: "0",
+              }));
+            }}
+            variant="secondary"
+            size="sm"
+          >
             Add Set
           </Button>
         </div>
