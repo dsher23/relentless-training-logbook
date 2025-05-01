@@ -20,7 +20,6 @@ export const useLiveWorkout = () => {
   const [exerciseData, setExerciseData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // Save workout progress to localStorage
   useEffect(() => {
     if (workout && Object.keys(exerciseData).length > 0) {
       const progressData = {
@@ -28,9 +27,28 @@ export const useLiveWorkout = () => {
         exerciseData,
         currentExerciseIndex
       };
-      localStorage.setItem('workout_in_progress', JSON.stringify(progressData));
+      try {
+        localStorage.setItem('workout_in_progress', JSON.stringify(progressData));
+      } catch (error: any) {
+        console.error("Error saving workout progress to localStorage:", error);
+        if (error.name === "QuotaExceededError") {
+          console.warn("localStorage quota exceeded. Clearing workout_in_progress...");
+          localStorage.removeItem('workout_in_progress');
+          toast({
+            title: "Storage Limit Reached",
+            description: "Cleared workout progress to free up space. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to save workout progress. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
     }
-  }, [workout, exerciseData, currentExerciseIndex]);
+  }, [workout, exerciseData, currentExerciseIndex, toast]);
 
   const initializeExerciseData = useCallback((exercise) => {
     if (!exercise) {
@@ -149,13 +167,12 @@ export const useLiveWorkout = () => {
     if (!id) {
       console.error("No workout ID provided");
       setIsLoading(false);
-      return;
+      throw new Error("No workout ID provided");
     }
     
     try {
       console.log("Workouts available:", workouts);
       console.log("Workout templates available:", workoutTemplates);
-      console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
       
       const savedProgress = localStorage.getItem('workout_in_progress');
       let initialExerciseData = {};
@@ -228,13 +245,16 @@ export const useLiveWorkout = () => {
         variant: "destructive",
       });
       setTimeout(() => navigate("/workouts"), 500);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   }, [id, workouts, workoutTemplates, isTemplate, addWorkout, navigate, toast, initializeExerciseData]);
 
   useEffect(() => {
-    loadWorkout();
+    loadWorkout().catch(error => {
+      console.error("Error in useEffect loadWorkout:", error);
+    });
   }, [loadWorkout]);
 
   const nextExercise = useCallback(() => {
