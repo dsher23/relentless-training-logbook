@@ -58,6 +58,7 @@ const LiveWorkout: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false); // Track auto-saving state
   
   useEffect(() => {
     if (!id) {
@@ -174,6 +175,8 @@ const LiveWorkout: React.FC = () => {
     );
   }
 
+  const isLastExercise = currentExerciseIndex === workout.exercises.length - 1;
+
   const ExerciseBlock: React.FC<{
     exercise: any;
     exerciseData: any;
@@ -192,36 +195,48 @@ const LiveWorkout: React.FC = () => {
     const sets = exerciseData?.sets || [];
     const previousPR = getPreviousPRForExercise(exercise.id);
 
-    // Local state to hold input values for each set and field
     const [inputValues, setInputValues] = useState<Record<string, string>>(
       sets.reduce((acc: Record<string, string>, set: any, index: number) => {
-        acc[`reps-${index}`] = set?.reps?.toString() ?? "0";
-        acc[`weight-${index}`] = set?.weight?.toString() ?? "0";
+        acc[`reps-${index}`] = set?.reps?.toString() ?? "";
+        acc[`weight-${index}`] = set?.weight?.toString() ?? "";
         return acc;
       }, {})
     );
 
-    // Debounced version of onUpdateSet
+    useEffect(() => {
+      setInputValues(
+        sets.reduce((acc: Record<string, string>, set: any, index: number) => {
+          acc[`reps-${index}`] = set?.reps?.toString() ?? "";
+          acc[`weight-${index}`] = set?.weight?.toString() ?? "";
+          return acc;
+        }, {})
+      );
+    }, [exerciseData]);
+
     const debouncedUpdateSet = debounce((setIndex: number, field: "reps" | "weight", value: number) => {
       onUpdateSet(setIndex, field, value);
+      setIsSaving(true);
+      setTimeout(() => setIsSaving(false), 1000); // Show saving indicator for 1 second
     }, 500);
 
     const handleSetChange = (setIndex: number, field: "reps" | "weight", value: string) => {
-      // Update local state immediately for smooth UI feedback
+      // Allow empty string while typing
       setInputValues(prev => ({
         ...prev,
         [`${field}-${setIndex}`]: value,
       }));
 
-      // Parse the value and update the global state (debounced)
+      // Only update global state if the value is a valid number
       const numValue = Number(value);
-      if (!isNaN(numValue)) {
+      if (value !== "" && !isNaN(numValue)) {
         debouncedUpdateSet(setIndex, field, numValue);
       }
     };
 
     const handleNotesChange = (notes: string) => {
       onUpdateNotes(notes);
+      setIsSaving(true);
+      setTimeout(() => setIsSaving(false), 1000);
     };
 
     return (
@@ -328,8 +343,8 @@ const LiveWorkout: React.FC = () => {
               onAddSet();
               setInputValues(prev => ({
                 ...prev,
-                [`reps-${sets.length}`]: "0",
-                [`weight-${sets.length}`]: "0",
+                [`reps-${sets.length}`]: "",
+                [`weight-${sets.length}`]: "",
               }));
             }}
             variant="secondary"
@@ -370,9 +385,18 @@ const LiveWorkout: React.FC = () => {
           </div>
         </div>
         
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between">
           <p className="text-sm text-muted-foreground">
             Time: {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {isSaving ? "Saving..." : "Progress Saved"}
+          </p>
+        </div>
+        
+        <div className="mb-4">
+          <p className="text-sm text-muted-foreground">
+            Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
           </p>
         </div>
         
@@ -389,7 +413,7 @@ const LiveWorkout: React.FC = () => {
           </CardContent>
         </Card>
         
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <Button
             onClick={previousExercise}
             disabled={currentExerciseIndex === 0}
@@ -398,9 +422,14 @@ const LiveWorkout: React.FC = () => {
             <ChevronLeft className="h-4 w-4 mr-2" />
             Previous
           </Button>
+          {isLastExercise && (
+            <p className="text-sm text-muted-foreground">
+              Last exercise – click Finish to save
+            </p>
+          )}
           <Button
             onClick={nextExercise}
-            disabled={currentExerciseIndex === workout.exercises.length - 1}
+            disabled={isLastExercise}
             variant="secondary"
           >
             Next
