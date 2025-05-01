@@ -1,5 +1,6 @@
 import React, { createContext, useState, useMemo, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import localForage from 'localforage';
 import { AppContextType, Workout, Measurement, Supplement, Cycle, Exercise, Reminder, MoodLog, WeeklyRoutine, TrainingBlock, WeakPoint, SteroidCycle, SupplementLog, WorkoutTemplate, WorkoutPlan, BodyMeasurement, UnitSystem, SteroidCompound, CycleCompound, ProgressPhoto, WeightUnit, MeasurementUnit, PR } from '@/types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -44,24 +45,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isFavorite: false
   };
 
-  const initializeState = <T,>(key: string, defaultValue: T): T => {
+  const initializeState = async <T,>(key: string, defaultValue: T): Promise<T> => {
     try {
-      const savedData = localStorage.getItem(key);
-      return savedData ? JSON.parse(savedData) : defaultValue;
+      const savedData = await localForage.getItem<T>(key);
+      return savedData !== null ? savedData : defaultValue;
     } catch (error) {
-      console.error(`Failed to load ${key} from localStorage:`, error);
+      console.error(`Failed to load ${key} from localForage:`, error);
       return defaultValue;
     }
   };
 
-  const [workouts, setWorkouts] = useState<Workout[]>(initializeState('workouts', []));
-  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(() => {
-    const templates = initializeState('workoutTemplates', []);
-    if (!templates.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
-      return [defaultTemplate, ...templates];
-    }
-    return templates;
-  });
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
+
+  useEffect(() => {
+    initializeState('workouts', []).then(data => setWorkouts(data));
+    initializeState('workoutTemplates', []).then(data => {
+      if (!data.some((t: WorkoutTemplate) => t.id === defaultTemplate.id)) {
+        setWorkoutTemplates([defaultTemplate, ...data]);
+      } else {
+        setWorkoutTemplates(data);
+      }
+    });
+  }, []);
 
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
@@ -92,23 +98,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [prLifts, setPRLifts] = useState<PR[]>([]);
 
-  const saveToLocalStorage = (key: string, data: any) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error(`Failed to save ${key} to localStorage:`, error);
-      localStorage.clear();
-      if (key === 'workouts') setWorkouts([]);
-      if (key === 'workoutTemplates') setWorkoutTemplates([defaultTemplate]);
-    }
-  };
-
   useEffect(() => {
-    saveToLocalStorage('workouts', workouts);
+    localForage.setItem('workouts', workouts).catch(error => {
+      console.error("Failed to save workouts to localForage:", error);
+    });
   }, [workouts]);
 
   useEffect(() => {
-    saveToLocalStorage('workoutTemplates', workoutTemplates);
+    localForage.setItem('workoutTemplates', workoutTemplates).catch(error => {
+      console.error("Failed to save workoutTemplates to localForage:", error);
+    });
   }, [workoutTemplates]);
 
   const addWorkout = (name: string, exercises: Exercise[] = [], additionalData: Partial<Workout> = {}) => {
