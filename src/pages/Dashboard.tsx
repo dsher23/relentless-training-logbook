@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,17 +12,73 @@ import { Badge } from "@/components/ui/badge";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { weeklyRoutines = [], workoutTemplates = [] } = useAppContext();
-  
+  const context = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if context is available
+  if (!context) {
+    throw new Error("Dashboard must be used within an AppProvider");
+  }
+
+  const { weeklyRoutines = [], workoutTemplates = [] } = context;
+
+  useEffect(() => {
+    // Simulate loading state
+    setIsLoading(true);
+    try {
+      // Validate data
+      if (!Array.isArray(weeklyRoutines) || !Array.isArray(workoutTemplates)) {
+        throw new Error("Invalid data: weeklyRoutines or workoutTemplates is not an array.");
+      }
+      setIsLoading(false);
+    } catch (err: any) {
+      console.error("Error loading dashboard data:", err.message);
+      setError("Failed to load dashboard data. Please try again.");
+      setIsLoading(false);
+    }
+  }, [weeklyRoutines, workoutTemplates]);
+
   // Get today's workout from weekly routine if available
-  const activeRoutine = weeklyRoutines?.find(r => !r.archived);
+  const activeRoutine = weeklyRoutines.find(r => !r.archived);
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
   
   const todaysWorkoutDay = activeRoutine?.workoutDays?.find(day => day.dayOfWeek === dayOfWeek);
-  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId && workoutTemplates?.length > 0
+  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId && workoutTemplates.length > 0
     ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
     : null;
+
+  if (isLoading) {
+    return (
+      <div className="app-container animate-fade-in">
+        <HeaderExtended title="IronLog" hasBackButton={false} />
+        <div className="px-4 py-8 text-center">
+          <div className="animate-pulse">
+            <div className="h-8 w-32 bg-gray-300 rounded mb-4 mx-auto"></div>
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-container animate-fade-in">
+        <HeaderExtended title="IronLog" hasBackButton={false} />
+        <div className="px-4 py-8 text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/workouts")}
+          >
+            Go to Workouts
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container animate-fade-in">
@@ -58,7 +113,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <h3 className="text-lg font-semibold">{todaysWorkout.name}</h3>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {todaysWorkout.exercises.length} exercises
+                      {todaysWorkout.exercises?.length || 0} exercises
                     </p>
                   </div>
                   <Button 
@@ -69,7 +124,7 @@ const Dashboard: React.FC = () => {
                   </Button>
                 </div>
                 
-                {todaysWorkout.exercises.length > 0 && (
+                {todaysWorkout.exercises?.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {todaysWorkout.exercises.slice(0, 3).map((exercise, idx) => (
                       <Badge key={idx} variant="secondary" className="bg-secondary/50">
