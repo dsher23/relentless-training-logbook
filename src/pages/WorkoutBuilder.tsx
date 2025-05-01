@@ -1,23 +1,27 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Edit, Plus, Save, GripVertical } from "lucide-react";
+import { Trash2, Edit, Plus, Save, GripVertical, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/context/AppContext";
 import NavigationHeader from "@/components/NavigationHeader";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import { DndContext, closestCenter, DndContextProps } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import StartWorkoutButton from "@/components/StartWorkoutButton";
 
-const SortableExerciseItem: React.FC<{
+interface SortableExerciseItemProps {
   exercise: any;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ exercise, onEdit, onDelete }) => {
+}
+
+const SortableExerciseItem: React.FC<SortableExerciseItemProps> = ({ exercise, onEdit, onDelete }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: exercise.id });
 
   const style = {
@@ -65,6 +69,7 @@ const WorkoutBuilder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadWorkout = useCallback(async () => {
     if (!id) {
@@ -81,7 +86,6 @@ const WorkoutBuilder: React.FC = () => {
     setIsLoading(true);
     try {
       console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
-      console.log("Attempting to load workout with ID:", id);
 
       const template = workoutTemplates.find(t => t.id === id);
       if (!template) {
@@ -148,19 +152,35 @@ const WorkoutBuilder: React.FC = () => {
       weight: 0,
     };
 
-    addExercise(newExercise);
-
-    setWorkout((prev: any) => ({
-      ...prev,
-      exercises: [...prev.exercises, newExercise],
-    }));
-
-    setCustomExerciseName("");
-    setCustomExerciseCategory("");
-    toast({
-      title: "Success",
-      description: `${newExercise.name} added to the workout.`,
-    });
+    try {
+      addExercise(newExercise);
+  
+      setWorkout((prev: any) => ({
+        ...prev,
+        exercises: [...prev.exercises, newExercise],
+      }));
+  
+      // Auto-save the workout after adding exercise
+      const updatedWorkout = {
+        ...workout,
+        exercises: [...workout.exercises, newExercise],
+      };
+      updateWorkoutTemplate(updatedWorkout);
+  
+      setCustomExerciseName("");
+      setCustomExerciseCategory("");
+      toast({
+        title: "Success",
+        description: `${newExercise.name} added to the workout.`,
+      });
+    } catch (error) {
+      console.error("Error adding custom exercise:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add exercise. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddExerciseToWorkout = () => {
@@ -173,100 +193,160 @@ const WorkoutBuilder: React.FC = () => {
       return;
     }
 
-    const exerciseToAdd = exercises.find(ex => ex.id === selectedExerciseId);
-    if (!exerciseToAdd) {
+    try {
+      const exerciseToAdd = exercises.find(ex => ex.id === selectedExerciseId);
+      if (!exerciseToAdd) {
+        toast({
+          title: "Error",
+          description: "Selected exercise not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+  
+      const updatedWorkout = {
+        ...workout,
+        exercises: [...workout.exercises, { ...exerciseToAdd }],
+      };
+  
+      setWorkout(updatedWorkout);
+      updateWorkoutTemplate(updatedWorkout);
+      
+      setSelectedExerciseId("");
+      toast({
+        title: "Success",
+        description: `${exerciseToAdd.name} added to the workout.`,
+      });
+    } catch (error) {
+      console.error("Error adding exercise to workout:", error);
       toast({
         title: "Error",
-        description: "Selected exercise not found.",
+        description: "Failed to add exercise. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-
-    setWorkout((prev: any) => ({
-      ...prev,
-      exercises: [...prev.exercises, { ...exerciseToAdd }],
-    }));
-    setSelectedExerciseId("");
-    toast({
-      title: "Success",
-      description: `${exerciseToAdd.name} added to the workout.`,
-    });
   };
 
   const handleEditExercise = (exerciseId: string) => {
     const exercise = workout.exercises.find((ex: any) => ex.id === exerciseId);
     if (!exercise) return;
 
-    const newName = prompt("Enter new exercise name:", exercise.name);
-    const newCategory = prompt("Enter new exercise category:", exercise.category);
-
-    if (newName && newCategory) {
-      setWorkout((prev: any) => ({
-        ...prev,
-        exercises: prev.exercises.map((ex: any) =>
-          ex.id === exerciseId ? { ...ex, name: newName, category: newCategory } : ex
-        ),
-      }));
-      toast({
-        title: "Success",
-        description: `${newName} updated successfully.`,
-      });
-    }
+    // Navigate to the dedicated exercise edit page with exercise data
+    navigate(`/workouts/builder/edit-exercise/${exerciseId}`, {
+      state: {
+        exercise,
+        selectedExercises: workout.exercises
+      }
+    });
   };
 
   const handleDeleteExercise = (exerciseId: string) => {
-    setWorkout((prev: any) => ({
-      ...prev,
-      exercises: prev.exercises.filter((ex: any) => ex.id !== exerciseId),
-    }));
-    toast({
-      title: "Success",
-      description: "Exercise removed from workout.",
-    });
+    try {
+      const updatedExercises = workout.exercises.filter((ex: any) => ex.id !== exerciseId);
+      const updatedWorkout = {
+        ...workout,
+        exercises: updatedExercises
+      };
+      
+      setWorkout(updatedWorkout);
+      updateWorkoutTemplate(updatedWorkout);
+      
+      toast({
+        title: "Success",
+        description: "Exercise removed from workout.",
+      });
+    } catch (error) {
+      console.error("Error deleting exercise:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove exercise. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
-      setWorkout((prev: any) => {
-        const oldIndex = prev.exercises.findIndex((ex: any) => ex.id === active.id);
-        const newIndex = prev.exercises.findIndex((ex: any) => ex.id === over.id);
-        const newExercises = arrayMove(prev.exercises, oldIndex, newIndex);
-        return {
-          ...prev,
-          exercises: newExercises,
-        };
-      });
-      toast({
-        title: "Success",
-        description: "Exercises reordered successfully.",
-      });
+      try {
+        setWorkout((prev: any) => {
+          const oldIndex = prev.exercises.findIndex((ex: any) => ex.id === active.id);
+          const newIndex = prev.exercises.findIndex((ex: any) => ex.id === over.id);
+          const newExercises = arrayMove(prev.exercises, oldIndex, newIndex);
+          
+          const updatedWorkout = {
+            ...prev,
+            exercises: newExercises,
+          };
+          
+          // Auto-save the reordered workout
+          updateWorkoutTemplate(updatedWorkout);
+          
+          return updatedWorkout;
+        });
+        
+        toast({
+          title: "Success",
+          description: "Exercises reordered successfully.",
+        });
+      } catch (error) {
+        console.error("Error reordering exercises:", error);
+        toast({
+          title: "Error",
+          description: "Failed to reorder exercises. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleSaveWorkout = () => {
     if (!workout) return;
+    
+    setIsSaving(true);
 
-    updateWorkoutTemplate(workout);
-    toast({
-      title: "Success",
-      description: "Workout template saved successfully.",
-    });
-    navigate("/workouts");
+    try {
+      updateWorkoutTemplate(workout);
+      toast({
+        title: "Success",
+        description: "Workout template saved successfully.",
+      });
+      
+      setTimeout(() => {
+        setIsSaving(false);
+        navigate("/workouts");
+      }, 500);
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      setIsSaving(false);
+      toast({
+        title: "Error",
+        description: "Failed to save workout. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteWorkout = () => {
     if (!workout) return;
 
     if (window.confirm("Are you sure you want to delete this workout template?")) {
-      deleteWorkoutTemplate(workout.id);
-      toast({
-        title: "Success",
-        description: "Workout template deleted successfully.",
-      });
-      navigate("/workouts");
+      try {
+        deleteWorkoutTemplate(workout.id);
+        toast({
+          title: "Success",
+          description: "Workout template deleted successfully.",
+        });
+        navigate("/workouts");
+      } catch (error) {
+        console.error("Error deleting workout:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete workout. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -274,7 +354,12 @@ const WorkoutBuilder: React.FC = () => {
     return (
       <>
         <NavigationHeader title="Loading" showBack={true} />
-        <div className="p-4 text-white">Loading workout...</div>
+        <div className="p-4 flex items-center justify-center h-40">
+          <div className="animate-pulse text-center">
+            <div className="h-8 w-32 bg-gray-300 rounded mb-4 mx-auto"></div>
+            <p className="text-muted-foreground">Loading workout...</p>
+          </div>
+        </div>
       </>
     );
   }
@@ -283,9 +368,10 @@ const WorkoutBuilder: React.FC = () => {
     return (
       <>
         <NavigationHeader title="Error" showBack={true} />
-        <div className="p-4 text-white">
-          <p>{error}</p>
+        <div className="p-4">
+          <p className="text-red-500">{error}</p>
           <Button onClick={() => navigate("/workouts")} className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Workouts
           </Button>
         </div>
@@ -299,11 +385,18 @@ const WorkoutBuilder: React.FC = () => {
       
       <div className="px-4 pt-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">{workout.name}</h2>
-          <Button variant="destructive" onClick={handleDeleteWorkout}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Workout
-          </Button>
+          <h2 className="text-2xl font-bold">{workout?.name || "Loading workout..."}</h2>
+          <div className="flex gap-2">
+            {workout && (
+              <>
+                <Button variant="destructive" onClick={handleDeleteWorkout}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+                <StartWorkoutButton workoutId={workout.id} isTemplate={true} />
+              </>
+            )}
+          </div>
         </div>
 
         {/* Custom Exercise Form */}
@@ -352,7 +445,7 @@ const WorkoutBuilder: React.FC = () => {
                   id="exercise-select"
                   value={selectedExerciseId}
                   onChange={(e) => setSelectedExerciseId(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded-md bg-background"
                 >
                   <option value="">Select an exercise</option>
                   {exercises.map((exercise) => (
@@ -376,9 +469,9 @@ const WorkoutBuilder: React.FC = () => {
             <CardTitle>Exercises in Workout</CardTitle>
           </CardHeader>
           <CardContent>
-            {workout.exercises.length === 0 ? (
+            {workout && workout.exercises && workout.exercises.length === 0 ? (
               <p className="text-muted-foreground">No exercises added yet.</p>
-            ) : (
+            ) : workout ? (
               <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext
                   items={workout.exercises.map((ex: any) => ex.id)}
@@ -394,14 +487,20 @@ const WorkoutBuilder: React.FC = () => {
                   ))}
                 </SortableContext>
               </DndContext>
+            ) : (
+              <p className="text-muted-foreground">Loading exercises...</p>
             )}
           </CardContent>
         </Card>
 
         {/* Save Button */}
-        <Button onClick={handleSaveWorkout} className="w-full">
+        <Button 
+          onClick={handleSaveWorkout} 
+          className="w-full"
+          disabled={isSaving}
+        >
           <Save className="h-4 w-4 mr-2" />
-          Save Workout
+          {isSaving ? "Saving..." : "Save Workout"}
         </Button>
       </div>
     </div>

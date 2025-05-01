@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -22,18 +23,22 @@ export const useLiveWorkout = () => {
 
   useEffect(() => {
     if (workout && Object.keys(exerciseData).length > 0) {
-      const progressData = {
-        workoutId: workout.id,
-        exerciseData,
-        currentExerciseIndex
-      };
       try {
+        const progressData = {
+          workoutId: workout.id,
+          exerciseData,
+          currentExerciseIndex
+        };
+        
         localStorage.setItem('workout_in_progress', JSON.stringify(progressData));
+        console.log("Saved workout progress to localStorage");
       } catch (error: any) {
         console.error("Error saving workout progress to localStorage:", error);
+        
         if (error.name === "QuotaExceededError") {
           console.warn("localStorage quota exceeded. Clearing workout_in_progress...");
           localStorage.removeItem('workout_in_progress');
+          
           toast({
             title: "Storage Limit Reached",
             description: "Cleared workout progress to free up space. Please try again.",
@@ -187,10 +192,15 @@ export const useLiveWorkout = () => {
       let initialExerciseIndex = 0;
       
       if (savedProgress) {
-        const progressData = JSON.parse(savedProgress);
-        if (progressData.workoutId === id) {
-          initialExerciseData = progressData.exerciseData || {};
-          initialExerciseIndex = progressData.currentExerciseIndex || 0;
+        try {
+          const progressData = JSON.parse(savedProgress);
+          if (progressData.workoutId === id) {
+            initialExerciseData = progressData.exerciseData || {};
+            initialExerciseIndex = progressData.currentExerciseIndex || 0;
+            console.log("Loaded saved workout progress", progressData);
+          }
+        } catch (error) {
+          console.warn("Failed to parse saved workout progress:", error);
         }
       }
       
@@ -242,7 +252,7 @@ export const useLiveWorkout = () => {
       
       console.log("Initial exerciseData:", newExerciseData);
       setExerciseData(newExerciseData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading workout:", error.message);
       toast({
         title: "Workout Not Found",

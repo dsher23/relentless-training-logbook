@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronRight, ChevronLeft, Clock, Save, Info, Trophy } from "lucide-react";
+import { ChevronRight, ChevronLeft, Clock, Save, Info, Trophy, AlertTriangle, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,8 +59,9 @@ const LiveWorkout: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false); // Track auto-saving state
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+
   useEffect(() => {
     if (!id) {
       console.error("Workout ID is missing");
@@ -110,6 +112,21 @@ const LiveWorkout: React.FC = () => {
     setIsRunning(prev => !prev);
   };
 
+  const handleFinishWorkout = () => {
+    setIsFinishing(true);
+    try {
+      finishWorkout();
+    } catch (error) {
+      console.error("Error finishing workout:", error);
+      setIsFinishing(false);
+      toast({
+        title: "Error",
+        description: "Failed to save workout. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getPreviousPRForExercise = (exerciseId: string) => {
     if (!prLifts || !prLifts.length) return null;
     
@@ -125,8 +142,13 @@ const LiveWorkout: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <NavigationHeader title="Loading" showBack={true} />
-        <div className="p-4 text-white">Loading workout...</div>
+        <NavigationHeader title="Loading Workout" showBack={true} />
+        <div className="p-4 flex justify-center items-center h-40">
+          <div className="text-center">
+            <Loader className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading your workout...</p>
+          </div>
+        </div>
       </>
     );
   }
@@ -135,11 +157,16 @@ const LiveWorkout: React.FC = () => {
     return (
       <>
         <NavigationHeader title="Error" showBack={true} />
-        <div className="p-4 text-white">
-          <p>{error}</p>
-          <Button onClick={() => navigate("/workouts")} className="mt-4">
-            Back to Workouts
-          </Button>
+        <div className="p-4">
+          <Card>
+            <CardContent className="pt-6 flex flex-col items-center">
+              <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+              <p className="text-red-500 mb-4">{error}</p>
+              <Button onClick={() => navigate("/workouts")} className="mt-4">
+                Back to Workouts
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </>
     );
@@ -149,11 +176,16 @@ const LiveWorkout: React.FC = () => {
     return (
       <>
         <NavigationHeader title="Error" showBack={true} />
-        <div className="p-4 text-white">
-          <p>Failed to load workout. It may not exist or there was an error.</p>
-          <Button onClick={() => navigate("/workouts")} className="mt-4">
-            Back to Workouts
-          </Button>
+        <div className="p-4">
+          <Card>
+            <CardContent className="pt-6 flex flex-col items-center">
+              <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
+              <p className="mb-4">Failed to load workout. It may not exist or there was an error.</p>
+              <Button onClick={() => navigate("/workouts")} className="mt-4">
+                Back to Workouts
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </>
     );
@@ -165,11 +197,15 @@ const LiveWorkout: React.FC = () => {
     return (
       <>
         <NavigationHeader title={workout.name} showBack={true} />
-        <div className="p-4 text-white">
-          <p>No exercises found in this workout.</p>
-          <Button onClick={() => navigate("/workouts")} className="mt-4">
-            Back to Workouts
-          </Button>
+        <div className="p-4">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center">No exercises found in this workout.</p>
+              <Button onClick={() => navigate("/workouts")} className="mt-4 mx-auto block">
+                Back to Workouts
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </>
     );
@@ -290,6 +326,7 @@ const LiveWorkout: React.FC = () => {
                     className="col-span-3"
                     value={exerciseData?.notes || ""}
                     onChange={(e) => handleNotesChange(e.target.value)}
+                    placeholder="Add notes about your performance or form..."
                   />
                 </div>
               </div>
@@ -298,44 +335,57 @@ const LiveWorkout: React.FC = () => {
         </div>
         
         <div className="space-y-2">
+          <div className="grid grid-cols-12 gap-2 mb-2">
+            <div className="col-span-1 font-medium text-sm">Set</div>
+            <div className="col-span-5 font-medium text-sm">Weight</div>
+            <div className="col-span-5 font-medium text-sm">Reps</div>
+            <div className="col-span-1"></div>
+          </div>
+          
           {sets.map((set: any, index: number) => (
-            <div key={index} className="flex items-center space-x-4">
-              <div className="flex-1">
-                <Label htmlFor={`reps-${index}`}>Reps</Label>
-                <Input
-                  type="number"
-                  id={`reps-${index}`}
-                  placeholder="0"
-                  value={inputValues[`reps-${index}`] ?? ""}
-                  onChange={(e) => handleSetChange(index, "reps", e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <Label htmlFor={`weight-${index}`}>Weight</Label>
+            <div key={index} className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-1 text-sm font-medium">{index + 1}</div>
+              <div className="col-span-5">
                 <Input
                   type="number"
                   id={`weight-${index}`}
                   placeholder="0"
+                  inputMode="decimal"
                   value={inputValues[`weight-${index}`] ?? ""}
                   onChange={(e) => handleSetChange(index, "weight", e.target.value)}
+                  className="h-9"
                 />
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  onRemoveSet(index);
-                  setInputValues(prev => {
-                    const newValues = { ...prev };
-                    delete newValues[`reps-${index}`];
-                    delete newValues[`weight-${index}`];
-                    return newValues;
-                  });
-                }}
-              >
-                <Clock className="h-4 w-4" />
-              </Button>
+              <div className="col-span-5">
+                <Input
+                  type="number"
+                  id={`reps-${index}`}
+                  placeholder="0"
+                  inputMode="numeric"
+                  value={inputValues[`reps-${index}`] ?? ""}
+                  onChange={(e) => handleSetChange(index, "reps", e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="col-span-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onRemoveSet(index);
+                    setInputValues(prev => {
+                      const newValues = { ...prev };
+                      delete newValues[`reps-${index}`];
+                      delete newValues[`weight-${index}`];
+                      return newValues;
+                    });
+                  }}
+                  className="h-9 w-9 p-0"
+                >
+                  <Clock className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
           <Button
@@ -349,6 +399,7 @@ const LiveWorkout: React.FC = () => {
             }}
             variant="secondary"
             size="sm"
+            className="w-full mt-2"
           >
             Add Set
           </Button>
@@ -370,17 +421,30 @@ const LiveWorkout: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-sm text-muted-foreground">
-              {isTemplate ? "Template" : "Workout"}
+              {isTemplate ? "Template" : "Workout"} • Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={toggleTimer}>
+            <Button variant="outline" onClick={toggleTimer} size="sm">
               <Clock className="h-4 w-4 mr-2" />
               {isRunning ? "Pause" : "Start"}
             </Button>
-            <Button onClick={finishWorkout} disabled={hasAttemptedSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Finish
+            <Button 
+              onClick={handleFinishWorkout} 
+              disabled={hasAttemptedSave || isFinishing}
+              size="sm"
+            >
+              {isFinishing ? (
+                <>
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Finish
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -391,12 +455,6 @@ const LiveWorkout: React.FC = () => {
           </p>
           <p className="text-sm text-muted-foreground">
             {isSaving ? "Saving..." : "Progress Saved"}
-          </p>
-        </div>
-        
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground">
-            Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
           </p>
         </div>
         
@@ -422,10 +480,12 @@ const LiveWorkout: React.FC = () => {
             <ChevronLeft className="h-4 w-4 mr-2" />
             Previous
           </Button>
-          {isLastExercise && (
+          {isLastExercise ? (
             <p className="text-sm text-muted-foreground">
               Last exercise – click Finish to save
             </p>
+          ) : (
+            <span></span>
           )}
           <Button
             onClick={nextExercise}

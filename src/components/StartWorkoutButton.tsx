@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -23,42 +23,58 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { workoutTemplates, getWorkoutById } = useAppContext();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleStartWorkout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    setIsLoading(true);
 
     // Check if the workout template or workout exists
     let workoutExists = false;
     let workout = null;
 
-    if (isTemplate) {
-      workout = workoutTemplates.find(template => template.id === workoutId);
-      workoutExists = !!workout;
-    } else {
-      workout = getWorkoutById(workoutId);
-      workoutExists = !!workout;
-    }
+    try {
+      if (isTemplate) {
+        workout = workoutTemplates.find(template => template.id === workoutId);
+        workoutExists = !!workout;
+      } else {
+        workout = getWorkoutById(workoutId);
+        workoutExists = !!workout;
+      }
 
-    if (workoutExists) {
-      // Log for debugging
-      console.log("Navigating to Live Workout with:", { workoutId, isTemplate, workout });
+      if (workoutExists) {
+        // Log for debugging
+        console.log("Navigating to Live Workout with:", { workoutId, isTemplate, workout });
 
-      // Navigate to the live-workout route (changed from kerjaouts/start to live-workout)
-      navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
+        // Show a confirmation toast
+        toast({
+          title: "Starting Workout",
+          description: "Loading your workout session...",
+        });
 
-      // Show a confirmation toast
+        // Navigate to the live-workout route
+        setTimeout(() => {
+          setIsLoading(false);
+          navigate(`/live-workout/${workoutId}?isTemplate=${isTemplate}`);
+        }, 300);
+      } else {
+        // Log for debugging
+        console.log("Workout not found:", { workoutId, isTemplate });
+        setIsLoading(false);
+
+        // Show an error toast if the workout doesn't exist
+        toast({
+          title: "Workout Not Found",
+          description: "The selected workout could not be found. Please try another workout.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error starting workout:", error);
+      setIsLoading(false);
       toast({
-        title: "Starting Workout",
-        description: "Loading your workout session...",
-      });
-    } else {
-      // Log for debugging
-      console.log("Workout not found:", { workoutId, isTemplate });
-
-      // Show an error toast if the workout doesn't exist
-      toast({
-        title: "Workout Not Found",
-        description: "The selected workout could not be found. Please try another workout.",
+        title: "Error",
+        description: "Failed to start workout. Please try again.",
         variant: "destructive",
       });
     }
@@ -69,8 +85,15 @@ const StartWorkoutButton: React.FC<StartWorkoutButtonProps> = ({
       size={compact ? "sm" : "default"}
       onClick={handleStartWorkout}
       className={cn("bg-gym-blue hover:bg-gym-blue/90 text-white font-medium", className)}
+      disabled={isLoading}
     >
-      <Play className="h-4 w-4 mr-1" /> {compact ? "" : "Start Workout"}
+      {isLoading ? (
+        <span className="animate-pulse">Loading...</span>
+      ) : (
+        <>
+          <Play className="h-4 w-4 mr-1" /> {compact ? "" : "Start Workout"}
+        </>
+      )}
     </Button>
   );
 };
