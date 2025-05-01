@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,8 +64,9 @@ const WorkoutBuilder: React.FC = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false); // Prevent infinite loop
 
-  useEffect(() => {
+  const loadWorkout = useCallback(async () => {
     if (!id) {
       console.error("Workout ID is missing");
       toast({
@@ -77,36 +78,57 @@ const WorkoutBuilder: React.FC = () => {
       return;
     }
 
-    const loadWorkout = async () => {
-      setIsLoading(true);
-      try {
-        console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
-        console.log("Attempting to load workout with ID:", id);
+    setIsLoading(true);
+    try {
+      console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
+      console.log("Attempting to load workout with ID:", id);
 
-        const template = workoutTemplates.find(t => t.id === id);
-        if (!template) {
-          throw new Error(`Template with ID ${id} not found`);
-        }
+      const template = workoutTemplates.find(t => t.id === id);
+      if (!template) {
+        throw new Error(`Template with ID ${id} not found`);
+      }
 
-        console.log("Workout template found:", template);
-        setWorkout(template);
-        console.log("WorkoutBuilder: Workout loaded successfully", template);
-      } catch (err: any) {
-        console.error("Error loading workout:", err.message);
-        setError(`Failed to load workout: ${err.message}`);
+      console.log("Workout template found:", template);
+      setWorkout(template);
+      console.log("WorkoutBuilder: Workout loaded successfully", template);
+      setLoaded(true); // Mark as loaded to prevent re-running
+    } catch (err: any) {
+      console.error("Error loading workout:", err.message);
+      setError(`Failed to load workout: ${err.message}`);
+      toast({
+        title: "Error",
+        description: `Failed to load workout: ${err.message}`,
+        variant: "destructive",
+      });
+      navigate("/workouts");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, workoutTemplates, navigate, toast]); // Removed isTemplate from dependencies
+
+  useEffect(() => {
+    if (!loaded) {
+      loadWorkout();
+    }
+  }, [loaded, loadWorkout]); // Only re-run if not loaded
+
+  // Timeout for loading to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setError("Loading timeout: Unable to load workout.");
+        setIsLoading(false);
         toast({
           title: "Error",
-          description: `Failed to load workout: ${err.message}`,
+          description: "Loading timeout: Unable to load workout.",
           variant: "destructive",
         });
         navigate("/workouts");
-      } finally {
-        setIsLoading(false);
       }
-    };
+    }, 10000); // 10-second timeout
 
-    loadWorkout();
-  }, [id, isTemplate, workoutTemplates, navigate, toast]);
+    return () => clearTimeout(timeout);
+  }, [isLoading, navigate, toast]);
 
   const handleAddCustomExercise = () => {
     if (!customExerciseName || !customExerciseCategory) {
