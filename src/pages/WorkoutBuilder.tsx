@@ -64,7 +64,7 @@ const WorkoutBuilder: React.FC = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false); // Prevent infinite loop
+  const [loaded, setLoaded] = useState(false);
 
   const loadWorkout = useCallback(async () => {
     if (!id) {
@@ -91,7 +91,7 @@ const WorkoutBuilder: React.FC = () => {
       console.log("Workout template found:", template);
       setWorkout(template);
       console.log("WorkoutBuilder: Workout loaded successfully", template);
-      setLoaded(true); // Mark as loaded to prevent re-running
+      setLoaded(true);
     } catch (err: any) {
       console.error("Error loading workout:", err.message);
       setError(`Failed to load workout: ${err.message}`);
@@ -104,15 +104,14 @@ const WorkoutBuilder: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [id, workoutTemplates, navigate, toast]); // Removed isTemplate from dependencies
+  }, [id, workoutTemplates, navigate, toast]);
 
   useEffect(() => {
     if (!loaded) {
       loadWorkout();
     }
-  }, [loaded, loadWorkout]); // Only re-run if not loaded
+  }, [loaded, loadWorkout]);
 
-  // Timeout for loading to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
@@ -125,7 +124,7 @@ const WorkoutBuilder: React.FC = () => {
         });
         navigate("/workouts");
       }
-    }, 10000); // 10-second timeout
+    }, 10000);
 
     return () => clearTimeout(timeout);
   }, [isLoading, navigate, toast]);
@@ -149,16 +148,13 @@ const WorkoutBuilder: React.FC = () => {
       weight: 0,
     };
 
-    // Add the custom exercise to the global exercises list
     addExercise(newExercise);
 
-    // Automatically add the new exercise to the workout
     setWorkout((prev: any) => ({
       ...prev,
       exercises: [...prev.exercises, newExercise],
     }));
 
-    // Reset form
     setCustomExerciseName("");
     setCustomExerciseCategory("");
     toast({
@@ -242,6 +238,10 @@ const WorkoutBuilder: React.FC = () => {
           ...prev,
           exercises: newExercises,
         };
+      });
+      toast({
+        title: "Success",
+        description: "Exercises reordered successfully.",
       });
     }
   };
