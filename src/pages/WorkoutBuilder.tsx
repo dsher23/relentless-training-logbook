@@ -1,535 +1,388 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
-import { DndContext } from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { v4 as uuidv4 } from "uuid";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Edit, Plus, Save, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
-import { WorkoutTemplate, Exercise, Workout } from "@/types";
-import AddExerciseForm from "@/components/AddExerciseForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
-import StartWorkoutButton from "@/components/StartWorkoutButton";
+import NavigationHeader from "@/components/NavigationHeader";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
-const ExerciseItem = ({
-  exercise,
-  index,
-  onEdit,
-  onDelete,
-}: {
-  exercise: Exercise;
-  index: number;
+const SortableExerciseItem: React.FC<{
+  exercise: any;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-}) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: exercise.id,
-    data: { index },
-  });
+}> = ({ exercise, onEdit, onDelete }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: exercise.id });
 
   const style = {
-    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
+    transform: CSS.Transform.toString(transform),
     transition,
-    opacity: 1,
   };
-
-  const getPRExerciseName = (prType: string | undefined) => {
-    if (!prType) return null;
-    const CORE_LIFTS = [
-      { id: "bench-press", name: "Bench Press" },
-      { id: "deadlift", name: "Deadlift" },
-      { id: "squat", name: "Squat" },
-      { id: "shoulder-press", name: "Shoulder Press" },
-      { id: "custom", name: "Custom Exercise" },
-    ];
-    return CORE_LIFTS.find(lift => lift.id === prType)?.name || "Custom PR";
-  };
-
-  const prExerciseName = getPRExerciseName(exercise.prExerciseType);
 
   return (
-    <Card
-      ref={setNodeRef}
-      id={`exercise-${exercise.id}`}
-      className="mb-3 cursor-move bg-secondary/80 border-border/30 shadow"
-      style={style}
-      {...attributes}
-      {...listeners}
-    >
-      <CardContent className="flex items-center justify-between p-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-white">{exercise.name}</span>
-            {exercise.prExerciseType && (
-              <div className="flex items-center" title={`${prExerciseName} PR`}>
-                <Trophy className="h-3.5 w-3.5 text-yellow-500" />
-              </div>
-            )}
-            <span className="ml-2 text-xs text-muted-foreground">
-              {Array.isArray(exercise.sets) ? exercise.sets.length : exercise.sets} sets × {exercise.reps} reps, {exercise.weight || "-"} kg/lb
-              {exercise.restTime ? `, ${exercise.restTime}s rest` : ""}
-            </span>
-          </div>
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(exercise.id);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(exercise.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete</span>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div ref={setNodeRef} style={style} className="flex items-center space-x-2 mb-2 p-2 border rounded">
+      <div {...attributes} {...listeners} className="cursor-move">
+        <GripVertical className="h-4 w-4" />
+      </div>
+      <div className="flex-1">
+        <p className="font-medium">{exercise.name}</p>
+        <p className="text-sm text-muted-foreground">{exercise.category}</p>
+      </div>
+      <Button variant="ghost" size="sm" onClick={() => onEdit(exercise.id)}>
+        <Edit className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => onDelete(exercise.id)}>
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };
 
 const WorkoutBuilder: React.FC = () => {
-  const { id } = useParams<{ id?: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isTemplate = searchParams.get("isTemplate") === "true";
   const { toast } = useToast();
-  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout, getWorkoutById, exercises } = useAppContext();
-  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>(location.state?.selectedExercises || []);
-  const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
-  const [showExerciseForm, setShowExerciseForm] = useState(false);
-  const [editingExercise, setEditingExercise] = useState<Exercise | undefined>(undefined);
-  const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
-  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRegularWorkout, setIsRegularWorkout] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
+  const {
+    workoutTemplates,
+    exercises,
+    addExercise,
+    updateWorkoutTemplate,
+    deleteWorkoutTemplate,
+  } = useAppContext();
 
-  const { workout: loadedWorkout, isTemplate } = useWorkoutLoader(id);
+  const [workout, setWorkout] = useState<any>(null);
+  const [customExerciseName, setCustomExerciseName] = useState("");
+  const [customExerciseCategory, setCustomExerciseCategory] = useState("");
+  const [selectedExerciseId, setSelectedExerciseId] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id && !location.state?.selectedExercises) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (loadedWorkout && loadedWorkout.id) {
-      console.log("WorkoutBuilder: Workout loaded successfully", loadedWorkout);
-      setWorkoutName(loadedWorkout.name);
-      setSelectedExercises(loadedWorkout.exercises || []);
-      setIsRegularWorkout(!isTemplate);
-      setIsLoading(false);
-      return;
-    }
-
-    if (!isLoading && !loadedWorkout && !location.state?.selectedExercises) {
-      console.error("WorkoutBuilder: Failed to load workout", id);
-      setLoadError("The workout you're trying to edit could not be found.");
+    if (!id) {
+      console.error("Workout ID is missing");
       toast({
-        title: "Workout not found",
-        description: "The workout you're trying to edit does not exist.",
+        title: "Error",
+        description: "Workout ID is missing.",
         variant: "destructive",
       });
-      setIsLoading(false);
+      navigate("/workouts");
+      return;
     }
 
-    if (location.state?.selectedExercises) {
-      setSelectedExercises(location.state.selectedExercises);
-      setIsLoading(false);
-    }
-  }, [id, loadedWorkout, isTemplate, isLoading, toast, location.state]);
+    const loadWorkout = async () => {
+      setIsLoading(true);
+      try {
+        console.log("Loading workout with ID:", id, "isTemplate:", isTemplate);
+        console.log("Attempting to load workout with ID:", id);
 
-  const { startAfterCreation } = location.state || {};
+        const template = workoutTemplates.find(t => t.id === id);
+        if (!template) {
+          throw new Error(`Template with ID ${id} not found`);
+        }
 
-  const handleAddExerciseClick = () => {
-    setEditingExercise(undefined);
-    setShowExerciseForm(true);
-  };
-
-  const handleSelectExercise = () => {
-    if (selectedExerciseId) {
-      const exercise = exercises.find(ex => ex.id === selectedExerciseId);
-      if (exercise) {
-        const exerciseCopy = { 
-          ...exercise, 
-          id: uuidv4(),
-          sets: Array.isArray(exercise.sets) ? 
-            [...exercise.sets] : 
-            Array(3).fill({ reps: exercise.reps || 10, weight: exercise.weight || 0 }) 
-        };
-        
-        setSelectedExercises([...selectedExercises, exerciseCopy]);
-        setSelectedExerciseId("");
+        console.log("Workout template found:", template);
+        setWorkout(template);
+        console.log("WorkoutBuilder: Workout loaded successfully", template);
+      } catch (err: any) {
+        console.error("Error loading workout:", err.message);
+        setError(`Failed to load workout: ${err.message}`);
+        toast({
+          title: "Error",
+          description: `Failed to load workout: ${err.message}`,
+          variant: "destructive",
+        });
+        navigate("/workouts");
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    loadWorkout();
+  }, [id, isTemplate, workoutTemplates, navigate, toast]);
+
+  const handleAddCustomExercise = () => {
+    if (!customExerciseName || !customExerciseCategory) {
+      toast({
+        title: "Error",
+        description: "Please provide a name and category for the custom exercise.",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  const handleSaveExercise = (exercise: Exercise) => {
-    if (editingExercise) {
-      setSelectedExercises(selectedExercises.map(ex => 
-        ex.id === exercise.id ? exercise : ex
-      ));
-    } else {
-      setSelectedExercises([...selectedExercises, exercise]);
-    }
-    setShowExerciseForm(false);
-    setEditingExercise(undefined);
-  };
+    const newExercise = {
+      id: `custom-${Date.now()}`,
+      name: customExerciseName,
+      category: customExerciseCategory,
+      sets: 1,
+      reps: 0,
+      weight: 0,
+    };
 
-  const handleEditExercise = (id: string) => {
-    const exercise = selectedExercises.find(ex => ex.id === id);
-    if (exercise) {
-      navigate(`/workouts/builder/edit-exercise/${id}`, { state: { exercise, selectedExercises } });
-    }
-  };
+    // Add the custom exercise to the global exercises list
+    addExercise(newExercise);
 
-  const promptDeleteExercise = (id: string) => {
-    setExerciseToDelete(id);
-    setConfirmDeleteExercise(true);
-  };
+    // Automatically add the new exercise to the workout
+    setWorkout((prev: any) => ({
+      ...prev,
+      exercises: [...prev.exercises, newExercise],
+    }));
 
-  const handleDeleteExercise = () => {
-    if (!exerciseToDelete) return;
-    setSelectedExercises(selectedExercises.filter((exercise) => exercise.id !== exerciseToDelete));
-    setConfirmDeleteExercise(false);
-    setExerciseToDelete(null);
+    // Reset form
+    setCustomExerciseName("");
+    setCustomExerciseCategory("");
     toast({
-      title: "Exercise deleted",
-      description: "The exercise has been removed from this workout.",
+      title: "Success",
+      description: `${newExercise.name} added to the workout.`,
+    });
+  };
+
+  const handleAddExerciseToWorkout = () => {
+    if (!selectedExerciseId) {
+      toast({
+        title: "Error",
+        description: "Please select an exercise to add.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const exerciseToAdd = exercises.find(ex => ex.id === selectedExerciseId);
+    if (!exerciseToAdd) {
+      toast({
+        title: "Error",
+        description: "Selected exercise not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setWorkout((prev: any) => ({
+      ...prev,
+      exercises: [...prev.exercises, { ...exerciseToAdd }],
+    }));
+    setSelectedExerciseId("");
+    toast({
+      title: "Success",
+      description: `${exerciseToAdd.name} added to the workout.`,
+    });
+  };
+
+  const handleEditExercise = (exerciseId: string) => {
+    const exercise = workout.exercises.find((ex: any) => ex.id === exerciseId);
+    if (!exercise) return;
+
+    const newName = prompt("Enter new exercise name:", exercise.name);
+    const newCategory = prompt("Enter new exercise category:", exercise.category);
+
+    if (newName && newCategory) {
+      setWorkout((prev: any) => ({
+        ...prev,
+        exercises: prev.exercises.map((ex: any) =>
+          ex.id === exerciseId ? { ...ex, name: newName, category: newCategory } : ex
+        ),
+      }));
+      toast({
+        title: "Success",
+        description: `${newName} updated successfully.`,
+      });
+    }
+  };
+
+  const handleDeleteExercise = (exerciseId: string) => {
+    setWorkout((prev: any) => ({
+      ...prev,
+      exercises: prev.exercises.filter((ex: any) => ex.id !== exerciseId),
+    }));
+    toast({
+      title: "Success",
+      description: "Exercise removed from workout.",
     });
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
+
     if (active.id !== over.id) {
-      setSelectedExercises((items) => {
-        const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+      setWorkout((prev: any) => {
+        const oldIndex = prev.exercises.findIndex((ex: any) => ex.id === active.id);
+        const newIndex = prev.exercises.findIndex((ex: any) => ex.id === over.id);
+        const newExercises = arrayMove(prev.exercises, oldIndex, newIndex);
+        return {
+          ...prev,
+          exercises: newExercises,
+        };
       });
     }
   };
 
-  const handleCancelClick = () => {
-    if (selectedExercises.length > 0 || workoutName.trim() !== "") {
-      setConfirmCancel(true);
-    } else {
+  const handleSaveWorkout = () => {
+    if (!workout) return;
+
+    updateWorkoutTemplate(workout);
+    toast({
+      title: "Success",
+      description: "Workout template saved successfully.",
+    });
+    navigate("/workouts");
+  };
+
+  const handleDeleteWorkout = () => {
+    if (!workout) return;
+
+    if (window.confirm("Are you sure you want to delete this workout template?")) {
+      deleteWorkoutTemplate(workout.id);
+      toast({
+        title: "Success",
+        description: "Workout template deleted successfully.",
+      });
       navigate("/workouts");
-    }
-  };
-
-  const handleComplete = () => {
-    if (!workoutName) {
-      toast({
-        title: "Error",
-        description: "Please enter a workout name.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedExercises.length === 0) {
-      toast({
-        title: "Cannot create workout",
-        description: "Please add at least one exercise to your workout.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const workoutId = id || uuidv4();
-
-      if (isRegularWorkout) {
-        const originalWorkout = id ? getWorkoutById(id) : null;
-        const updatedWorkout: Workout = {
-          ...(originalWorkout || {}),
-          id: workoutId,
-          name: workoutName,
-          exercises: selectedExercises,
-          date: originalWorkout?.date || new Date(),
-          completed: originalWorkout?.completed || false,
-          notes: originalWorkout?.notes || location.state?.notes || "",
-        };
-        console.log("Workouts before saving (regular):", workouts);
-        console.log("Saving regular workout:", updatedWorkout);
-        updateWorkout(updatedWorkout);
-        console.log("Workouts after saving (regular):", workouts);
-        toast({
-          title: "Success",
-          description: "Your workout has been updated successfully.",
-        });
-        navigate(`/workouts/${workoutId}`);
-      } else {
-        const originalTemplate = id ? workoutTemplates.find(t => t.id === id) : null;
-        const newWorkoutTemplate: WorkoutTemplate = {
-          ...(originalTemplate || {}),
-          id: workoutId,
-          name: workoutName,
-          exercises: selectedExercises,
-          isFavorite: originalTemplate?.isFavorite || false,
-        };
-        console.log("Templates before saving:", workoutTemplates);
-        console.log("Saving template:", newWorkoutTemplate);
-        if (id) {
-          updateWorkoutTemplate(newWorkoutTemplate);
-          console.log("Templates after updating:", workoutTemplates);
-          toast({
-            title: "Template Updated",
-            description: "Your workout template has been updated successfully.",
-          });
-        } else {
-          addWorkoutTemplate(newWorkoutTemplate);
-          console.log("Templates after adding:", workoutTemplates);
-          toast({
-            title: "Template Created",
-            description: "Your workout template has been saved successfully.",
-          });
-        }
-
-        if (startAfterCreation) {
-          navigate(`/workouts/start/${workoutId}?isTemplate=true`);
-        } else {
-          navigate("/workouts");
-        }
-      }
-    } catch (error) {
-      console.error("Error saving workout:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save workout. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
   if (isLoading) {
     return (
-      <div className="app-container animate-fade-in">
-        <Header title="Loading Workout...">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
-        <div className="p-4 space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      </div>
+      <>
+        <NavigationHeader title="Loading" showBack={true} />
+        <div className="p-4 text-white">Loading workout...</div>
+      </>
     );
   }
 
-  if (loadError) {
+  if (error) {
     return (
-      <div className="app-container animate-fade-in">
-        <Header title="Error">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
-        <div className="p-4 text-center">
-          <p className="mb-4 text-destructive">{loadError}</p>
-          <Button onClick={() => navigate("/workouts")}>
-            Return to Workouts
+      <>
+        <NavigationHeader title="Error" showBack={true} />
+        <div className="p-4 text-white">
+          <p>{error}</p>
+          <Button onClick={() => navigate("/workouts")} className="mt-4">
+            Back to Workouts
           </Button>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-      <div className="app-container animate-fade-in">
-        <Header title={id ? "Edit Workout" : "Create Workout"}>
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
+    <div className="app-container animate-fade-in pb-16">
+      <NavigationHeader title="Workout Builder" showBack={true} showHome={true} showProfile={false} />
+      
+      <div className="px-4 pt-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">{workout.name}</h2>
+          <Button variant="destructive" onClick={handleDeleteWorkout}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Workout
           </Button>
-        </Header>
-
-        <div className="p-4">
-          <input
-            type="text"
-            placeholder="Workout Name"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-            className="w-full p-2 border rounded mb-4 bg-secondary/75 text-white font-semibold text-lg"
-          />
-
-          <Card className="mb-4 bg-secondary/30 border-border/30">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Exercises</h2>
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
-                    <SelectTrigger className="w-[220px] bg-secondary/80 border-border/50">
-                      <SelectValue placeholder="Choose Exercise" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-secondary border-border/30">
-                      {exercises.length > 0 ? (
-                        ['upper', 'lower', 'core', 'other'].map((category) => (
-                          <React.Fragment key={category}>
-                            <SelectItem value={`category-${category}`} disabled className="text-muted-foreground">{category.toUpperCase()}</SelectItem>
-                            {exercises
-                              .filter((ex) => ex.category === category)
-                              .map((ex) => (
-                                <SelectItem key={ex.id} value={ex.id} className="text-white">
-                                  {ex.name}
-                                </SelectItem>
-                              ))}
-                          </React.Fragment>
-                        ))
-                      ) : (
-                        <SelectItem value="no-exercises" disabled>No exercises available</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
-                    <Button 
-                      onClick={handleSelectExercise} 
-                      disabled={!selectedExerciseId} 
-                      className="bg-gym-blue hover:bg-gym-blue/90 w-1/2 sm:w-auto"
-                    >
-                      Add
-                    </Button>
-                    <Button 
-                      onClick={handleAddExerciseClick}
-                      className="bg-gym-blue hover:bg-gym-blue/90 w-1/2 sm:w-auto"
-                    >
-                      <Plus className="h-4 w-4 mr-2" /> New Exercise
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {showExerciseForm && (
-            <AddExerciseForm
-              isOpen={showExerciseForm}
-              onClose={() => setShowExerciseForm(false)}
-              onSave={handleSaveExercise}
-              exercise={editingExercise}
-            />
-          )}
-
-          {selectedExercises.length === 0 ? (
-            <Card className="bg-secondary/60 border-border/30">
-              <CardContent className="text-center p-5 text-muted-foreground">
-                <p>No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <SortableContext
-              items={selectedExercises.map(exercise => exercise.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {selectedExercises.map((exercise, index) => (
-                <ExerciseItem
-                  key={exercise.id}
-                  exercise={exercise}
-                  index={index}
-                  onEdit={handleEditExercise}
-                  onDelete={promptDeleteExercise}
-                />
-              ))}
-            </SortableContext>
-          )}
-
-          <div className="flex justify-end space-x-3 mt-6">
-            <Button variant="outline" onClick={handleCancelClick} className="border-muted-foreground text-muted-foreground">
-              Cancel
-            </Button>
-            
-            <div className="flex space-x-2">
-              {id && !isRegularWorkout && (
-                <StartWorkoutButton workoutId={id} isTemplate={true} />
-              )}
-              
-              <Button 
-                onClick={handleComplete}
-                className="bg-gym-blue hover:bg-gym-blue/90"
-              >
-                {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start" : "Save Workout")}
-              </Button>
-            </div>
-          </div>
         </div>
 
-        <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Exercise</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this exercise? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmDeleteExercise(false)}>
-                Cancel
+        {/* Custom Exercise Form */}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Add Custom Exercise</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="custom-exercise-name">Exercise Name</Label>
+                <Input
+                  id="custom-exercise-name"
+                  value={customExerciseName}
+                  onChange={(e) => setCustomExerciseName(e.target.value)}
+                  placeholder="e.g., Push-Up"
+                />
+              </div>
+              <div>
+                <Label htmlFor="custom-exercise-category">Category</Label>
+                <Input
+                  id="custom-exercise-category"
+                  value={customExerciseCategory}
+                  onChange={(e) => setCustomExerciseCategory(e.target.value)}
+                  placeholder="e.g., upper"
+                />
+              </div>
+              <Button onClick={handleAddCustomExercise}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Custom Exercise
               </Button>
-              <Button variant="destructive" onClick={handleDeleteExercise}>
-                Delete Exercise
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </CardContent>
+        </Card>
 
-        <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cancel Workout Creation</DialogTitle>
-              <DialogDescription>
-                You have unsaved changes. Are you sure you want to cancel?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmCancel(false)}>
-                Continue Editing
+        {/* Add Existing Exercise */}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Add Existing Exercise</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="exercise-select">Select Exercise</Label>
+                <select
+                  id="exercise-select"
+                  value={selectedExerciseId}
+                  onChange={(e) => setSelectedExerciseId(e.target.value)}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">Select an exercise</option>
+                  {exercises.map((exercise) => (
+                    <option key={exercise.id} value={exercise.id}>
+                      {exercise.name} ({exercise.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button onClick={handleAddExerciseToWorkout}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Exercise
               </Button>
-              <Button variant="destructive" onClick={() => navigate("/workouts")}>
-                Discard Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Workout Exercises List */}
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Exercises in Workout</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {workout.exercises.length === 0 ? (
+              <p className="text-muted-foreground">No exercises added yet.</p>
+            ) : (
+              <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={workout.exercises.map((ex: any) => ex.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {workout.exercises.map((exercise: any) => (
+                    <SortableExerciseItem
+                      key={exercise.id}
+                      exercise={exercise}
+                      onEdit={handleEditExercise}
+                      onDelete={handleDeleteExercise}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <Button onClick={handleSaveWorkout} className="w-full">
+          <Save className="h-4 w-4 mr-2" />
+          Save Workout
+        </Button>
       </div>
-    </DndContext>
+    </div>
   );
 };
 
