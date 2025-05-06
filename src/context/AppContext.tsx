@@ -54,9 +54,9 @@ interface PRLift {
 }
 
 interface UserProfile {
-  displayName: string;
-  email: string;
-  createdAt: string;
+  displayName?: string;
+  email?: string;
+  createdAt?: string;
 }
 
 interface AppContextType {
@@ -153,7 +153,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
       }
     }, (error) => {
-      console.error("Error syncing user profile from Firestore:", error);
+      console.error("Error syncing user profile from Firestore:", error.message);
+      // Fallback to default values if Firestore fetch fails
       setUserProfile({
         displayName: user.displayName || "User",
         email: user.email || "",
@@ -188,7 +189,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("Workouts synced from Firestore:", data);
       setWorkouts(data);
     }, (error) => {
-      console.error("Error syncing workouts:", error);
+      console.error("Error syncing workouts:", error.message);
+      setWorkouts([]);
     });
 
     // Sync progress photos
@@ -198,7 +200,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("Progress photos synced from Firestore:", data);
       setProgressPhotos(data);
     }, (error) => {
-      console.error("Error syncing progress photos:", error);
+      console.error("Error syncing progress photos:", error.message);
+      setProgressPhotos([]);
     });
 
     // Sync body measurements
@@ -208,7 +211,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("Body measurements synced from Firestore:", data);
       setBodyMeasurements(data);
     }, (error) => {
-      console.error("Error syncing body measurements:", error);
+      console.error("Error syncing body measurements:", error.message);
+      setBodyMeasurements([]);
     });
 
     // Sync user supplements
@@ -218,7 +222,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("User supplements synced from Firestore:", data);
       setUserSupplements(data);
     }, (error) => {
-      console.error("Error syncing user supplements:", error);
+      console.error("Error syncing user supplements:", error.message);
+      setUserSupplements([]);
     });
 
     // Sync weekly recovery data
@@ -232,7 +237,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setWeeklyRecoveryData(null);
       }
     }, (error) => {
-      console.error("Error syncing weekly recovery data:", error);
+      console.error("Error syncing weekly recovery data:", error.message);
+      setWeeklyRecoveryData(null);
     });
 
     // Sync weekly routines
@@ -242,7 +248,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("Weekly routines synced from Firestore:", data);
       setWeeklyRoutines(data);
     }, (error) => {
-      console.error("Error syncing weekly routines:", error);
+      console.error("Error syncing weekly routines:", error.message);
+      setWeeklyRoutines([]);
     });
 
     // Sync workout templates
@@ -252,7 +259,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("Workout templates synced from Firestore:", data);
       setWorkoutTemplates(data);
     }, (error) => {
-      console.error("Error syncing workout templates:", error);
+      console.error("Error syncing workout templates:", error.message);
+      setWorkoutTemplates([]);
     });
 
     // Sync PR lifts
@@ -262,7 +270,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log("PR lifts synced from Firestore:", data);
       setPRLifts(data);
     }, (error) => {
-      console.error("Error syncing PR lifts:", error);
+      console.error("Error syncing PR lifts:", error.message);
+      setPRLifts([]);
     });
 
     // Cleanup on unmount or user change
