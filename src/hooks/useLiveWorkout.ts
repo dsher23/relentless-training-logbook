@@ -91,7 +91,7 @@ export const useLiveWorkout = () => {
         weight: bestSet.weight,
         reps: bestSet.reps,
         date: new Date().toISOString(),
-        workoutId: id,
+        workoutId: id, // Now valid since workoutId is part of PRLift
         isDirectEntry: false
       });
 
