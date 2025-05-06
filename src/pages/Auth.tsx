@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import "../types/window"; // Import the declaration file to extend Window
+
+// Declare the window.recaptchaVerifier property directly in this file
+declare global {
+  interface Window {
+    recaptchaVerifier: import("firebase/auth").RecaptchaVerifier | undefined;
+  }
+}
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
