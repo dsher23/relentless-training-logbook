@@ -33,7 +33,7 @@ const TabNavigationExtended: React.FC = () => {
       path: "/dashboard",
       label: "Dashboard",
       icon: <BarChart className="w-5 h-5" />,
-      isActive: isActive(["/dashboard"]),
+      isActive: isActive(["/dashboard", "/progress-photos"]),
     },
     {
       path: "/training",
@@ -44,7 +44,7 @@ const TabNavigationExtended: React.FC = () => {
     {
       path: "/weekly-overview",
       label: "Weekly",
-      icon: <CalendarDays className="w-5 h-5" />,
+      icon: <CalendarDays className="w-5 w-5" />,
       isActive: isActive(["/weekly-overview"]),
     },
     {

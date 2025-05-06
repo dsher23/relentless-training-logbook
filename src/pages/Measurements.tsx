@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from "react";
 import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
 import { useAppContext } from "@/context/AppContext";
@@ -26,7 +27,6 @@ interface Draft {
   thighs?: string;
   calves?: string;
   notes?: string;
-  photoData?: string;
 }
 
 export default function Measurements() {
@@ -42,7 +42,7 @@ export default function Measurements() {
   const [draft, setDraft] = useState<Draft>({
     date: new Date().toISOString().slice(0, 10),
   });
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>("");
 
   const weightUnit = getWeightUnitDisplay();
   const measureUnit = getMeasurementUnitDisplay();
@@ -122,7 +122,6 @@ export default function Measurements() {
         appConvertMeasurement(Number(draft.calves), unitSystem.bodyMeasurementUnit, "cm") : 
         undefined,
       notes: draft.notes,
-      photoData: draft.photoData,
     };
 
     addBodyMeasurement(measurement);
@@ -155,7 +154,7 @@ export default function Measurements() {
     if (key === "date") {
       return new Date(value as Date | string).toLocaleDateString();
     }
-    if (key === "notes" || key === "id" || key === "photoData" || value === undefined) {
+    if (key === "notes" || key === "id" || value === undefined) {
       return value?.toString() || "";
     }
     if (key === "weight" || key === "displayWeight") {
@@ -334,24 +333,6 @@ export default function Measurements() {
               placeholder="Notes"
               value={draft.notes ?? ""}
               onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Progress Photo</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) =>
-                  setDraft({
-                    ...draft,
-                    photoData: ev.target?.result as string,
-                  });
-                reader.readAsDataURL(file);
-              }}
-              className="w-full"
             />
 
             <Button className="w-full" onClick={handleSave}>

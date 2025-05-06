@@ -1,20 +1,29 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings } from "lucide-react";
+import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderExtended from "@/components/HeaderExtended";
 import ActivityStats from "@/components/dashboard/ActivityStats";
 import WeeklyProgress from "@/components/dashboard/WeeklyProgress";
 import { motion } from "framer-motion";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
+import { toast } from "sonner";
+import { v4 as uuid } from "uuid";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const context = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { progressPhotos, addProgressPhoto } = useBodyMeasurements();
+  const [photoDrawerOpen, setPhotoDrawerOpen] = useState(false);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [photoData, setPhotoData] = useState<string | null>(null);
 
   // Check if context is available
   if (!context) {
@@ -47,6 +56,44 @@ const Dashboard: React.FC = () => {
   const todaysWorkoutDay = activeRoutine?.workoutDays?.find(day => day.dayOfWeek === dayOfWeek);
   const todaysWorkout = todaysWorkoutDay?.workoutTemplateId && workoutTemplates.length > 0
     ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
+    : null;
+
+  // Handle progress photo upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPhotoData(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save progress photo
+  const handleSavePhoto = () => {
+    if (!photoData) {
+      toast.error("Please select a photo first");
+      return;
+    }
+
+    const newPhoto = {
+      id: uuid(),
+      date: new Date(),
+      imageData: photoData,
+      caption: photoCaption || `Progress photo - ${new Date().toLocaleDateString()}`
+    };
+
+    addProgressPhoto(newPhoto);
+    toast.success("Progress photo saved successfully");
+    setPhotoDrawerOpen(false);
+    setPhotoData(null);
+    setPhotoCaption("");
+  };
+
+  // Display latest progress photo
+  const latestPhoto = progressPhotos && progressPhotos.length > 0 
+    ? progressPhotos[progressPhotos.length - 1] 
     : null;
 
   if (isLoading) {
@@ -143,6 +190,58 @@ const Dashboard: React.FC = () => {
           </div>
         )}
         
+        {/* Progress Photos Section */}
+        <div className="mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <Camera className="h-5 w-5 mr-2" />
+                Progress Photos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {latestPhoto ? (
+                <div className="space-y-2">
+                  <div className="aspect-square max-h-[200px] overflow-hidden rounded-md">
+                    <img 
+                      src={latestPhoto.imageData} 
+                      alt="Latest progress" 
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {latestPhoto.caption || new Date(latestPhoto.date).toLocaleDateString()}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setPhotoDrawerOpen(true)}
+                    >
+                      Add New
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/progress-photos")}
+                    >
+                      View All
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 space-y-3">
+                  <p className="text-sm text-muted-foreground">No progress photos yet</p>
+                  <Button onClick={() => setPhotoDrawerOpen(true)}>
+                    <Camera className="h-4 w-4 mr-2" />
+                    Add First Photo
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Quick Action Buttons */}
         <div className="grid grid-cols-3 gap-3">
           <Button 
@@ -205,6 +304,71 @@ const Dashboard: React.FC = () => {
           <WeeklyProgress />
         </div>
       </div>
+      
+      {/* Progress Photo Upload Drawer */}
+      <Drawer open={photoDrawerOpen} onOpenChange={setPhotoDrawerOpen}>
+        <DrawerContent className="p-4 space-y-4">
+          <h3 className="font-medium text-lg flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            Add Progress Photo
+          </h3>
+          
+          <div className="space-y-4">
+            {photoData ? (
+              <div className="aspect-square max-h-[300px] overflow-hidden rounded-md mx-auto">
+                <img 
+                  src={photoData} 
+                  alt="Progress preview" 
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-md p-8 text-center">
+                <Camera className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">Upload a progress photo</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="w-full"
+                />
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Caption (Optional)</label>
+              <input
+                type="text"
+                placeholder="Add a caption..."
+                value={photoCaption}
+                onChange={(e) => setPhotoCaption(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  setPhotoDrawerOpen(false);
+                  setPhotoData(null);
+                  setPhotoCaption("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1"
+                onClick={handleSavePhoto}
+                disabled={!photoData}
+              >
+                Save Photo
+              </Button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
