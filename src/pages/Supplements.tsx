@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { PillIcon, Plus, Lock, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,29 +13,62 @@ import AddCompoundForm from "@/components/AddCompoundForm";
 import { useAppContext } from "@/context/AppContext";
 import { SteroidCompound } from "@/types";
 import TabNavigation from "@/components/TabNavigation";
+import { useToast } from "@/hooks/use-toast";
 
 const Supplements: React.FC = () => {
+  const { toast } = useToast();
+  const context = useAppContext();
+  
+  // Validate context is available
+  if (!context) {
+    throw new Error("Supplements must be used within an AppProvider");
+  }
+  
   const { 
-    supplements, 
-    supplementLogs, 
-    steroidCycles, 
-    steroidCompounds, 
+    supplements = [], 
+    supplementLogs = [], 
+    steroidCycles = [], 
+    steroidCompounds = [], 
     addCompound, 
     updateCompound, 
     deleteCompound 
-  } = useAppContext();
+  } = context;
   
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isSupplementFormOpen, setIsSupplementFormOpen] = useState(false);
   const [isCycleFormOpen, setIsCycleFormOpen] = useState(false);
   const [isCompoundFormOpen, setIsCompoundFormOpen] = useState(false);
   const [currentCycleId, setCurrentCycleId] = useState<string | null>(null);
   const [editingCompound, setEditingCompound] = useState<SteroidCompound | null>(null);
   
+  useEffect(() => {
+    // Simulate data loading and validation
+    try {
+      setIsLoading(true);
+      
+      // Validate data
+      if (!Array.isArray(supplements)) {
+        throw new Error("Supplements data is invalid");
+      }
+      
+      if (!Array.isArray(supplementLogs)) {
+        throw new Error("Supplement logs data is invalid");
+      }
+      
+      setIsLoading(false);
+    } catch (error: any) {
+      console.error("Error loading supplements data:", error.message);
+      setError("Failed to load supplements data. Please try again.");
+      setIsLoading(false);
+    }
+  }, [supplements, supplementLogs]);
+  
   const today = new Date();
   const todayString = format(today, 'yyyy-MM-dd');
-  const todayLogs = supplementLogs.filter(log => 
+  const todayLogs = Array.isArray(supplementLogs) ? supplementLogs.filter(log => 
     format(new Date(log.date), 'yyyy-MM-dd') === todayString
-  );
+  ) : [];
   
   const takenCount = todayLogs.filter(log => log.taken).length;
   const complianceRate = supplements.length > 0 
@@ -42,38 +76,120 @@ const Supplements: React.FC = () => {
     : 0;
   
   const handleAddCompound = (cycleId: string) => {
-    setCurrentCycleId(cycleId);
-    setEditingCompound(null);
-    setIsCompoundFormOpen(true);
+    try {
+      setCurrentCycleId(cycleId);
+      setEditingCompound(null);
+      setIsCompoundFormOpen(true);
+    } catch (error) {
+      console.error("Error adding compound:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add compound. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleEditCompound = (compound: SteroidCompound) => {
-    setEditingCompound(compound);
-    setCurrentCycleId(compound.cycleId);
-    setIsCompoundFormOpen(true);
+    try {
+      setEditingCompound(compound);
+      setCurrentCycleId(compound.cycleId);
+      setIsCompoundFormOpen(true);
+    } catch (error) {
+      console.error("Error editing compound:", error);
+      toast({
+        title: "Error",
+        description: "Failed to edit compound. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleSaveCompound = (compound: SteroidCompound) => {
-    if (editingCompound) {
-      updateCompound(compound);
-    } else {
-      addCompound({
-        ...compound,
-        cycleId: currentCycleId!
+    try {
+      if (editingCompound && typeof updateCompound === 'function') {
+        updateCompound(compound);
+        toast({
+          title: "Success",
+          description: "Compound updated successfully.",
+        });
+      } else if (typeof addCompound === 'function') {
+        addCompound({
+          ...compound,
+          cycleId: currentCycleId!
+        });
+        toast({
+          title: "Success",
+          description: "Compound added successfully.",
+        });
+      }
+      setIsCompoundFormOpen(false);
+    } catch (error) {
+      console.error("Error saving compound:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save compound. Please try again.",
+        variant: "destructive",
       });
     }
-    setIsCompoundFormOpen(false);
   };
   
   const handleDeleteCompound = (compoundId: string) => {
-    if (confirm("Are you sure you want to delete this compound?")) {
-      deleteCompound(compoundId);
+    try {
+      if (confirm("Are you sure you want to delete this compound?") && typeof deleteCompound === 'function') {
+        deleteCompound(compoundId);
+        toast({
+          title: "Success",
+          description: "Compound deleted successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting compound:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete compound. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
   const cycleCompounds = (cycleId: string) => {
-    return steroidCompounds.filter(c => c.cycleId === cycleId);
+    return Array.isArray(steroidCompounds) 
+      ? steroidCompounds.filter(c => c.cycleId === cycleId)
+      : [];
   };
+  
+  if (isLoading) {
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <Header title="Supplements + Cycles" />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading supplements...</p>
+          </div>
+        </div>
+        <TabNavigation />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <Header title="Supplements + Cycles" />
+        <div className="p-4 text-center">
+          <div className="bg-destructive/10 p-4 rounded-md mb-4">
+            <p className="text-destructive">{error}</p>
+          </div>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
+        <TabNavigation />
+      </div>
+    );
+  }
   
   return (
     <div className="app-container animate-fade-in pb-16">
@@ -182,7 +298,7 @@ const Supplements: React.FC = () => {
         
         <TabsContent value="cycles">
           <div className="space-y-4">
-            {steroidCycles.length === 0 ? (
+            {steroidCycles.length === 0 || !Array.isArray(steroidCycles) ? (
               <div className="text-center py-6 text-muted-foreground">
                 No cycles added yet. Click "Add Steroid Cycle" to get started.
               </div>
