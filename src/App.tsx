@@ -21,6 +21,7 @@ import WorkoutDays from "./pages/WorkoutDays";
 import DayExercises from "./pages/DayExercises";
 import WeeklyOverview from "./pages/WeeklyOverview";
 import Measurements from "./pages/Measurements";
+import ProgressPhotos from "./pages/ProgressPhotos"; // Add import for ProgressPhotos
 import Supplements from "./pages/Supplements";
 import Recovery from "./pages/Recovery";
 import Profile from "./pages/Profile";
@@ -91,6 +92,7 @@ function App() {
 
               {/* Other Feature Routes */}
               <Route path="/measurements" element={<Measurements />} />
+              <Route path="/progress-photos" element={<ProgressPhotos />} /> {/* Add route for ProgressPhotos */}
               <Route path="/supplements" element={<Supplements />} />
               <Route path="/recovery" element={<Recovery />} />
 
