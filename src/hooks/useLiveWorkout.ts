@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -78,7 +77,7 @@ export const useLiveWorkout = () => {
     return initializedData;
   }, []);
 
-  const checkForPRs = useCallback((exerciseId, name, prExerciseType, sets) => {
+  const checkForPRs = useCallback((exerciseId: string, name: string, prExerciseType: boolean, sets: any[]) => {
     if (!prExerciseType || !sets || sets.length === 0) return;
 
     const bestSet = [...sets].sort((a, b) => {
@@ -88,10 +87,10 @@ export const useLiveWorkout = () => {
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
       addPRLift({
-        exercise: exerciseId, // Use 'exercise' instead of 'exerciseId'
+        exerciseId, // Changed from 'exercise' to 'exerciseId'
         weight: bestSet.weight,
         reps: bestSet.reps,
-        date: new Date().toISOString(), // Ensure we're passing a string
+        date: new Date().toISOString(),
         workoutId: id,
         isDirectEntry: false
       });
