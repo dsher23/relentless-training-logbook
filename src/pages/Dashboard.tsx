@@ -181,10 +181,18 @@ const Dashboard: React.FC = () => {
           <Button 
             variant="outline"
             className="flex flex-col h-20 gap-1"
-            onClick={() => navigate("/progress-photos")} // Updated to navigate to /progress-photos
+            onClick={() => navigate("/progress-photos")}
           >
             <Camera className="h-5 w-5" />
             <span>Photos</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/measurements")}
+          >
+            <Activity className="h-5 w-5" />
+            <span>Measurements</span>
           </Button>
           <Button 
             variant="outline"
