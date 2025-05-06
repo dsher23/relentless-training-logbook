@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import "../types/window"; // Import the declaration file to extend Window
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -177,7 +178,7 @@ const Auth: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier!);
       console.log("Phone auth confirmation sent:", confirmation);
       setConfirmationResult(confirmation);
       toast({
