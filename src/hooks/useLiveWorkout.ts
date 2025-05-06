@@ -144,10 +144,10 @@ export const useLiveWorkout = () => {
       
       console.log("Saving completed workout:", completedWorkout);
       
-      // Since this is a new workout from a template, use addWorkout instead of updateWorkout
+      // Fix: Use boolean instead of string for the completed property
       addWorkout(completedWorkout.name, completedWorkout.exercises, {
         id: completedWorkout.id,
-        completed: true, // Fix: Use boolean instead of completedWorkout.date
+        completed: true, // Fixed: Use boolean instead of completedWorkout.date
         date: completedWorkout.date.toISOString(), // Convert Date to string
         notes: completedWorkout.notes,
       });

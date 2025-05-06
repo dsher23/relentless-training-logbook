@@ -1,9 +1,11 @@
+
 import React from "react";
 import NavigationHeader from "@/components/NavigationHeader";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const Profile: React.FC = () => {
   const { user, userProfile } = useAppContext();
