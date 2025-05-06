@@ -1,16 +1,16 @@
-
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Firebase configuration (user must replace with their config from Firebase Console)
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "your-ironlog-api-key",
-  authDomain: "your-ironlog-auth-domain",
-  projectId: "your-ironlog-project-id",
-  storageBucket: "your-ironlog-storage-bucket",
-  messagingSenderId: "your-ironlog-messaging-sender-id",
-  appId: "your-ironlog-app-id"
+  apiKey: "AIzaSyAjuJ6X0QJM0J9QqkUJ7YDtdL30XAn-AcE",
+  authDomain: "ironlog-e178a.firebaseapp.com",
+  projectId: "ironlog-e178a",
+  storageBucket: "ironlog-e178a.firebasestorage.app",
+  messagingSenderId: "412400158271",
+  appId: "1:412400158271:web:20810fc8e9ca156ae81a8a",
+  measurementId: "G-E74P4KFPB3"
 };
 
 // Initialize Firebase
@@ -19,6 +19,3 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore and Auth
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-// IMPORTANT: Replace the firebaseConfig values above with your actual Firebase project 
-// configuration from the Firebase Console (Project settings > General > Your apps > Web app)
