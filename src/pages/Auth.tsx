@@ -16,7 +16,7 @@ const Auth: React.FC = () => {
   const { user } = useAppContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState(""); // New: Display name input
+  const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
@@ -28,7 +28,7 @@ const Auth: React.FC = () => {
     console.log("Current user state:", user);
     if (user) {
       console.log("User authenticated, redirecting to /dashboard");
-      navigate("/dashboard");
+      setTimeout(() => navigate("/dashboard"), 1000);
     }
   }, [user, navigate]);
 
@@ -62,14 +62,34 @@ const Auth: React.FC = () => {
         console.log("Sign-up successful, user:", firebaseUser);
 
         // Set display name in Firebase Authentication
-        await updateProfile(firebaseUser, { displayName });
+        try {
+          await updateProfile(firebaseUser, { displayName });
+          console.log("Display name set in Firebase Authentication:", displayName);
+        } catch (error: any) {
+          console.error("Failed to set display name in Firebase Authentication:", error.message);
+          toast({
+            title: "Warning",
+            description: "Failed to set display name, proceeding with sign-up.",
+            variant: "default",
+          });
+        }
 
         // Save user profile to Firestore
-        await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
-          displayName,
-          email,
-          createdAt: new Date().toISOString(),
-        });
+        try {
+          await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+            displayName,
+            email,
+            createdAt: new Date().toISOString(),
+          });
+          console.log("User profile saved to Firestore:", { displayName, email });
+        } catch (error: any) {
+          console.error("Failed to save user profile to Firestore:", error.message);
+          toast({
+            title: "Warning",
+            description: "Failed to save profile to Firestore, proceeding with sign-up.",
+            variant: "default",
+          });
+        }
 
         toast({
           title: "Success",
@@ -110,11 +130,21 @@ const Auth: React.FC = () => {
       console.log("Google Sign-In successful, user:", firebaseUser);
 
       // Save user profile to Firestore if not already present
-      await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
-        displayName: firebaseUser.displayName || "User",
-        email: firebaseUser.email,
-        createdAt: new Date().toISOString(),
-      }, { merge: true });
+      try {
+        await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+          displayName: firebaseUser.displayName || "User",
+          email: firebaseUser.email,
+          createdAt: new Date().toISOString(),
+        }, { merge: true });
+        console.log("User profile saved to Firestore for Google sign-in:", { displayName: firebaseUser.displayName || "User", email: firebaseUser.email });
+      } catch (error: any) {
+        console.error("Failed to save user profile to Firestore for Google sign-in:", error.message);
+        toast({
+          title: "Warning",
+          description: "Failed to save profile to Firestore, proceeding with login.",
+          variant: "default",
+        });
+      }
 
       toast({
         title: "Success",
@@ -185,11 +215,21 @@ const Auth: React.FC = () => {
       console.log("Phone verification successful, user:", firebaseUser);
 
       // Save user profile to Firestore
-      await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
-        displayName: "User", // Default display name for phone auth
-        email: firebaseUser.email || phoneNumber,
-        createdAt: new Date().toISOString(),
-      }, { merge: true });
+      try {
+        await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+          displayName: "User",
+          email: firebaseUser.email || phoneNumber,
+          createdAt: new Date().toISOString(),
+        }, { merge: true });
+        console.log("User profile saved to Firestore for phone sign-in:", { displayName: "User", email: firebaseUser.email || phoneNumber });
+      } catch (error: any) {
+        console.error("Failed to save user profile to Firestore for phone sign-in:", error.message);
+        toast({
+          title: "Warning",
+          description: "Failed to save profile to Firestore, proceeding with login.",
+          variant: "default",
+        });
+      }
 
       toast({
         title: "Success",
