@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -88,7 +87,7 @@ export const useLiveWorkout = () => {
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
       addPRLift({
-        exercise: exerciseId, // Using exerciseId as 'exercise' property
+        exercise: exerciseId,
         weight: bestSet.weight,
         reps: bestSet.reps,
         date: new Date().toISOString(),
@@ -138,7 +137,7 @@ export const useLiveWorkout = () => {
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true, // Changed from string to boolean
+        completed: true,
         date: new Date(),
         notes: workout.notes || ""
       };
@@ -148,8 +147,8 @@ export const useLiveWorkout = () => {
       // Since this is a new workout from a template, use addWorkout instead of updateWorkout
       addWorkout(completedWorkout.name, completedWorkout.exercises, {
         id: completedWorkout.id,
-        completed: true, // Fixed: Using boolean instead of string
-        date: completedWorkout.date,
+        completed: true, // Fix: Use boolean instead of completedWorkout.date
+        date: completedWorkout.date.toISOString(), // Convert Date to string
         notes: completedWorkout.notes,
       });
       
