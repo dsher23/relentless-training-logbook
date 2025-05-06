@@ -1,22 +1,18 @@
-
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage"; // Add Firebase Storage
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAjuJ6X0QJM0J9QqkUJ7YDtdL30XAn-AcE",
-  authDomain: "ironlog-e178a.firebaseapp.com",
-  projectId: "ironlog-e178a",
-  storageBucket: "ironlog-e178a.appspot.com",  // Fixed storage bucket URL
-  messagingSenderId: "412400158271",
-  appId: "1:412400158271:web:20810fc8e9ca156ae81a8a",
-  measurementId: "G-E74P4KFPB3"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore and Auth
-export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app); // Export Firebase Storage
