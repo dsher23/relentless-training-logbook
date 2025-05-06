@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings, Camera } from "lucide-react";
@@ -6,12 +5,35 @@ import { Button } from "@/components/ui/button";
 import HeaderExtended from "@/components/HeaderExtended";
 import ActivityStats from "@/components/dashboard/ActivityStats";
 import WeeklyProgress from "@/components/dashboard/WeeklyProgress";
+import TabNavigation from "@/components/TabNavigation";
 import { motion } from "framer-motion";
 import { useAppContext } from "@/context/AppContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
-import { toast } from "sonner";
+
+// Error Boundary Component for Child Components
+class ChildErrorBoundary extends React.Component<{ children: React.ReactNode; componentName: string }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error(`Error in ${this.props.componentName}:`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 text-center text-muted-foreground">
+          <p>Error loading {this.props.componentName}. Please try again later.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -54,7 +76,7 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="app-container animate-fade-in">
+      <div className="app-container animate-fade-in pb-16">
         <HeaderExtended title="IronLog" hasBackButton={false} />
         <div className="px-4 py-8 text-center">
           <div className="animate-pulse">
@@ -68,7 +90,7 @@ const Dashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="app-container animate-fade-in">
+      <div className="app-container animate-fade-in pb-16">
         <HeaderExtended title="IronLog" hasBackButton={false} />
         <div className="px-4 py-8 text-center">
           <p className="text-red-500 mb-4">{error}</p>
@@ -84,7 +106,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container animate-fade-in pb-16">
       <HeaderExtended title="IronLog" hasBackButton={false} />
       
       <div className="px-4 space-y-6">
@@ -129,7 +151,7 @@ const Dashboard: React.FC = () => {
                 
                 {todaysWorkout.exercises?.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {todaysWorkout.exercises.slice(0, 3).map((exercise, idx) => (
+                    {todaysWorkout.exercises.slice(0, 3).map((exercise: any, idx: number) => (
                       <Badge key={idx} variant="secondary" className="bg-secondary/50">
                         {exercise.name}
                       </Badge>
@@ -145,7 +167,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </div>
         )}
-
+        
         {/* Quick Action Buttons */}
         <div className="grid grid-cols-3 gap-3">
           <Button 
@@ -159,10 +181,10 @@ const Dashboard: React.FC = () => {
           <Button 
             variant="outline"
             className="flex flex-col h-20 gap-1"
-            onClick={() => navigate("/measurements")}
+            onClick={() => navigate("/progress-photos")} // Updated to navigate to /progress-photos
           >
-            <Activity className="h-5 w-5" />
-            <span>Measurements</span>
+            <Camera className="h-5 w-5" />
+            <span>Photos</span>
           </Button>
           <Button 
             variant="outline"
@@ -188,14 +210,6 @@ const Dashboard: React.FC = () => {
             <Dumbbell className="h-5 w-5" />
             <span>Training</span>
           </Button>
-          <Button 
-            variant="outline"
-            className="flex flex-col h-20 gap-1"
-            onClick={() => navigate("/progress-photos")}
-          >
-            <Camera className="h-5 w-5" />
-            <span>Photos</span>
-          </Button>
         </div>
 
         {/* Activity Stats */}
@@ -204,18 +218,24 @@ const Dashboard: React.FC = () => {
             <LineChart className="h-5 w-5" />
             Activity Overview
           </h2>
-          <ActivityStats />
+          <ChildErrorBoundary componentName="ActivityStats">
+            <ActivityStats />
+          </ChildErrorBoundary>
         </div>
 
         {/* Weekly Progress */}
-        <div className="pb-8">
+        <div className="pb-16">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Weekly Progress
           </h2>
-          <WeeklyProgress />
+          <ChildErrorBoundary componentName="WeeklyProgress">
+            <WeeklyProgress />
+          </ChildErrorBoundary>
         </div>
       </div>
+
+      <TabNavigation />
     </div>
   );
 };
