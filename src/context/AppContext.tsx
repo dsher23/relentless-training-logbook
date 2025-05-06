@@ -1,10 +1,10 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWorkoutPlans } from '@/hooks/useWorkoutPlans';
+import { useWeeklyRoutines } from '@/hooks/useWeeklyRoutines';
 import { useToast } from '@/hooks/use-toast';
-import { Exercise, Workout, WorkoutTemplate, PRLift, WeightUnit, MeasurementUnit, UnitSystem } from '@/types';
+import { Exercise, Workout, WorkoutTemplate, PRLift, WeightUnit, MeasurementUnit, UnitSystem, WeeklyRoutine } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Define default unit system
@@ -94,10 +94,22 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setActivePlan,
   } = useWorkoutPlans();
   
+  const {
+    weeklyRoutines,
+    setWeeklyRoutines,
+    addWeeklyRoutine,
+    updateWeeklyRoutine,
+    deleteWeeklyRoutine,
+    duplicateWeeklyRoutine,
+    archiveWeeklyRoutine,
+    assignWorkoutToDay,
+    removeWorkoutFromDay,
+  } = useWeeklyRoutines();
+  
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [prLifts, setPRLifts] = useState<PRLift[]>([]);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(DEFAULT_UNIT_SYSTEM);
-  const [reminders, setReminders] = useState([]);
+  const [reminders, setReminders] = useState<WeeklyRoutine[]>([]);
 
   useEffect(() => {
     // Load data from localStorage on component mount
@@ -109,6 +121,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const storedPRs = safeLocalStorage.getItem('prLifts', []);
       const storedUnitSystem = safeLocalStorage.getItem('unitSystem', DEFAULT_UNIT_SYSTEM);
       const storedReminders = safeLocalStorage.getItem('reminders', []);
+      const storedWeeklyRoutines = safeLocalStorage.getItem('weeklyRoutines', []);
       
       setWorkouts(storedWorkouts);
       setWorkoutTemplates(storedTemplates);
@@ -117,6 +130,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       setPRLifts(storedPRs);
       setUnitSystem(storedUnitSystem);
       setReminders(storedReminders);
+      setWeeklyRoutines(storedWeeklyRoutines);
     } catch (error) {
       console.error("Error loading data from localStorage:", error);
       toast({
@@ -125,7 +139,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         variant: "destructive",
       });
     }
-  }, [setWorkouts, setWorkoutTemplates, setWorkoutPlans, toast]);
+  }, [setWorkouts, setWorkoutTemplates, setWorkoutPlans, setWeeklyRoutines, toast]);
   
   // Save data to localStorage whenever state changes
   useEffect(() => {
@@ -167,6 +181,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       safeLocalStorage.setItem('reminders', reminders);
     }
   }, [reminders]);
+  
+  useEffect(() => {
+    if (weeklyRoutines && weeklyRoutines.length > 0) {
+      safeLocalStorage.setItem('weeklyRoutines', weeklyRoutines);
+    }
+  }, [weeklyRoutines]);
   
   const addExercise = (exercise: Exercise) => {
     setExercises((prevExercises) => {
@@ -305,6 +325,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     reminders,
     setReminders,
     getDueReminders,
+    weeklyRoutines,
+    addWeeklyRoutine,
+    updateWeeklyRoutine,
+    deleteWeeklyRoutine,
+    duplicateWeeklyRoutine,
+    archiveWeeklyRoutine,
+    assignWorkoutToDay,
+    removeWorkoutFromDay,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
