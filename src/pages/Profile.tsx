@@ -1,61 +1,49 @@
-
 import React from "react";
 import NavigationHeader from "@/components/NavigationHeader";
-import UserInfoCard from "@/components/profile/UserInfoCard";
-import SettingsCard from "@/components/profile/SettingsCard";
-import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/context/AppContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const Profile: React.FC = () => {
-  const { toast } = useToast();
-  
-  // In a real app these would come from a user context/authentication system
-  const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    joinDate: "January 2023",
-    phone: "+1 234 567 8900",
-    avatarUrl: undefined
-  };
+  const { user, userProfile } = useAppContext();
 
-  const [settings, setSettings] = React.useState({
-    darkMode: false,
-    restTimer: true,
-    units: "kg" as "kg" | "lbs",
-    showLastLift: true,
-    showMotivation: true
-  });
-
-  const handleSettingChange = (
-    setting: "darkMode" | "restTimer" | "units" | "showLastLift" | "showMotivation",
-    value: boolean | string
-  ) => {
-    setSettings(prev => ({ ...prev, [setting]: value }));
-    toast({
-      title: "Settings updated",
-      description: "Your preferences have been saved."
-    });
-  };
-
-  const handleResetData = () => {
-    // In a real app, this would clear all user data
-    toast({
-      title: "Data reset",
-      description: "All your data has been reset successfully.",
-      variant: "destructive"
-    });
-  };
+  if (!user) {
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <NavigationHeader title="Profile" showBack={true} showHome={true} showProfile={false} />
+        <div className="px-4 pt-4 text-center">
+          <p className="text-red-500">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container animate-fade-in pb-16">
-      <NavigationHeader title="Profile" />
-      
-      <div className="p-4 space-y-6">
-        <UserInfoCard userData={userData} />
-        <SettingsCard
-          settings={settings}
-          onSettingChange={handleSettingChange}
-          onResetData={handleResetData}
-        />
+      <NavigationHeader title="Profile" showBack={true} showHome={true} showProfile={false} />
+      <div className="px-4 pt-4 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <Label>Display Name</Label>
+              <p>{userProfile?.displayName || "User"}</p>
+            </div>
+            <div>
+              <Label>Email</Label>
+              <p>{userProfile?.email || "No email available"}</p>
+            </div>
+            <div>
+              <Label>Joined</Label>
+              <p>{userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : "Unknown"}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Button variant="outline" className="w-full">
+          Edit Profile
+        </Button>
       </div>
     </div>
   );
