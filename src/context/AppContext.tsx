@@ -100,11 +100,10 @@ interface UserProfile {
   displayName?: string;
   email?: string;
   createdAt?: string;
-  startWeight?: number; // Added for profile page
-  currentWeight?: number; // Added for profile page
-  goalWeight?: number; // Added for profile page
-  bio?: string; // Added for profile page
-  profilePictureUrl?: string; // Added for profile picture
+  startWeight?: number;
+  currentWeight?: number;
+  goalWeight?: number;
+  bio?: string;
 }
 
 interface Exercise {
@@ -291,11 +290,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           displayName: user.displayName || "User",
           email: user.email || "",
           createdAt: new Date().toISOString(),
-          startWeight: 0, // Default value
-          currentWeight: 0, // Default value
-          goalWeight: 0, // Default value
-          bio: "", // Default value
-          profilePictureUrl: "", // Default value
+          startWeight: 0,
+          currentWeight: 0,
+          goalWeight: 0,
+          bio: "",
         });
       }
     }, (error) => {
@@ -308,7 +306,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentWeight: 0,
         goalWeight: 0,
         bio: "",
-        profilePictureUrl: "",
       });
     });
 
@@ -586,7 +583,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  useEffect(() => { if (user) updateFirestore("workouts", workouts); }, [workouts, user]);
   useEffect(() => { if (user) updateFirestore("workouts", workouts); }, [workouts, user]);
   useEffect(() => { if (user) updateFirestore("progressPhotos", progressPhotos); }, [progressPhotos, user]);
   useEffect(() => { if (user) updateFirestore("bodyMeasurements", bodyMeasurements); }, [bodyMeasurements, user]);
