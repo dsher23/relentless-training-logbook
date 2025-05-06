@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, RecaptchaVerifier, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +10,13 @@ import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
-// Add RecaptchaVerifier to the window object
-declare global {
-  interface Window {
-    recaptchaVerifier: any;
-  }
-}
-
 const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAppContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState(""); // New: Display name input
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
@@ -31,109 +25,107 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    console.log("Current user state:", user);
     if (user) {
-      console.log("User detected in Auth component, navigating to dashboard:", user);
+      console.log("User authenticated, redirecting to /dashboard");
       navigate("/dashboard");
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    // Initialize reCAPTCHA verifier for phone auth
-    if (isPhoneAuth && !window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-          callback: () => {
-            console.log("reCAPTCHA verified");
-          },
-        });
-        console.log("reCAPTCHA verifier initialized");
-      } catch (error) {
-        console.error("Error initializing reCAPTCHA:", error);
-      }
-    }
-  }, [isPhoneAuth]);
-
   const handleEmailAuth = async () => {
-    console.log(`Attempting to ${isSignUp ? 'sign up' : 'log in'} with email:`, email);
+    console.log("handleEmailAuth called with:", { email, password, displayName, isSignUp });
+    if (!email || !password) {
+      console.log("Validation failed: Email or password missing");
+      toast({
+        title: "Error",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (isSignUp && !displayName) {
+      console.log("Validation failed: Display name missing");
+      toast({
+        title: "Error",
+        description: "Please enter a display name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isSignUp) {
+        console.log("Attempting to sign up with Firebase...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Account created successfully:", userCredential.user);
+        const firebaseUser = userCredential.user;
+        console.log("Sign-up successful, user:", firebaseUser);
+
+        // Set display name in Firebase Authentication
+        await updateProfile(firebaseUser, { displayName });
+
+        // Save user profile to Firestore
+        await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+          displayName,
+          email,
+          createdAt: new Date().toISOString(),
+        });
+
         toast({
           title: "Success",
           description: "Account created successfully.",
         });
-        
-        // Add a small delay before navigation to ensure context updates
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 500);
       } else {
+        console.log("Attempting to log in with Firebase...");
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("Logged in successfully:", userCredential.user);
+        console.log("Login successful, user:", userCredential.user);
         toast({
           title: "Success",
           description: "Logged in successfully.",
         });
-        
-        // Add a small delay before navigation to ensure context updates
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 500);
       }
+      console.log("Navigating to /dashboard with delay");
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error: any) {
       console.error("Auth error:", error.code, error.message);
-      
-      // Provide more user-friendly error messages
-      let errorMessage = error.message;
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "This email address is already in use.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Please enter a valid email address.";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "Password should be at least 6 characters.";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password.";
-      } else if (error.code === "auth/user-not-found") {
-        errorMessage = "No account found with this email address.";
-      } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "Too many failed login attempts. Please try again later.";
-      } else if (error.code === "auth/network-request-failed") {
-        errorMessage = "Network error. Please check your connection and try again.";
-      }
-      
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "An error occurred during authentication.",
         variant: "destructive",
       });
     } finally {
+      console.log("Setting isLoading to false");
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    console.log("handleGoogleSignIn called");
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      console.log("Google sign-in successful:", result.user);
+      console.log("Attempting Google Sign-In...");
+      const userCredential = await signInWithPopup(auth, provider);
+      const firebaseUser = userCredential.user;
+      console.log("Google Sign-In successful, user:", firebaseUser);
+
+      // Save user profile to Firestore if not already present
+      await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+        displayName: firebaseUser.displayName || "User",
+        email: firebaseUser.email,
+        createdAt: new Date().toISOString(),
+      }, { merge: true });
+
       toast({
         title: "Success",
         description: "Logged in with Google successfully.",
       });
-      
-      // Add a small delay before navigation to ensure context updates
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error: any) {
       console.error("Google Sign-In error:", error.code, error.message);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during Google Sign-In.",
         variant: "destructive",
       });
     } finally {
@@ -142,7 +134,9 @@ const Auth: React.FC = () => {
   };
 
   const handlePhoneAuth = async () => {
+    console.log("handlePhoneAuth called with:", { phoneNumber });
     if (!phoneNumber) {
+      console.log("Validation failed: Phone number missing");
       toast({
         title: "Error",
         description: "Please enter a valid phone number.",
@@ -153,9 +147,8 @@ const Auth: React.FC = () => {
 
     setIsLoading(true);
     try {
-      console.log("Sending verification code to:", phoneNumber);
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-      console.log("Verification code sent successfully");
+      console.log("Phone auth confirmation sent:", confirmation);
       setConfirmationResult(confirmation);
       toast({
         title: "Success",
@@ -163,18 +156,9 @@ const Auth: React.FC = () => {
       });
     } catch (error: any) {
       console.error("Phone Auth error:", error.code, error.message);
-      
-      // Reset reCAPTCHA on error
-      try {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      } catch (clearError) {
-        console.error("Error clearing reCAPTCHA:", clearError);
-      }
-      
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during phone authentication.",
         variant: "destructive",
       });
     } finally {
@@ -183,7 +167,9 @@ const Auth: React.FC = () => {
   };
 
   const handleVerifyCode = async () => {
+    console.log("handleVerifyCode called with:", { verificationCode });
     if (!verificationCode || !confirmationResult) {
+      console.log("Validation failed: Verification code or confirmation result missing");
       toast({
         title: "Error",
         description: "Please enter the verification code.",
@@ -194,23 +180,27 @@ const Auth: React.FC = () => {
 
     setIsLoading(true);
     try {
-      console.log("Verifying code:", verificationCode);
       const result = await confirmationResult.confirm(verificationCode);
-      console.log("Phone verification successful:", result.user);
+      const firebaseUser = result.user;
+      console.log("Phone verification successful, user:", firebaseUser);
+
+      // Save user profile to Firestore
+      await setDoc(doc(db, `users/${firebaseUser.uid}/profile`, "info"), {
+        displayName: "User", // Default display name for phone auth
+        email: firebaseUser.email || phoneNumber,
+        createdAt: new Date().toISOString(),
+      }, { merge: true });
+
       toast({
         title: "Success",
         description: "Logged in with phone number successfully.",
       });
-      
-      // Add a small delay before navigation to ensure context updates
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error: any) {
       console.error("Verification error:", error.code, error.message);
       toast({
         title: "Error",
-        description: "Invalid verification code. Please try again.",
+        description: error.message || "An error occurred during verification.",
         variant: "destructive",
       });
     } finally {
@@ -218,13 +208,23 @@ const Auth: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (isPhoneAuth && !window.recaptchaVerifier) {
+      console.log("Initializing reCAPTCHA verifier");
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+        callback: () => {
+          console.log("reCAPTCHA verified");
+        },
+      });
+    }
+  }, [isPhoneAuth]);
+
   return (
-    <div className="app-container animate-fade-in flex items-center justify-center h-screen px-4 bg-background">
+    <div className="app-container animate-fade-in flex items-center justify-center h-screen px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold">
-            {isPhoneAuth ? "Phone Sign-In" : isSignUp ? "Sign Up" : "Log In"}
-          </CardTitle>
+          <CardTitle>{isPhoneAuth ? "Phone Sign-In" : isSignUp ? "Sign Up" : "Log In"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isPhoneAuth ? (
@@ -237,7 +237,7 @@ const Auth: React.FC = () => {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="Enter your phone number (e.g., +1234567890)"
-                  disabled={isLoading || confirmationResult !== null}
+                  disabled={isLoading}
                 />
               </div>
               {confirmationResult && (
@@ -309,10 +309,23 @@ const Auth: React.FC = () => {
                   disabled={isLoading}
                 />
               </div>
+              {isSignUp && (
+                <div>
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Enter your display name"
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
               <Button 
                 onClick={handleEmailAuth} 
                 className="w-full"
-                disabled={isLoading || !email || !password}
+                disabled={isLoading || !email || !password || (isSignUp && !displayName)}
               >
                 {isLoading ? "Processing..." : isSignUp ? "Sign Up" : "Log In"}
               </Button>
@@ -329,6 +342,7 @@ const Auth: React.FC = () => {
                   setIsPhoneAuth(true);
                   setEmail("");
                   setPassword("");
+                  setDisplayName("");
                 }}
                 variant="outline"
                 className="w-full"
