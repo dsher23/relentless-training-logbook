@@ -32,6 +32,7 @@ const Auth: React.FC = () => {
 
   useEffect(() => {
     if (user) {
+      console.log("User detected in Auth component, navigating to dashboard:", user);
       navigate("/dashboard");
     }
   }, [user, navigate]);
@@ -39,37 +40,73 @@ const Auth: React.FC = () => {
   useEffect(() => {
     // Initialize reCAPTCHA verifier for phone auth
     if (isPhoneAuth && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
-        callback: () => {
-          console.log("reCAPTCHA verified");
-        },
-      });
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+          callback: () => {
+            console.log("reCAPTCHA verified");
+          },
+        });
+        console.log("reCAPTCHA verifier initialized");
+      } catch (error) {
+        console.error("Error initializing reCAPTCHA:", error);
+      }
     }
   }, [isPhoneAuth]);
 
   const handleEmailAuth = async () => {
+    console.log(`Attempting to ${isSignUp ? 'sign up' : 'log in'} with email:`, email);
     setIsLoading(true);
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("Account created successfully:", userCredential.user);
         toast({
           title: "Success",
           description: "Account created successfully.",
         });
+        
+        // Add a small delay before navigation to ensure context updates
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 500);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("Logged in successfully:", userCredential.user);
         toast({
           title: "Success",
           description: "Logged in successfully.",
         });
+        
+        // Add a small delay before navigation to ensure context updates
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 500);
       }
-      navigate("/dashboard");
     } catch (error: any) {
-      console.error("Auth error:", error.message);
+      console.error("Auth error:", error.code, error.message);
+      
+      // Provide more user-friendly error messages
+      let errorMessage = error.message;
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "This email address is already in use.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password should be at least 6 characters.";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "Incorrect password.";
+      } else if (error.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email address.";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "Too many failed login attempts. Please try again later.";
+      } else if (error.code === "auth/network-request-failed") {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -81,14 +118,19 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google sign-in successful:", result.user);
       toast({
         title: "Success",
         description: "Logged in with Google successfully.",
       });
-      navigate("/dashboard");
+      
+      // Add a small delay before navigation to ensure context updates
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
     } catch (error: any) {
-      console.error("Google Sign-In error:", error.message);
+      console.error("Google Sign-In error:", error.code, error.message);
       toast({
         title: "Error",
         description: error.message,
@@ -111,14 +153,25 @@ const Auth: React.FC = () => {
 
     setIsLoading(true);
     try {
+      console.log("Sending verification code to:", phoneNumber);
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      console.log("Verification code sent successfully");
       setConfirmationResult(confirmation);
       toast({
         title: "Success",
         description: "Verification code sent to your phone.",
       });
     } catch (error: any) {
-      console.error("Phone Auth error:", error.message);
+      console.error("Phone Auth error:", error.code, error.message);
+      
+      // Reset reCAPTCHA on error
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (clearError) {
+        console.error("Error clearing reCAPTCHA:", clearError);
+      }
+      
       toast({
         title: "Error",
         description: error.message,
@@ -141,17 +194,23 @@ const Auth: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await confirmationResult.confirm(verificationCode);
+      console.log("Verifying code:", verificationCode);
+      const result = await confirmationResult.confirm(verificationCode);
+      console.log("Phone verification successful:", result.user);
       toast({
         title: "Success",
         description: "Logged in with phone number successfully.",
       });
-      navigate("/dashboard");
+      
+      // Add a small delay before navigation to ensure context updates
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
     } catch (error: any) {
-      console.error("Verification error:", error.message);
+      console.error("Verification error:", error.code, error.message);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Invalid verification code. Please try again.",
         variant: "destructive",
       });
     } finally {

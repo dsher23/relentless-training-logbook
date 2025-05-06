@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { AppProvider, useAppContext } from "./context/AppContext";
@@ -34,6 +35,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { user } = useAppContext();
   
   if (!user) {
+    console.log("User not authenticated, redirecting to auth page");
     return <Navigate to="/auth" replace />;
   }
   
@@ -41,20 +43,52 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 // Error Boundary Component to catch runtime errors
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, errorInfo: string }> {
+  state = { hasError: false, errorInfo: "" };
 
   static getDerivedStateFromError(error: any) {
-    return { hasError: true };
+    // Update state so the next render will show the fallback UI
+    return { hasError: true, errorInfo: error?.message || "Unknown error occurred" };
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error("Error caught in ErrorBoundary:", error, errorInfo);
+    // Log error details for debugging
+    console.error("Error caught in ErrorBoundary:", error);
+    console.error("Component stack:", errorInfo.componentStack);
+    this.setState({
+      errorInfo: error?.message || "Unknown error occurred"
+    });
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, errorInfo: "" });
+    window.location.href = '/';
+  };
 
   render() {
     if (this.state.hasError) {
-      return <div className="p-4 text-white">Something went wrong. Please try again.</div>;
+      return (
+        <div className="flex flex-col items-center justify-center h-screen p-4 bg-background text-foreground">
+          <div className="w-full max-w-md text-center p-6 border rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
+            <p className="mb-4 text-muted-foreground">{this.state.errorInfo}</p>
+            <div className="flex space-x-4 justify-center">
+              <button 
+                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"
+                onClick={this.handleReset}
+              >
+                Go to Home
+              </button>
+              <button
+                className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md"
+                onClick={() => window.location.reload()}
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
     return this.props.children;
   }

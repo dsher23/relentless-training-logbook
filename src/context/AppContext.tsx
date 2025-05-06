@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { db, auth } from "../firebase";
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { migrateLocalData } from "../utils/migrateLocalData";
@@ -44,7 +45,7 @@ interface WeeklyRecoveryData {
 
 interface PRLift {
   id: string;
-  exerciseId: string; // Changed from 'exercise' to 'exerciseId'
+  exercise: string; // This is the correct property name
   weight: number;
   reps: number;
   date: string;
@@ -52,6 +53,7 @@ interface PRLift {
 
 interface AppContextType {
   user: User | null;
+  signOutUser: () => Promise<void>;
   workouts: Workout[];
   setWorkouts: (workouts: Workout[]) => void;
   progressPhotos: ProgressPhoto[];
@@ -101,6 +103,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     bodyMeasurementUnit: "cm",
     liftingWeightUnit: "kg",
   });
+
+  // Sign out function
+  const signOutUser = async () => {
+    try {
+      await signOut(auth);
+      console.log("User signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   // Firebase Authentication listener
   useEffect(() => {
@@ -273,7 +285,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addPRLift = async (prLift: Omit<PRLift, "id">) => {
     const newPRLift = {
       ...prLift,
-      id: `${prLift.exerciseId}-${Date.now()}`, // Use exerciseId instead of exercise
+      id: `${prLift.exercise}-${Date.now()}`, // Use exercise instead of exerciseId
     };
     const updatedPRLifts = [...prLifts, newPRLift];
     setPRLifts(updatedPRLifts);
@@ -293,6 +305,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const value = useMemo(
     () => ({
       user,
+      signOutUser,
       workouts,
       setWorkouts,
       progressPhotos,
