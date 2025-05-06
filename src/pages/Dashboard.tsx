@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings, Camera } from "lucide-react";
@@ -283,6 +282,14 @@ const Dashboard: React.FC = () => {
           >
             <Dumbbell className="h-5 w-5" />
             <span>Training</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="flex flex-col h-20 gap-1"
+            onClick={() => navigate("/progress-photos")}
+          >
+            <Camera className="h-5 w-5" />
+            <span>Photos</span>
           </Button>
         </div>
 

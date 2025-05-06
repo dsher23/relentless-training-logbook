@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { v4 as uuid } from "uuid";
 import { BodyMeasurement, ProgressPhoto } from "@/types";
@@ -68,7 +67,7 @@ export function useBodyMeasurements() {
     return bodyMeasurements.find(m => m.id === id) || null;
   }, [bodyMeasurements]);
 
-  // Add a new progress photo
+  // Add a new progress photo - updated to match the correct type
   const addProgressPhoto = useCallback((photo: Omit<ProgressPhoto, "id">) => {
     const newPhoto = {
       ...photo,

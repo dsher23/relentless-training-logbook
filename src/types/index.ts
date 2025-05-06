@@ -209,7 +209,9 @@ export interface CycleCompound {
 export interface ProgressPhoto {
   id: string;
   date: Date;
-  url: string;
+  imageData: string;  // Changed from url to imageData to match actual usage
+  caption?: string;   // Added caption property
+  url?: string;       // Kept for backward compatibility
 }
 
 export interface UnitSystem {
