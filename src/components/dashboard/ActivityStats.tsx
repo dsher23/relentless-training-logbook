@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Ruler, PillIcon } from "lucide-react";
@@ -7,7 +8,7 @@ import { useAppContext } from "@/context/AppContext";
 const ActivityStats = () => {
   const context = useAppContext();
   const bodyMeasurements = context?.bodyMeasurements ?? [];
-  const supplements = context?.supplements ?? [];
+  const userSupplements = context?.userSupplements ?? [];
 
   // Get the latest measurement date
   const latestMeasurement = bodyMeasurements.length > 0
@@ -19,7 +20,7 @@ const ActivityStats = () => {
     : "No data";
   
   const measurementCount = bodyMeasurements.length;
-  const supplementCount = supplements.length;
+  const supplementCount = userSupplements.length;
 
   return (
     <div className="grid grid-cols-2 gap-4 h-full">

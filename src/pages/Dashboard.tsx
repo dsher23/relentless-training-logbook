@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dumbbell, Play, Calendar, LineChart, Clock, PillIcon, Activity, Settings, Camera } from "lucide-react";
@@ -37,13 +38,47 @@ class ChildErrorBoundary extends React.Component<{ children: React.ReactNode; co
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const context = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use try-catch block to handle potential context errors
+  let context;
+  try {
+    context = useAppContext();
+  } catch (err) {
+    console.error("Failed to load AppContext:", err);
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <HeaderExtended title="IronLog" hasBackButton={false} />
+        <div className="px-4 py-8 text-center">
+          <p className="text-red-500 mb-4">Failed to load app data. Please try again.</p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Check if context is available
   if (!context) {
-    throw new Error("Dashboard must be used within an AppProvider");
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <HeaderExtended title="IronLog" hasBackButton={false} />
+        <div className="px-4 py-8 text-center">
+          <p className="text-red-500 mb-4">App context is not available. Please try again.</p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const { weeklyRoutines = [], workoutTemplates = [] } = context;
