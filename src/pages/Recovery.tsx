@@ -120,6 +120,15 @@ const Recovery: React.FC = () => {
     }
   };
 
+  const handleFeelingChange = (feeling: "Energized" | "Normal" | "Tired" | "Exhausted") => {
+    setGeneralFeeling(feeling); // Now correctly uses the union type
+    updateWeeklyRecoveryData({
+      ...weeklyRecoveryData,
+      feeling,
+    });
+    calculateScore(sleepHours, feeling, restDays);
+  };
+
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in pb-16">
@@ -196,7 +205,7 @@ const Recovery: React.FC = () => {
           <CardContent>
             <Select
               value={generalFeeling}
-              onValueChange={(value: "Energized" | "Normal" | "Tired" | "Exhausted") => setGeneralFeeling(value)}
+              onValueChange={(value: "Energized" | "Normal" | "Tired" | "Exhausted") => handleFeelingChange(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select your feeling" />

@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -87,7 +88,7 @@ export const useLiveWorkout = () => {
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
       addPRLift({
-        exerciseId, // Changed from 'exercise' to 'exerciseId'
+        exercise: exerciseId, // Changed from 'exerciseId' to 'exercise'
         weight: bestSet.weight,
         reps: bestSet.reps,
         date: new Date().toISOString(),

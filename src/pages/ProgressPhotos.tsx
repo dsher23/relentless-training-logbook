@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -45,9 +44,14 @@ const ProgressPhotos: React.FC = () => {
       }
       
       // Sort photos by date (newest first)
-      const sortedPhotos = [...progressPhotos].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+      const sortedPhotos = photos
+        .map(photo => ({
+          ...photo,
+          imageData: photo.imageData || photo.url || "", // Ensure imageData exists
+        }))
+        .sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
       
       setPhotos(sortedPhotos);
       setIsLoading(false);

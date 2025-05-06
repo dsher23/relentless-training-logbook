@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, ChevronLeft, Clock, Save, Info, Trophy, AlertTriangle, Loader } from "lucide-react";
@@ -127,16 +126,21 @@ const LiveWorkout: React.FC = () => {
     }
   };
 
+  // Update the getPreviousPRForExercise function to use 'exercise' instead of 'exerciseId'
   const getPreviousPRForExercise = (exerciseId: string) => {
-    if (!prLifts || !prLifts.length) return null;
+    const exercisePRs = prLifts.filter((pr) => pr.exercise === exerciseId);
     
-    const exercisePRs = prLifts.filter(pr => pr.exerciseId === exerciseId);
-    if (!exercisePRs.length) return null;
+    if (exercisePRs.length === 0) return null;
     
-    return [...exercisePRs].sort((a, b) => {
-      if (b.weight !== a.weight) return b.weight - a.weight;
-      return b.reps - a.reps;
-    })[0];
+    // Sort PRs by weight (descending)
+    const sortedPRs = [...exercisePRs].sort((a, b) => {
+      // Compare by estimated 1RM (weight * (1 + reps/30))
+      const aValue = a.weight * (1 + a.reps / 30);
+      const bValue = b.weight * (1 + b.reps / 30);
+      return bValue - aValue;
+    });
+    
+    return sortedPRs[0];
   };
   
   if (isLoading) {
