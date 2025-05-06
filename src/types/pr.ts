@@ -5,12 +5,12 @@ export type MeasurementUnit = 'cm' | 'in';
 export interface UnitSystem {
   bodyWeightUnit: WeightUnit;
   bodyMeasurementUnit: MeasurementUnit;
-  liftingWeightUnit: WeightUnit; // Restored
+  liftingWeightUnit: WeightUnit;
 }
 
 export interface PR {
   id: string;
-  exercise: string; // Changed from exerciseId to match PRLift
+  exercise: string; // Using exercise instead of exerciseId
   weight: number;
   reps: number;
   date: Date | string;

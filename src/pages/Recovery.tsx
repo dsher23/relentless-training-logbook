@@ -14,9 +14,12 @@ import { Progress } from "@/components/ui/progress";
 type FeelingType = "Energized" | "Normal" | "Tired" | "Exhausted";
 
 interface WeeklyRecoveryData {
+  id: string;
+  weekStartDate: string;
   weekStart: string;
   sleepHours: number[];
   feeling: FeelingType;
+  generalFeeling: FeelingType;
 }
 
 const Recovery: React.FC = () => {
@@ -103,10 +106,13 @@ const Recovery: React.FC = () => {
   const handleSaveRecoveryData = async () => {
     setIsSaving(true);
     try {
-      const newData = {
-        weekStart: getCurrentWeekStart(),
+      const newData: WeeklyRecoveryData = {
+        id: Date.now().toString(),
+        weekStartDate: getCurrentWeekStart(),
+        weekStart: getCurrentWeekStart(), // For backward compatibility
         sleepHours,
         feeling: generalFeeling,
+        generalFeeling: generalFeeling, // For backward compatibility
       };
       await setWeeklyRecoveryData(newData);
       toast({

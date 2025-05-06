@@ -18,9 +18,9 @@ interface Set {
 interface Exercise {
   id: string;
   name: string;
-  category: string;
+  category: "upper" | "lower" | "core" | "other"; // Updated to match type in index.ts
   sets: Set[];
-  reps: number; // Added the missing reps property
+  reps: number;
 }
 
 interface WorkoutTemplate {
@@ -54,8 +54,9 @@ const WorkoutBuilder: React.FC = () => {
     const newExercise: Exercise = {
       id: Date.now().toString(),
       name: "",
-      category: "",
+      category: "other", // Default to "other" from the allowed union type
       sets: [{ weight: 0, reps: 0 }], // Initialize with an array of Set objects
+      reps: 0, // Added the missing reps property
     };
     setExercises([...exercises, newExercise]);
   };
@@ -114,11 +115,18 @@ const WorkoutBuilder: React.FC = () => {
 
     setIsSaving(true);
     try {
+      // Ensure exercises have the correct category type
+      const typeSafeExercises = exercises.map(ex => ({
+        ...ex,
+        category: (ex.category || "other") as "upper" | "lower" | "core" | "other"
+      }));
+      
       const template: WorkoutTemplate = {
         id: id || Date.now().toString(),
         name: name.trim(),
-        exercises,
+        exercises: typeSafeExercises,
       };
+      
       if (id) {
         const updatedTemplates = workoutTemplates.map((t: WorkoutTemplate) =>
           t.id === id ? template : t
