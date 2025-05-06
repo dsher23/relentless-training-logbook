@@ -1,332 +1,147 @@
+
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Edit, Trash2, GripVertical, ArrowLeft, Trophy } from "lucide-react";
-import { DndContext } from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Moon, Clock, Bed, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useAppContext } from "@/context/AppContext";
-import { WorkoutTemplate, Exercise, Workout } from "@/types";
-import AddExerciseForm from "@/components/AddExerciseForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkoutLoader } from "@/hooks/useWorkoutLoader";
 
-const ExerciseItem = ({
-  exercise,
-  index,
-  onEdit,
-  onDelete,
-}: {
-  exercise: Exercise;
-  index: number;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-}) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: exercise.id,
-    data: { index },
-  });
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const FEELING_OPTIONS = ["Energized", "Normal", "Tired", "Exhausted"];
 
-  const style = {
-    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
-    transition,
-    opacity: 1,
-  };
-
-  const getPRExerciseName = (prType: string | undefined) => {
-    if (!prType) return null;
-    const CORE_LIFTS = [
-      { id: "bench-press", name: "Bench Press" },
-      { id: "deadlift", name: "Deadlift" },
-      { id: "squat", name: "Squat" },
-      { id: "shoulder-press", name: "Shoulder Press" },
-      { id: "custom", name: "Custom Exercise" },
-    ];
-    return CORE_LIFTS.find(lift => lift.id === prType)?.name || "Custom PR";
-  };
-
-  const prExerciseName = getPRExerciseName(exercise.prExerciseType);
-
-  return (
-    <Card
-      ref={setNodeRef}
-      id={`exercise-${exercise.id}`}
-      className="mb-2 cursor-move"
-      style={style}
-      {...attributes}
-      {...listeners}
-    >
-      <CardContent className="flex items-center justify-between p-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold">{exercise.name}</span>
-            {exercise.prExerciseType && (
-              <div className="flex items-center" title={`${prExerciseName} PR`}>
-                <Trophy className="h-3 w-3 text-yellow-500" />
-              </div>
-            )}
-            <span className="ml-2 text-xs text-muted-foreground">
-              {Array.isArray(exercise.sets) ? exercise.sets.length : exercise.sets} sets × {exercise.reps} reps, {exercise.weight || "-"} kg/lb
-              {exercise.restTime ? `, ${exercise.restTime}s rest` : ""}
-            </span>
-          </div>
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(exercise.id);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(exercise.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete</span>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const WorkoutBuilder: React.FC = () => {
-  const { id } = useParams<{ id?: string }>();
+const Recovery: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const { addWorkoutTemplate, updateWorkoutTemplate, workoutTemplates, workouts, updateWorkout, getWorkoutById, exercises } = useAppContext();
-  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
-  const [workoutName, setWorkoutName] = useState(location.state?.workoutName || "");
-  const [showExerciseForm, setShowExerciseForm] = useState(false);
-  const [editingExercise, setEditingExercise] = useState<Exercise | undefined>(undefined);
-  const [confirmDeleteExercise, setConfirmDeleteExercise] = useState(false);
-  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRegularWorkout, setIsRegularWorkout] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
+  const {
+    weeklyRecoveryData,
+    updateWeeklyRecoveryData,
+    getRestDaysForCurrentWeek,
+    workouts = []
+  } = useAppContext();
 
-  const { workout: loadedWorkout, isTemplate } = useWorkoutLoader(id);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sleepHours, setSleepHours] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [feeling, setFeeling] = useState<string>("Normal");
+  const [recoveryScore, setRecoveryScore] = useState<number>(0);
+  const [restDays, setRestDays] = useState<number>(0);
 
   useEffect(() => {
-    if (!id) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (loadedWorkout && loadedWorkout.id) {
-      console.log("WorkoutBuilder: Workout loaded successfully", loadedWorkout);
-      setWorkoutName(loadedWorkout.name);
-      setSelectedExercises(loadedWorkout.exercises || []);
-      setIsRegularWorkout(!isTemplate);
-      setIsLoading(false);
-      return;
-    }
-
-    if (!isLoading && !loadedWorkout) {
-      console.error("WorkoutBuilder: Failed to load workout", id);
-      setLoadError("The workout you're trying to edit could not be found.");
-      toast({
-        title: "Workout not found",
-        description: "The workout you're trying to edit does not exist.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-    }
-  }, [id, loadedWorkout, isTemplate, isLoading, toast]);
-
-  const { startAfterCreation } = location.state || {};
-
-  const handleAddExerciseClick = () => {
-    setEditingExercise(undefined);
-    setShowExerciseForm(true);
-  };
-
-  const handleSelectExercise = () => {
-    if (selectedExerciseId) {
-      const exercise = exercises.find(ex => ex.id === selectedExerciseId);
-      if (exercise) {
-        const exerciseCopy = { 
-          ...exercise, 
-          id: uuidv4(),
-          sets: Array.isArray(exercise.sets) ? 
-            [...exercise.sets] : 
-            Array(3).fill({ reps: exercise.reps || 10, weight: exercise.weight || 0 }) 
-        };
-        
-        setSelectedExercises([...selectedExercises, exerciseCopy]);
-        setSelectedExerciseId("");
-      }
-    }
-  };
-
-  const handleSaveExercise = (exercise: Exercise) => {
-    if (editingExercise) {
-      setSelectedExercises(selectedExercises.map(ex => 
-        ex.id === exercise.id ? exercise : ex
-      ));
-    } else {
-      setSelectedExercises([...selectedExercises, exercise]);
-    }
-    setShowExerciseForm(false);
-    setEditingExercise(undefined);
-  };
-
-  const handleEditExercise = (id: string) => {
-    const exercise = selectedExercises.find(ex => ex.id === id);
-    if (exercise) {
-      setEditingExercise(exercise);
-      setShowExerciseForm(true);
-    }
-  };
-
-  const promptDeleteExercise = (id: string) => {
-    setExerciseToDelete(id);
-    setConfirmDeleteExercise(true);
-  };
-
-  const handleDeleteExercise = () => {
-    if (!exerciseToDelete) return;
-    setSelectedExercises(selectedExercises.filter((exercise) => exercise.id !== exerciseToDelete));
-    setConfirmDeleteExercise(false);
-    setExerciseToDelete(null);
-    toast({
-      title: "Exercise deleted",
-      description: "The exercise has been removed from this workout."
-    });
-  };
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (active.id !== over.id) {
-      setSelectedExercises((items) => {
-        const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const handleCancelClick = () => {
-    if (selectedExercises.length > 0 || workoutName.trim() !== "") {
-      setConfirmCancel(true);
-    } else {
-      navigate("/workouts");
-    }
-  };
-
-  const handleComplete = () => {
-    if (!workoutName) {
-      toast({
-        title: "Error",
-        description: "Please enter a workout name.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedExercises.length === 0) {
-      toast({
-        title: "Cannot create workout",
-        description: "Please add at least one exercise to your workout.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      const workoutId = id || uuidv4();
-
-      if (isRegularWorkout) {
-        const originalWorkout = id ? getWorkoutById(id) : null;
-        const updatedWorkout: Workout = {
-          ...(originalWorkout || {}),
-          id: workoutId,
-          name: workoutName,
-          exercises: selectedExercises,
-          date: originalWorkout?.date || new Date(),
-          completed: originalWorkout?.completed || false,
-          notes: originalWorkout?.notes || location.state?.notes || "",
-        };
-        updateWorkout(updatedWorkout);
-        toast({
-          title: "Success",
-          description: "Your workout has been updated successfully.",
-        });
-        navigate(`/workouts/${workoutId}`);
-      } else {
-        const originalTemplate = id ? workoutTemplates.find(t => t.id === id) : null;
-        const newWorkoutTemplate: WorkoutTemplate = {
-          ...(originalTemplate || {}),
-          id: workoutId,
-          name: workoutName,
-          exercises: selectedExercises,
-          isFavorite: originalTemplate?.isFavorite || false,
-        };
-
-        if (id) {
-          updateWorkoutTemplate(newWorkoutTemplate);
-        } else {
-          addWorkoutTemplate(newWorkoutTemplate);
-        }
-
-        toast({
-          title: "Success",
-          description: "Your workout has been saved successfully.",
-        });
-
-        if (startAfterCreation) {
-          navigate(`/live-workout/${workoutId}?isTemplate=true`);
-        } else {
-          navigate("/workouts");
-        }
+      // Load data from context
+      if (weeklyRecoveryData) {
+        setSleepHours(weeklyRecoveryData.sleepHours || [0, 0, 0, 0, 0, 0, 0]);
+        setFeeling(weeklyRecoveryData.feeling || "Normal");
+        
+        // Calculate rest days
+        const calculatedRestDays = getRestDaysForCurrentWeek();
+        setRestDays(calculatedRestDays);
+        
+        // Get recovery score from context or calculate it
+        setRecoveryScore(weeklyRecoveryData.recoveryScore || 0);
       }
     } catch (error) {
-      console.error("Error creating workout:", error);
+      console.error("Error loading recovery data:", error);
       toast({
         title: "Error",
-        description: "Failed to save workout. Please try again.",
-        variant: "destructive",
+        description: "Failed to load recovery data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [weeklyRecoveryData, getRestDaysForCurrentWeek, toast]);
+
+  const handleSleepChange = (index: number, value: string) => {
+    const newValue = parseFloat(value) || 0;
+    const newSleepHours = [...sleepHours];
+    newSleepHours[index] = Math.min(Math.max(newValue, 0), 24); // Clamp between 0-24 hours
+    setSleepHours(newSleepHours);
+  };
+
+  const handleSave = () => {
+    try {
+      // Update context
+      updateWeeklyRecoveryData({
+        sleepHours,
+        feeling,
+        weekStartDate: new Date().toISOString()
+      });
+
+      toast({
+        title: "Success",
+        description: "Recovery data saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving recovery data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save recovery data. Please try again.",
+        variant: "destructive"
       });
     }
+  };
+
+  const getAverageSleep = () => {
+    const totalSleep = sleepHours.reduce((a, b) => a + b, 0);
+    return (totalSleep / sleepHours.length).toFixed(1);
+  };
+
+  const getTotalSleep = () => {
+    return sleepHours.reduce((a, b) => a + b, 0).toFixed(1);
+  };
+
+  const getRecoveryRecommendations = () => {
+    const avgSleep = parseFloat(getAverageSleep());
+    
+    if ((feeling === "Tired" || feeling === "Exhausted") && avgSleep < 7) {
+      return `You seem ${feeling.toLowerCase()} and aren't getting enough sleep (average: ${avgSleep} hours). Aim for at least 7-8 hours per night to improve recovery.`;
+    } else if ((feeling === "Tired" || feeling === "Exhausted") && avgSleep >= 7) {
+      return `You're getting enough sleep, but still feeling ${feeling.toLowerCase()}. Consider reducing workout intensity or adding a rest day.`;
+    } else if (feeling === "Normal" && avgSleep < 7) {
+      return `You're feeling normal, but could improve recovery by getting more than your current ${avgSleep} hours of sleep per night.`;
+    } else if (feeling === "Energized" && avgSleep >= 7) {
+      return `Great job! You're feeling energized and getting plenty of sleep (${avgSleep} hours per night).`;
+    } else {
+      return `You're currently feeling ${feeling.toLowerCase()} with an average of ${avgSleep} hours of sleep per night.`;
+    }
+  };
+
+  const getRestDaysRecommendation = () => {
+    if (restDays >= 2) {
+      return `You've taken ${restDays} rest days this week. Great job balancing training and recovery!`;
+    } else if (restDays === 1) {
+      return `You've taken ${restDays} rest day this week. Aim for at least 2 rest days per week to optimize recovery.`;
+    } else {
+      return `You haven't taken any rest days this week. Adding 1-2 rest days can significantly improve recovery and performance.`;
+    }
+  };
+
+  const getRecoveryScoreColor = () => {
+    if (recoveryScore >= 80) return "bg-green-500";
+    if (recoveryScore >= 60) return "bg-lime-500";
+    if (recoveryScore >= 40) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  const getRecoveryScoreMessage = () => {
+    if (recoveryScore >= 80) return "Excellent recovery! Keep up the good work.";
+    if (recoveryScore >= 60) return "Good recovery. Minor improvements could help.";
+    if (recoveryScore >= 40) return "Moderate recovery. Focus on sleep and rest days.";
+    return "Poor recovery. Prioritize sleep and consider taking a break.";
   };
 
   if (isLoading) {
     return (
       <div className="app-container animate-fade-in">
-        <Header title="Loading Workout...">
+        <Header title="Recovery">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -341,159 +156,126 @@ const WorkoutBuilder: React.FC = () => {
     );
   }
 
-  if (loadError) {
-    return (
-      <div className="app-container animate-fade-in">
-        <Header title="Error">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
-        <div className="p-4 text-center">
-          <p className="mb-4 text-destructive">{loadError}</p>
-          <Button onClick={() => navigate("/workouts")}>
-            Return to Workouts
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-      <div className="app-container animate-fade-in">
-        <Header title={id ? "Edit Workout" : "Create Workout"}>
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
+    <div className="app-container pb-16 animate-fade-in">
+      <Header title="Recovery">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </Header>
 
-        <div className="p-4">
-          <input
-            type="text"
-            placeholder="Workout Name"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-            className="w-full p-2 border rounded mb-4"
-          />
+      <div className="p-4 space-y-4">
+        {/* Recovery Score Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-5 w-5 text-primary" />
+              Recovery Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Your Recovery Score</span>
+                <span className="text-lg font-bold">{recoveryScore}/100</span>
+              </div>
+              <Progress value={recoveryScore} className={getRecoveryScoreColor()} />
+              <p className="text-sm text-muted-foreground mt-2">{getRecoveryScoreMessage()}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="mb-4">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Exercises</h2>
-                <div className="flex items-center gap-2">
-                  <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select Exercise" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['upper', 'lower', 'core', 'other'].map((category) => (
-                        <React.Fragment key={category}>
-                          <SelectItem value={`category-${category}`} disabled>{category.toUpperCase()}</SelectItem>
-                          {exercises
-                            .filter((ex) => ex.category === category)
-                            .map((ex) => (
-                              <SelectItem key={ex.id} value={ex.id}>
-                                {ex.name}
-                              </SelectItem>
-                            ))}
-                        </React.Fragment>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={handleSelectExercise} disabled={!selectedExerciseId}>
-                    Add
-                  </Button>
-                  <Button size="sm" onClick={handleAddExerciseClick}>
-                    <Plus className="h-4 w-4 mr-2" /> New Exercise
-                  </Button>
+        {/* Sleep Tracking Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Moon className="mr-2 h-5 w-5 text-primary" />
+              Sleep Tracking
+            </CardTitle>
+            <CardDescription>Track your sleep for each day of the week</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {DAY_NAMES.map((day, index) => (
+                  <div key={day} className="space-y-1">
+                    <Label htmlFor={`sleep-${index}`}>{day}</Label>
+                    <div className="flex items-center">
+                      <Input
+                        id={`sleep-${index}`}
+                        type="number"
+                        value={sleepHours[index] || ""}
+                        onChange={(e) => handleSleepChange(index, e.target.value)}
+                        min="0"
+                        max="24"
+                        step="0.5"
+                        className="w-full"
+                      />
+                      <span className="ml-1 text-xs">hrs</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-sm pt-2">
+                <div>
+                  <span className="font-medium">Average:</span>{" "}
+                  <span className="font-bold">{getAverageSleep()} hrs</span>
+                </div>
+                <div>
+                  <span className="font-medium">Total:</span>{" "}
+                  <span className="font-bold">{getTotalSleep()} hrs</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {showExerciseForm && (
-            <AddExerciseForm
-              isOpen={showExerciseForm}
-              onClose={() => setShowExerciseForm(false)}
-              onSave={handleSaveExercise}
-              exercise={editingExercise}
-            />
-          )}
-
-          {selectedExercises.length === 0 ? (
-            <Card>
-              <CardContent className="text-center p-5">
-                No exercises added yet. Use the dropdown or click "New Exercise" to start building your workout.
-              </CardContent>
-            </Card>
-          ) : (
-            <SortableContext
-              items={selectedExercises.map(exercise => exercise.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {selectedExercises.map((exercise, index) => (
-                <ExerciseItem
-                  key={exercise.id}
-                  exercise={exercise}
-                  index={index}
-                  onEdit={handleEditExercise}
-                  onDelete={promptDeleteExercise}
-                />
+        {/* General Feeling Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Bed className="mr-2 h-5 w-5 text-primary" />
+              General Feeling
+            </CardTitle>
+            <CardDescription>How do you feel this week?</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup value={feeling} onValueChange={setFeeling} className="flex flex-wrap gap-2">
+              {FEELING_OPTIONS.map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option} id={`feeling-${option}`} />
+                  <Label htmlFor={`feeling-${option}`}>{option}</Label>
+                </div>
               ))}
-            </SortableContext>
-          )}
+            </RadioGroup>
+          </CardContent>
+        </Card>
 
-          <div className="flex justify-end space-x-2 mt-4">
-            <Button variant="outline" onClick={handleCancelClick}>
-              Cancel
-            </Button>
-            <Button onClick={handleComplete}>
-              {isRegularWorkout ? "Update Workout" : (startAfterCreation ? "Save and Start Workout" : "Save Workout")}
-            </Button>
-          </div>
-        </div>
+        {/* Recommendations Card */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center">
+              <Clock className="mr-2 h-5 w-5 text-primary" />
+              Recovery Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium">Sleep Analysis</h4>
+              <p className="text-sm text-muted-foreground">{getRecoveryRecommendations()}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium">Rest Days</h4>
+              <p className="text-sm text-muted-foreground">{getRestDaysRecommendation()}</p>
+            </div>
 
-        <Dialog open={confirmDeleteExercise} onOpenChange={setConfirmDeleteExercise}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Exercise</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this exercise? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmDeleteExercise(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteExercise}>
-                Delete Exercise
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cancel Workout Creation</DialogTitle>
-              <DialogDescription>
-                You have unsaved changes. Are you sure you want to cancel?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmCancel(false)}>
-                Continue Editing
-              </Button>
-              <Button variant="destructive" onClick={() => navigate("/workouts")}>
-                Discard Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <Button onClick={handleSave} className="w-full">Save Recovery Data</Button>
+          </CardContent>
+        </Card>
       </div>
-    </DndContext>
+    </div>
   );
 };
 
-export default WorkoutBuilder;
+export default Recovery;

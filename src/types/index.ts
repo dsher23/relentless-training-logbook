@@ -1,3 +1,4 @@
+
 export interface Workout {
   id: string;
   name: string;
@@ -189,6 +190,14 @@ export interface TrainingBlock {
   notes?: string;
 }
 
+export interface WeeklyRecoveryData {
+  id: string;
+  weekStartDate: string;
+  sleepHours: number[];
+  feeling: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
+  recoveryScore?: number;
+}
+
 export interface WeakPoint {
   id: string;
   exerciseId?: string;
@@ -330,4 +339,9 @@ export type AppContextType = {
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
   prLifts: PR[];
+  
+  weeklyRecoveryData: WeeklyRecoveryData;
+  updateWeeklyRecoveryData: (data: Partial<WeeklyRecoveryData>) => void;
+  getRestDaysForCurrentWeek: () => number;
+  calculateRecoveryScore: (sleepHours: number[], feeling: string, restDays: number) => number;
 };

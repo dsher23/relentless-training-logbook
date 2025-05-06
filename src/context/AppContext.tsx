@@ -14,6 +14,22 @@ const DEFAULT_UNIT_SYSTEM: UnitSystem = {
   liftingWeightUnit: 'kg'
 };
 
+// Interface for weekly recovery data
+interface WeeklyRecoveryData {
+  id: string;
+  weekStartDate: string;
+  sleepHours: number[];
+  feeling: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
+  recoveryScore?: number;
+}
+
+const DEFAULT_WEEKLY_RECOVERY: WeeklyRecoveryData = {
+  id: 'default',
+  weekStartDate: new Date().toISOString(),
+  sleepHours: [0, 0, 0, 0, 0, 0, 0], // One for each day of the week
+  feeling: 'Normal'
+};
+
 const AppContext = createContext<any>({});
 
 // Helper function to safely use localStorage
@@ -110,6 +126,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [prLifts, setPRLifts] = useState<PRLift[]>([]);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(DEFAULT_UNIT_SYSTEM);
   const [reminders, setReminders] = useState<WeeklyRoutine[]>([]);
+  const [weeklyRecoveryData, setWeeklyRecoveryData] = useState<WeeklyRecoveryData>(DEFAULT_WEEKLY_RECOVERY);
 
   useEffect(() => {
     // Load data from localStorage on component mount
@@ -122,6 +139,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const storedUnitSystem = safeLocalStorage.getItem('unitSystem', DEFAULT_UNIT_SYSTEM);
       const storedReminders = safeLocalStorage.getItem('reminders', []);
       const storedWeeklyRoutines = safeLocalStorage.getItem('weeklyRoutines', []);
+      const storedWeeklyRecovery = safeLocalStorage.getItem('weeklyRecoveryData', DEFAULT_WEEKLY_RECOVERY);
       
       setWorkouts(storedWorkouts);
       setWorkoutTemplates(storedTemplates);
@@ -131,6 +149,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       setUnitSystem(storedUnitSystem);
       setReminders(storedReminders);
       setWeeklyRoutines(storedWeeklyRoutines);
+      setWeeklyRecoveryData(storedWeeklyRecovery);
     } catch (error) {
       console.error("Error loading data from localStorage:", error);
       toast({
@@ -187,6 +206,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       safeLocalStorage.setItem('weeklyRoutines', weeklyRoutines);
     }
   }, [weeklyRoutines]);
+  
+  useEffect(() => {
+    safeLocalStorage.setItem('weeklyRecoveryData', weeklyRecoveryData);
+  }, [weeklyRecoveryData]);
   
   const addExercise = (exercise: Exercise) => {
     setExercises((prevExercises) => {
@@ -285,6 +308,89 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }));
   };
 
+  const calculateRecoveryScore = (sleepHours: number[], feeling: string, restDays: number): number => {
+    // Calculate average sleep
+    const totalSleep = sleepHours.reduce((sum, hours) => sum + hours, 0);
+    const avgSleep = totalSleep / 7;
+    
+    // Points from sleep (max 50 points - 10 points per hour up to 5 hours)
+    const sleepPoints = Math.min(avgSleep * 10, 50);
+    
+    // Points from feeling
+    let feelingPoints = 0;
+    switch (feeling) {
+      case 'Energized': feelingPoints = 30; break;
+      case 'Normal': feelingPoints = 20; break;
+      case 'Tired': feelingPoints = 10; break;
+      case 'Exhausted': feelingPoints = 0; break;
+      default: feelingPoints = 15;
+    }
+    
+    // Points from rest days
+    let restDaysPoints = 0;
+    if (restDays >= 2) restDaysPoints = 20;
+    else if (restDays === 1) restDaysPoints = 10;
+    
+    // Calculate total score (max 100)
+    const totalScore = Math.min(Math.round(sleepPoints + feelingPoints + restDaysPoints), 100);
+    return totalScore;
+  };
+
+  const getRestDaysForCurrentWeek = (): number => {
+    try {
+      if (!Array.isArray(workouts)) return 0;
+      
+      // Get dates for current week (Monday to Sunday)
+      const today = new Date();
+      const currentDay = today.getDay() || 7; // Convert Sunday from 0 to 7
+      const mondayDate = new Date(today);
+      mondayDate.setDate(today.getDate() - currentDay + 1);
+      
+      // Set time to beginning of the day
+      mondayDate.setHours(0, 0, 0, 0);
+      
+      // Get workouts from current week
+      const workoutsThisWeek = workouts.filter(workout => {
+        const workoutDate = new Date(workout.date);
+        return workoutDate >= mondayDate && workoutDate <= today;
+      });
+      
+      // Count days with workouts
+      const daysWithWorkouts = new Set();
+      workoutsThisWeek.forEach(workout => {
+        const workoutDate = new Date(workout.date);
+        daysWithWorkouts.add(workoutDate.toDateString());
+      });
+      
+      // Calculate days between Monday and today (inclusive)
+      const daysDiff = Math.floor((today.getTime() - mondayDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Rest days = total days - days with workouts
+      return Math.max(0, daysDiff - daysWithWorkouts.size);
+    } catch (error) {
+      console.error("Error calculating rest days:", error);
+      return 0;
+    }
+  };
+
+  const updateWeeklyRecoveryData = (data: Partial<WeeklyRecoveryData>) => {
+    setWeeklyRecoveryData(prev => {
+      const updatedData = { ...prev, ...data };
+      
+      // Calculate recovery score if not provided
+      if (!data.recoveryScore) {
+        const restDays = getRestDaysForCurrentWeek();
+        updatedData.recoveryScore = calculateRecoveryScore(
+          updatedData.sleepHours, 
+          updatedData.feeling, 
+          restDays
+        );
+      }
+      
+      return updatedData;
+    });
+  };
+
   // Empty implementation of getDueReminders for compatibility
   const getDueReminders = () => {
     return [];
@@ -333,6 +439,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     archiveWeeklyRoutine,
     assignWorkoutToDay,
     removeWorkoutFromDay,
+    weeklyRecoveryData,
+    updateWeeklyRecoveryData,
+    getRestDaysForCurrentWeek,
+    calculateRecoveryScore,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

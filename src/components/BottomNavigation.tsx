@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Clock, User } from "lucide-react";
+import { Home, Dumbbell, Clock, User, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BottomNavigation: React.FC = () => {
@@ -37,14 +37,19 @@ const BottomNavigation: React.FC = () => {
       isActive: isActive("/workout-history")
     },
     {
+      path: "/recovery",
+      icon: <Heart className="w-5 h-5" />,
+      label: "Recovery",
+      isActive: isActive("/recovery")
+    },
+    {
       path: "/profile",
       icon: <User className="w-5 h-5" />,
       label: "Profile",
       isActive: isActive("/profile") || 
                isActive("/settings") || 
                isActive("/measurements") || 
-               isActive("/supplements") ||
-               isActive("/recovery")
+               isActive("/supplements")
     }
   ];
 
