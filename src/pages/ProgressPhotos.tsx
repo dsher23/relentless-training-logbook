@@ -23,6 +23,7 @@ const ProgressPhotos: React.FC = () => {
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Check if context is available
   if (!context) {
@@ -34,22 +35,24 @@ const ProgressPhotos: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     try {
-      // Sort photos by date (newest first)
-      const sortedPhotos = [...progressPhotos].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      setPhotos(sortedPhotos);
+      console.log("ProgressPhotos: Context data:", { progressPhotos });
+      if (!Array.isArray(progressPhotos)) {
+        console.warn("ProgressPhotos: progressPhotos is not an array:", progressPhotos);
+        setPhotos([]);
+      } else {
+        // Sort photos by date (newest first)
+        const sortedPhotos = [...progressPhotos].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setPhotos(sortedPhotos);
+      }
       setIsLoading(false);
-    } catch (error) {
-      console.error("Error loading progress photos:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load progress photos.",
-        variant: "destructive",
-      });
+    } catch (err: any) {
+      console.error("ProgressPhotos: Error loading progress photos:", err.message);
+      setError("Failed to load progress photos.");
       setIsLoading(false);
     }
-  }, [progressPhotos, toast]);
+  }, [progressPhotos]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,6 +82,7 @@ const ProgressPhotos: React.FC = () => {
         };
 
         const updatedPhotos = [...photos, newPhotoData];
+        console.log("ProgressPhotos: Saving updated photos:", updatedPhotos);
         setProgressPhotos(updatedPhotos);
         setPhotos(updatedPhotos);
         setNewPhoto(null);
@@ -90,7 +94,7 @@ const ProgressPhotos: React.FC = () => {
       };
       reader.readAsDataURL(newPhoto);
     } catch (error) {
-      console.error("Error saving progress photo:", error);
+      console.error("ProgressPhotos: Error saving progress photo:", error);
       toast({
         title: "Error",
         description: "Failed to save progress photo.",
@@ -102,6 +106,7 @@ const ProgressPhotos: React.FC = () => {
   const handleDeletePhoto = (id: string) => {
     try {
       const updatedPhotos = photos.filter(photo => photo.id !== id);
+      console.log("ProgressPhotos: Deleting photo, updated photos:", updatedPhotos);
       setProgressPhotos(updatedPhotos);
       setPhotos(updatedPhotos);
       toast({
@@ -109,7 +114,7 @@ const ProgressPhotos: React.FC = () => {
         description: "Progress photo deleted successfully.",
       });
     } catch (error) {
-      console.error("Error deleting progress photo:", error);
+      console.error("ProgressPhotos: Error deleting progress photo:", error);
       toast({
         title: "Error",
         description: "Failed to delete progress photo.",
@@ -127,6 +132,23 @@ const ProgressPhotos: React.FC = () => {
             <div className="h-8 w-32 bg-gray-300 rounded mb-4 mx-auto"></div>
             <p className="text-muted-foreground">Loading photos...</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <NavigationHeader title="Progress Photos" showBack={true} showHome={true} showProfile={false} />
+        <div className="px-4 py-8 text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/dashboard")}
+          >
+            Back to Dashboard
+          </Button>
         </div>
       </div>
     );
