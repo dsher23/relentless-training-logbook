@@ -148,7 +148,7 @@ export const useLiveWorkout = () => {
       // Since this is a new workout from a template, use addWorkout instead of updateWorkout
       addWorkout(completedWorkout.name, completedWorkout.exercises, {
         id: completedWorkout.id,
-        completed: true, // Changed from string to boolean
+        completed: true, // Fixed: Using boolean instead of string
         date: completedWorkout.date,
         notes: completedWorkout.notes,
       });
