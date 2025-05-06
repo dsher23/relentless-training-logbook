@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
@@ -19,6 +20,7 @@ interface Exercise {
   name: string;
   category: string;
   sets: Set[];
+  reps: number; // Added the missing reps property
 }
 
 interface WorkoutTemplate {

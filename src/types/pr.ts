@@ -10,10 +10,10 @@ export interface UnitSystem {
 
 export interface PR {
   id: string;
-  exerciseId: string;
+  exercise: string; // Changed from exerciseId to match PRLift
   weight: number;
   reps: number;
-  date: Date;
+  date: Date | string;
   workoutId?: string;
   isDirectEntry?: boolean;
 }

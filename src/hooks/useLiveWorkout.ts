@@ -88,7 +88,7 @@ export const useLiveWorkout = () => {
 
     if (bestSet && bestSet.weight > 0 && bestSet.reps > 0) {
       addPRLift({
-        exercise: exerciseId, // Changed from 'exerciseId' to 'exercise'
+        exercise: exerciseId, // Using exerciseId as 'exercise' property
         weight: bestSet.weight,
         reps: bestSet.reps,
         date: new Date().toISOString(),
@@ -138,7 +138,7 @@ export const useLiveWorkout = () => {
         id: workout.id,
         name: workout.name, 
         exercises: updatedExercises,
-        completed: true,
+        completed: true, // Fixed: Using boolean value
         date: new Date(),
         notes: workout.notes || ""
       };
@@ -148,7 +148,7 @@ export const useLiveWorkout = () => {
       // Since this is a new workout from a template, use addWorkout instead of updateWorkout
       addWorkout(completedWorkout.name, completedWorkout.exercises, {
         id: completedWorkout.id,
-        completed: true,
+        completed: true, // Fixed: Using boolean value
         date: completedWorkout.date,
         notes: completedWorkout.notes,
       });

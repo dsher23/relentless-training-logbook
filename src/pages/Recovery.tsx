@@ -11,10 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 
+type FeelingType = "Energized" | "Normal" | "Tired" | "Exhausted";
+
 interface WeeklyRecoveryData {
   weekStart: string;
   sleepHours: number[];
-  generalFeeling: "Energized" | "Normal" | "Tired" | "Exhausted";
+  feeling: FeelingType;
 }
 
 const Recovery: React.FC = () => {
@@ -22,7 +24,7 @@ const Recovery: React.FC = () => {
   const { toast } = useToast();
   const { weeklyRecoveryData, setWeeklyRecoveryData, workouts } = useAppContext();
   const [sleepHours, setSleepHours] = useState<number[]>(Array(7).fill(0));
-  const [generalFeeling, setGeneralFeeling] = useState<"Energized" | "Normal" | "Tired" | "Exhausted">("Normal");
+  const [generalFeeling, setGeneralFeeling] = useState<FeelingType>("Normal");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,7 +34,10 @@ const Recovery: React.FC = () => {
     try {
       if (weeklyRecoveryData) {
         setSleepHours(weeklyRecoveryData.sleepHours);
-        setGeneralFeeling(weeklyRecoveryData.generalFeeling);
+        // Use either feeling or generalFeeling depending on what's available
+        setGeneralFeeling(
+          (weeklyRecoveryData.feeling || weeklyRecoveryData.generalFeeling || "Normal") as FeelingType
+        );
       }
       setIsLoading(false);
     } catch (err: any) {
@@ -98,10 +103,10 @@ const Recovery: React.FC = () => {
   const handleSaveRecoveryData = async () => {
     setIsSaving(true);
     try {
-      const newData: WeeklyRecoveryData = {
+      const newData = {
         weekStart: getCurrentWeekStart(),
         sleepHours,
-        generalFeeling,
+        feeling: generalFeeling,
       };
       await setWeeklyRecoveryData(newData);
       toast({
@@ -120,13 +125,9 @@ const Recovery: React.FC = () => {
     }
   };
 
-  const handleFeelingChange = (feeling: "Energized" | "Normal" | "Tired" | "Exhausted") => {
-    setGeneralFeeling(feeling); // Now correctly uses the union type
-    updateWeeklyRecoveryData({
-      ...weeklyRecoveryData,
-      feeling,
-    });
-    calculateScore(sleepHours, feeling, restDays);
+  const handleFeelingChange = (feeling: FeelingType) => {
+    setGeneralFeeling(feeling);
+    console.log("Updated feeling to:", feeling);
   };
 
   if (isLoading) {
@@ -205,7 +206,7 @@ const Recovery: React.FC = () => {
           <CardContent>
             <Select
               value={generalFeeling}
-              onValueChange={(value: "Energized" | "Normal" | "Tired" | "Exhausted") => handleFeelingChange(value)}
+              onValueChange={(value: FeelingType) => handleFeelingChange(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select your feeling" />

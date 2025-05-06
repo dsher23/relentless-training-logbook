@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { db, auth } from "../firebase";
@@ -116,7 +115,7 @@ interface AppContextType {
   
   // Weekly Routines
   weeklyRoutines: WeeklyRoutine[];
-  setWeeklyRoutines: (routines: any[]) => void;
+  setWeeklyRoutines: (routines: WeeklyRoutine[]) => void;
   addWeeklyRoutine: (routine: WeeklyRoutine) => void;
   updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
   deleteWeeklyRoutine: (id: string) => void;
@@ -147,7 +146,7 @@ interface AppContextType {
   
   // Workout Templates
   workoutTemplates: WorkoutTemplate[];
-  setWorkoutTemplates: (templates: any[]) => void;
+  setWorkoutTemplates: (templates: WorkoutTemplate[]) => void;
   addWorkoutTemplate: (template: WorkoutTemplate) => void;
   updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
   deleteWorkoutTemplate: (id: string) => void;
@@ -180,8 +179,8 @@ interface AppContextType {
   
   // PR Lifts
   prLifts: PR[];
-  setPRLifts: (prLifts: PRLift[]) => void;
-  addPRLift: (prData: Omit<PRLift, "id">) => void;
+  setPRLifts: (prLifts: PR[]) => void;
+  addPRLift: (prData: Omit<PR, "id">) => void;
   updatePR: (prData: PR) => void;
   deletePR: (id: string) => void;
   
@@ -212,7 +211,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [weeklyRecoveryData, setWeeklyRecoveryData] = useState<WeeklyRecoveryData | null>(null);
   const [weeklyRoutines, setWeeklyRoutines] = useState<WeeklyRoutine[]>([]);
   const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
-  const [prLifts, setPRLifts] = useState<PRLift[]>([]);
+  const [prLifts, setPRLifts] = useState<PR[]>([]);
   const [unitSystem] = useState<UnitSystem>({
     bodyWeightUnit: "kg",
     bodyMeasurementUnit: "cm",
@@ -751,8 +750,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // PR Lift methods
-  const addPRLift = (prData: Omit<PRLift, "id">) => {
-    const newPR: PRLift = {
+  const addPRLift = (prData: Omit<PR, "id">) => {
+    const newPR: PR = {
       ...prData,
       id: `${prData.exercise}-${Date.now()}`
     };
@@ -827,7 +826,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return workouts.find(workout => workout.id === id);
   };
 
-  const value = useMemo(() => ({
+  const value: AppContextType = useMemo(() => ({
     user,
     signOutUser,
     workouts,

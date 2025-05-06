@@ -1,4 +1,3 @@
-
 export interface Workout {
   id: string;
   name: string;
@@ -110,12 +109,12 @@ export interface SupplementLog {
 
 export interface PR {
   id: string;
-  exerciseId: string;
+  exercise: string; // Changed from exerciseId to match PRLift
   weight: number;
   reps: number;
   date: Date | string;
-  isDirectEntry?: boolean;
   workoutId?: string;
+  isDirectEntry?: boolean;
 }
 
 export interface WorkoutDay {
@@ -195,6 +194,8 @@ export interface WeeklyRecoveryData {
   weekStartDate: string;
   sleepHours: number[];
   feeling: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
+  generalFeeling?: 'Energized' | 'Normal' | 'Tired' | 'Exhausted'; // Added as optional for backward compatibility
+  weekStart?: string; // Added for backward compatibility
   recoveryScore?: number;
 }
 
