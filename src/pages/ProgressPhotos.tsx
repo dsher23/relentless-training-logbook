@@ -1,419 +1,218 @@
-
-import React, { useState, useRef } from "react";
-import { 
-  Camera, Upload, ChevronLeft, ChevronRight, 
-  ZoomIn, ZoomOut, Lock, Trash, Calendar 
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, addWeeks, subWeeks, isSameWeek } from "date-fns";
+import { Camera, Trash2 } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
+import { useToast } from "@/hooks/use-toast";
+import NavigationHeader from "@/components/NavigationHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import Header from "@/components/Header";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
-import { ProgressPhoto } from "@/types";
 
-const ProgressPhotos = () => {
+interface ProgressPhoto {
+  id: string;
+  url: string;
+  date: string;
+  notes?: string;
+}
+
+const ProgressPhotos: React.FC = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { progressPhotos, addProgressPhoto, deleteProgressPhoto } = useBodyMeasurements();
-  
-  // State
-  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
-  const [comparisonDialogOpen, setComparisonDialogOpen] = useState(false);
-  const [showPrivate, setShowPrivate] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(new Date());
-  const [zoomLevel, setZoomLevel] = useState(1);
-  
-  // New photo state
-  const [newPhoto, setNewPhoto] = useState<{
-    imageData: string | null;
-    weight: string;
-    notes: string;
-    private: boolean;
-    caption: string;
-  }>({
-    imageData: null,
-    weight: "",
-    notes: "",
-    private: false,
-    caption: "",
-  });
-  
-  // Comparison state
-  const [comparisonPhotos, setComparisonPhotos] = useState<{
-    photo1?: ProgressPhoto;
-    photo2?: ProgressPhoto;
-  }>({});
-  
-  // Handle file selection
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setNewPhoto({
-          ...newPhoto,
-          imageData: reader.result as string
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  // Handle photo capture button
-  const handleCaptureClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-  
-  // Save new photo
-  const savePhoto = () => {
-    if (!newPhoto.imageData) {
+  const { toast } = useToast();
+  const context = useAppContext();
+  const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+  const [newPhoto, setNewPhoto] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if context is available
+  if (!context) {
+    throw new Error("ProgressPhotos must be used within an AppProvider");
+  }
+
+  const { progressPhotos = [], setProgressPhotos } = context;
+
+  useEffect(() => {
+    setIsLoading(true);
+    try {
+      // Sort photos by date (newest first)
+      const sortedPhotos = [...progressPhotos].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setPhotos(sortedPhotos);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error loading progress photos:", error);
       toast({
-        title: "No Photo Selected",
-        description: "Please take or upload a photo to continue",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to load progress photos.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  }, [progressPhotos, toast]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewPhoto(file);
+    }
+  };
+
+  const handleSavePhoto = () => {
+    if (!newPhoto) {
+      toast({
+        title: "Error",
+        description: "Please select a photo to upload.",
+        variant: "destructive",
       });
       return;
     }
-    
-    const photo: Omit<ProgressPhoto, "id"> = {
-      date: new Date(),
-      imageData: newPhoto.imageData,
-      caption: newPhoto.caption || `Progress photo - ${new Date().toLocaleDateString()}`
-    };
-    
-    addProgressPhoto(photo);
-    
-    // Reset form and close dialog
-    setNewPhoto({
-      imageData: null,
-      weight: "",
-      notes: "",
-      private: false,
-      caption: "",
-    });
-    
-    setPhotoDialogOpen(false);
-    
-    toast.success("Photo Saved");
-  };
-  
-  // Delete photo
-  const handleDeletePhoto = (id: string) => {
-    deleteProgressPhoto(id);
-    toast.success("Photo Deleted");
-  };
-  
-  // Select photo for comparison
-  const selectForComparison = (photo: ProgressPhoto) => {
-    if (!comparisonPhotos.photo1) {
-      setComparisonPhotos({ photo1: photo });
-    } else if (!comparisonPhotos.photo2) {
-      setComparisonPhotos({ ...comparisonPhotos, photo2: photo });
-      setComparisonDialogOpen(true);
-    } else {
-      // Reset and start over
-      setComparisonPhotos({ photo1: photo });
+
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const newPhotoData: ProgressPhoto = {
+          id: `photo-${Date.now()}`,
+          url: reader.result as string,
+          date: new Date().toISOString(),
+          notes: notes.trim() || undefined,
+        };
+
+        const updatedPhotos = [...photos, newPhotoData];
+        setProgressPhotos(updatedPhotos);
+        setPhotos(updatedPhotos);
+        setNewPhoto(null);
+        setNotes("");
+        toast({
+          title: "Success",
+          description: "Progress photo added successfully.",
+        });
+      };
+      reader.readAsDataURL(newPhoto);
+    } catch (error) {
+      console.error("Error saving progress photo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress photo.",
+        variant: "destructive",
+      });
     }
   };
-  
-  // Get photos for current week
-  const currentWeekPhotos = progressPhotos ? progressPhotos.filter(photo => 
-    isSameWeek(new Date(photo.date), selectedWeek)
-  ) : [];
-  
-  // Navigation
-  const prevWeek = () => setSelectedWeek(subWeeks(selectedWeek, 1));
-  const nextWeek = () => setSelectedWeek(addWeeks(selectedWeek, 1));
-  
-  return (
-    <div className="app-container animate-fade-in pb-16">
-      <Header title="Progress Photos" />
-      
-      <div className="px-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={prevWeek}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="text-center">
-            <div className="font-medium">
-              Week of {format(selectedWeek, "MMM d, yyyy")}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {currentWeekPhotos.length} photos this week
-            </div>
+
+  const handleDeletePhoto = (id: string) => {
+    try {
+      const updatedPhotos = photos.filter(photo => photo.id !== id);
+      setProgressPhotos(updatedPhotos);
+      setPhotos(updatedPhotos);
+      toast({
+        title: "Success",
+        description: "Progress photo deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Error deleting progress photo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete progress photo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="app-container animate-fade-in pb-16">
+        <NavigationHeader title="Progress Photos" showBack={true} showHome={true} showProfile={false} />
+        <div className="px-4 py-8 text-center">
+          <div className="animate-pulse">
+            <div className="h-8 w-32 bg-gray-300 rounded mb-4 mx-auto"></div>
+            <p className="text-muted-foreground">Loading photos...</p>
           </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={nextWeek}
-            disabled={isSameWeek(selectedWeek, new Date()) || selectedWeek > new Date()}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            className="w-full"
-            onClick={() => setPhotoDialogOpen(true)}
-          >
-            <Camera className="mr-2 h-4 w-4" /> Take Photo
-          </Button>
-          
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowPrivate(!showPrivate)}
-          >
-            <Lock className="mr-2 h-4 w-4" /> 
-            {showPrivate ? "Hide Private" : "Show Private"}
-          </Button>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="app-container animate-fade-in pb-16">
+      <NavigationHeader title="Progress Photos" showBack={true} showHome={true} showProfile={false} />
       
-      {currentWeekPhotos.length === 0 ? (
-        <div className="text-center py-12 px-4">
-          <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-lg font-medium mb-2">No Photos This Week</h2>
-          <p className="text-muted-foreground mb-6">
-            Take your first progress photo for this week to start tracking your journey.
-          </p>
-          <Button onClick={() => setPhotoDialogOpen(true)}>
-            <Camera className="mr-2 h-4 w-4" /> Add First Photo
-          </Button>
-        </div>
-      ) : (
-        <div className="px-4 grid grid-cols-2 gap-4">
-          {currentWeekPhotos.map((photo) => (
-            <Card 
-              key={photo.id} 
-              className="overflow-hidden"
+      <div className="px-4 pt-4 space-y-6">
+        {/* Upload New Photo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Progress Photo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="w-full"
+            />
+            <Input
+              placeholder="Add notes (optional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full"
+            />
+            <Button 
+              onClick={handleSavePhoto} 
+              className="w-full"
+              disabled={!newPhoto}
             >
-              <div 
-                className="h-48 bg-cover bg-center cursor-pointer"
-                style={{ backgroundImage: `url(${photo.imageData})` }}
-                onClick={() => selectForComparison(photo)}
-              />
-              <CardContent className="p-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-xs">{format(new Date(photo.date), "MMM d, yyyy")}</div>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7"
-                    onClick={() => handleDeletePhoto(photo.id)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-                {photo.caption && (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {photo.caption}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-      
-      {/* Add Photo Dialog */}
-      <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Progress Photo</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {newPhoto.imageData ? (
-              <div className="relative">
-                <img 
-                  src={newPhoto.imageData} 
-                  alt="Preview" 
-                  className="w-full h-64 object-cover rounded-md" 
-                />
+              <Camera className="h-4 w-4 mr-2" />
+              Save Photo
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Photo Gallery */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Photo Gallery</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {photos.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">No progress photos yet.</p>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="absolute bottom-2 right-2"
-                  onClick={() => setNewPhoto({ ...newPhoto, imageData: null })}
+                  onClick={() => document.querySelector('input[type="file"]')?.click()}
                 >
-                  Change
+                  Add Your First Photo
                 </Button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Button 
-                  className="flex-1"
-                  onClick={handleCaptureClick}
-                >
-                  <Camera className="mr-2 h-4 w-4" />
-                  Take Photo
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleCaptureClick}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                />
-              </div>
+              photos.map((photo) => (
+                <Card key={photo.id} className="mb-4">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-medium">{new Date(photo.date).toLocaleDateString()}</p>
+                        {photo.notes && (
+                          <p className="text-sm text-muted-foreground">{photo.notes}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeletePhoto(photo.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <img
+                      src={photo.url}
+                      alt="Progress photo"
+                      className="w-full h-48 object-cover rounded-md"
+                    />
+                  </CardContent>
+                </Card>
+              ))
             )}
-            
-            <div>
-              <label className="text-sm font-medium">Caption (optional)</label>
-              <Input
-                placeholder="E.g., Week 4 progress"
-                value={newPhoto.caption}
-                onChange={(e) => setNewPhoto({ ...newPhoto, caption: e.target.value })}
-              />
-            </div>
-            
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="private-checkbox"
-                checked={newPhoto.private}
-                onChange={(e) => setNewPhoto({ ...newPhoto, private: e.target.checked })}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="private-checkbox" className="ml-2 text-sm">
-                Private Photo
-              </label>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium">Notes (optional)</label>
-              <Textarea
-                placeholder="e.g., Started creatine this week"
-                value={newPhoto.notes}
-                onChange={(e) => setNewPhoto({ ...newPhoto, notes: e.target.value })}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setPhotoDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={savePhoto} disabled={!newPhoto.imageData}>
-              Save Photo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Comparison Dialog */}
-      <Dialog 
-        open={comparisonDialogOpen} 
-        onOpenChange={setComparisonDialogOpen}
-      >
-        <DialogContent className="sm:max-w-[90%] max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Photo Comparison</DialogTitle>
-          </DialogHeader>
-          
-          {comparisonPhotos.photo1 && comparisonPhotos.photo2 ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="font-medium">Before vs After</div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(comparisonPhotos.photo1.date), "MMM d, yyyy")} vs {format(new Date(comparisonPhotos.photo2.date), "MMM d, yyyy")}
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
-                  >
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-square overflow-hidden relative">
-                  <img 
-                    src={comparisonPhotos.photo1.imageData} 
-                    alt="Before" 
-                    className="w-full h-full object-cover"
-                    style={{ transform: `scale(${zoomLevel})` }}
-                  />
-                </div>
-                
-                <div className="aspect-square overflow-hidden relative">
-                  <img 
-                    src={comparisonPhotos.photo2.imageData} 
-                    alt="After" 
-                    className="w-full h-full object-cover"
-                    style={{ transform: `scale(${zoomLevel})` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p>Select two photos to compare</p>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setComparisonDialogOpen(false);
-                setComparisonPhotos({});
-                setZoomLevel(1);
-              }}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
