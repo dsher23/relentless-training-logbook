@@ -18,25 +18,17 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-
-interface ProgressPhoto {
-  id: string;
-  date: Date;
-  imageUrl: string;
-  weight?: number;
-  notes?: string;
-  private?: boolean;
-}
+import { useBodyMeasurements } from "@/hooks/useBodyMeasurements";
+import { ProgressPhoto } from "@/types";
 
 const ProgressPhotos = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { progressPhotos, addProgressPhoto, deleteProgressPhoto } = useBodyMeasurements();
   
   // State
-  const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [comparisonDialogOpen, setComparisonDialogOpen] = useState(false);
   const [showPrivate, setShowPrivate] = useState(false);
@@ -45,15 +37,17 @@ const ProgressPhotos = () => {
   
   // New photo state
   const [newPhoto, setNewPhoto] = useState<{
-    imageUrl: string | null;
+    imageData: string | null;
     weight: string;
     notes: string;
     private: boolean;
+    caption: string;
   }>({
-    imageUrl: null,
+    imageData: null,
     weight: "",
     notes: "",
     private: false,
+    caption: "",
   });
   
   // Comparison state
@@ -70,7 +64,7 @@ const ProgressPhotos = () => {
       reader.onload = () => {
         setNewPhoto({
           ...newPhoto,
-          imageUrl: reader.result as string
+          imageData: reader.result as string
         });
       };
       reader.readAsDataURL(file);
@@ -86,7 +80,7 @@ const ProgressPhotos = () => {
   
   // Save new photo
   const savePhoto = () => {
-    if (!newPhoto.imageUrl) {
+    if (!newPhoto.imageData) {
       toast({
         title: "No Photo Selected",
         description: "Please take or upload a photo to continue",
@@ -95,40 +89,32 @@ const ProgressPhotos = () => {
       return;
     }
     
-    const photo: ProgressPhoto = {
-      id: uuidv4(),
+    const photo: Omit<ProgressPhoto, "id"> = {
       date: new Date(),
-      imageUrl: newPhoto.imageUrl,
-      weight: newPhoto.weight ? parseFloat(newPhoto.weight) : undefined,
-      notes: newPhoto.notes || undefined,
-      private: newPhoto.private
+      imageData: newPhoto.imageData,
+      caption: newPhoto.caption || `Progress photo - ${new Date().toLocaleDateString()}`
     };
     
-    setPhotos([...photos, photo]);
+    addProgressPhoto(photo);
     
     // Reset form and close dialog
     setNewPhoto({
-      imageUrl: null,
+      imageData: null,
       weight: "",
       notes: "",
-      private: false
+      private: false,
+      caption: "",
     });
     
     setPhotoDialogOpen(false);
     
-    toast({
-      title: "Photo Saved",
-      description: "Your progress photo has been saved"
-    });
+    toast.success("Photo Saved");
   };
   
   // Delete photo
-  const deletePhoto = (id: string) => {
-    setPhotos(photos.filter(p => p.id !== id));
-    toast({
-      title: "Photo Deleted",
-      description: "Your progress photo has been removed"
-    });
+  const handleDeletePhoto = (id: string) => {
+    deleteProgressPhoto(id);
+    toast.success("Photo Deleted");
   };
   
   // Select photo for comparison
@@ -144,13 +130,10 @@ const ProgressPhotos = () => {
     }
   };
   
-  // Get visible photos
-  const visiblePhotos = photos.filter(p => !p.private || showPrivate);
-  
   // Get photos for current week
-  const currentWeekPhotos = visiblePhotos.filter(photo => 
+  const currentWeekPhotos = progressPhotos ? progressPhotos.filter(photo => 
     isSameWeek(new Date(photo.date), selectedWeek)
-  );
+  ) : [];
   
   // Navigation
   const prevWeek = () => setSelectedWeek(subWeeks(selectedWeek, 1));
@@ -215,44 +198,39 @@ const ProgressPhotos = () => {
           <p className="text-muted-foreground mb-6">
             Take your first progress photo for this week to start tracking your journey.
           </p>
+          <Button onClick={() => setPhotoDialogOpen(true)}>
+            <Camera className="mr-2 h-4 w-4" /> Add First Photo
+          </Button>
         </div>
       ) : (
         <div className="px-4 grid grid-cols-2 gap-4">
           {currentWeekPhotos.map((photo) => (
             <Card 
               key={photo.id} 
-              className={`overflow-hidden ${photo.private ? "border-amber-300" : ""}`}
+              className="overflow-hidden"
             >
               <div 
                 className="h-48 bg-cover bg-center cursor-pointer"
-                style={{ backgroundImage: `url(${photo.imageUrl})` }}
+                style={{ backgroundImage: `url(${photo.imageData})` }}
                 onClick={() => selectForComparison(photo)}
               />
               <CardContent className="p-3">
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="text-xs">{format(new Date(photo.date), "MMM d, yyyy")}</div>
-                    {photo.weight && (
-                      <div className="text-xs font-medium">{photo.weight} kg</div>
-                    )}
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className="h-7 w-7"
-                    onClick={() => deletePhoto(photo.id)}
+                    onClick={() => handleDeletePhoto(photo.id)}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
                 </div>
-                {photo.notes && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {photo.notes}
-                  </div>
-                )}
-                {photo.private && (
-                  <div className="mt-1 flex items-center text-xs text-amber-600">
-                    <Lock className="h-3 w-3 mr-1" /> Private
+                {photo.caption && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {photo.caption}
                   </div>
                 )}
               </CardContent>
@@ -269,10 +247,10 @@ const ProgressPhotos = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {newPhoto.imageUrl ? (
+            {newPhoto.imageData ? (
               <div className="relative">
                 <img 
-                  src={newPhoto.imageUrl} 
+                  src={newPhoto.imageData} 
                   alt="Preview" 
                   className="w-full h-64 object-cover rounded-md" 
                 />
@@ -280,7 +258,7 @@ const ProgressPhotos = () => {
                   variant="outline"
                   size="sm"
                   className="absolute bottom-2 right-2"
-                  onClick={() => setNewPhoto({ ...newPhoto, imageUrl: null })}
+                  onClick={() => setNewPhoto({ ...newPhoto, imageData: null })}
                 >
                   Change
                 </Button>
@@ -312,30 +290,26 @@ const ProgressPhotos = () => {
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Weight (optional)</label>
-                <Input
-                  type="number"
-                  placeholder="kg"
-                  value={newPhoto.weight}
-                  onChange={(e) => setNewPhoto({ ...newPhoto, weight: e.target.value })}
-                />
-              </div>
-              <div className="flex items-end pb-2">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="private-checkbox"
-                    checked={newPhoto.private}
-                    onChange={(e) => setNewPhoto({ ...newPhoto, private: e.target.checked })}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <label htmlFor="private-checkbox" className="ml-2 text-sm">
-                    Private Photo
-                  </label>
-                </div>
-              </div>
+            <div>
+              <label className="text-sm font-medium">Caption (optional)</label>
+              <Input
+                placeholder="E.g., Week 4 progress"
+                value={newPhoto.caption}
+                onChange={(e) => setNewPhoto({ ...newPhoto, caption: e.target.value })}
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="private-checkbox"
+                checked={newPhoto.private}
+                onChange={(e) => setNewPhoto({ ...newPhoto, private: e.target.checked })}
+                className="rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="private-checkbox" className="ml-2 text-sm">
+                Private Photo
+              </label>
             </div>
             
             <div>
@@ -355,7 +329,7 @@ const ProgressPhotos = () => {
             >
               Cancel
             </Button>
-            <Button onClick={savePhoto} disabled={!newPhoto.imageUrl}>
+            <Button onClick={savePhoto} disabled={!newPhoto.imageData}>
               Save Photo
             </Button>
           </DialogFooter>
@@ -403,44 +377,22 @@ const ProgressPhotos = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="aspect-square overflow-hidden relative">
                   <img 
-                    src={comparisonPhotos.photo1.imageUrl} 
+                    src={comparisonPhotos.photo1.imageData} 
                     alt="Before" 
                     className="w-full h-full object-cover"
                     style={{ transform: `scale(${zoomLevel})` }}
                   />
-                  <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-                    {comparisonPhotos.photo1.weight ? `${comparisonPhotos.photo1.weight} kg` : "No weight"}
-                  </div>
                 </div>
                 
                 <div className="aspect-square overflow-hidden relative">
                   <img 
-                    src={comparisonPhotos.photo2.imageUrl} 
+                    src={comparisonPhotos.photo2.imageData} 
                     alt="After" 
                     className="w-full h-full object-cover"
                     style={{ transform: `scale(${zoomLevel})` }}
                   />
-                  <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-                    {comparisonPhotos.photo2.weight ? `${comparisonPhotos.photo2.weight} kg` : "No weight"}
-                  </div>
                 </div>
               </div>
-              
-              {comparisonPhotos.photo1.weight && comparisonPhotos.photo2.weight && (
-                <div className="text-center p-3 bg-muted/30 rounded-md">
-                  Weight Difference: 
-                  <span className={`font-bold ml-2 ${
-                    comparisonPhotos.photo2.weight > comparisonPhotos.photo1.weight 
-                    ? "text-green-600" 
-                    : comparisonPhotos.photo2.weight < comparisonPhotos.photo1.weight 
-                    ? "text-red-600" 
-                    : ""
-                  }`}>
-                    {comparisonPhotos.photo2.weight > comparisonPhotos.photo1.weight ? "+" : ""}
-                    {(comparisonPhotos.photo2.weight - comparisonPhotos.photo1.weight).toFixed(1)} kg
-                  </span>
-                </div>
-              )}
             </div>
           ) : (
             <div className="text-center py-6">
