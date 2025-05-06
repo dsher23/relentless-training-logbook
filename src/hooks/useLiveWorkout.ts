@@ -353,4 +353,83 @@ export const useLiveWorkout = () => {
         [field]: value 
       };
       
-      console.log(`Updating set ${setIndex} ${field} to
+      console.log(`Updating set ${setIndex} ${field} to ${value}`);
+      
+      const updatedData = {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+      console.log("Updated exerciseData (handleSetUpdate):", updatedData);
+      return updatedData;
+    });
+  }, []);
+
+  const handleAddSet = useCallback((exerciseId: string) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
+      
+      const updatedData = {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: [...exercise.sets, { reps: 0, weight: 0 }]
+        }
+      };
+      console.log("Updated exerciseData (handleAddSet):", updatedData);
+      return updatedData;
+    });
+  }, []);
+
+  const handleRemoveSet = useCallback((exerciseId: string, setIndex: number) => {
+    setExerciseData(prev => {
+      const exercise = prev[exerciseId];
+      if (!exercise) {
+        console.warn(`Exercise ${exerciseId} not found in exerciseData`);
+        return prev;
+      }
+      
+      const updatedSets = [...exercise.sets];
+      updatedSets.splice(setIndex, 1);
+      
+      const updatedData = {
+        ...prev,
+        [exerciseId]: {
+          ...exercise,
+          sets: updatedSets
+        }
+      };
+      console.log("Updated exerciseData (handleRemoveSet):", updatedData);
+      return updatedData;
+    });
+  }, []);
+
+  return {
+    workout,
+    currentExerciseIndex,
+    setCurrentExerciseIndex,
+    hasAttemptedSave,
+    setHasAttemptedSave,
+    debugMode,
+    setDebugMode,
+    exerciseData,
+    setExerciseData,
+    finishWorkout,
+    loadWorkout,
+    isLoading,
+    nextExercise,
+    previousExercise,
+    handleUpdateNotes,
+    handleSetUpdate,
+    handleAddSet,
+    handleRemoveSet
+  };
+};
+
+export default useLiveWorkout;
