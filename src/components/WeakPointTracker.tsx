@@ -1,269 +1,175 @@
-
-import React, { useState } from "react";
-import { AlertTriangle, Plus, Tag, Trash } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
+import { useToast } from "@/hooks/use-toast";
 import { WeakPoint } from "@/types";
-import { v4 as uuidv4 } from "uuid";
 
-interface WeakPointFormProps {
-  onSave: () => void;
-}
-
-const WeakPointForm: React.FC<WeakPointFormProps> = ({ onSave }) => {
-  const { addWeakPoint } = useAppContext();
+const WeakPointTracker: React.FC = () => {
+  const { weakPoints, addWeakPoint, deleteWeakPoint } = useAppContext();
   const { toast } = useToast();
   const [muscleGroup, setMuscleGroup] = useState("");
-  const [priority, setPriority] = useState(2); // Medium priority by default
-  const [sessionsPerWeek, setSessionsPerWeek] = useState(2);
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const [notes, setNotes] = useState("");
+  const [date, setDate] = useState("");
+  const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Low");
+  const [sessionsPerWeekGoal, setSessionsPerWeekGoal] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddWeakPoint = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!muscleGroup.trim()) {
+    if (!muscleGroup || !date) {
       toast({
-        title: "Missing Information",
-        description: "Please provide a muscle group name.",
-        variant: "destructive"
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       });
       return;
     }
-    
-    const newWeakPoint: WeakPoint = {
-      id: uuidv4(),
-      name: muscleGroup.trim(), // Set name to the same as muscleGroup
-      muscleGroup: muscleGroup.trim(),
-      priority,
-      sessionsPerWeekGoal: sessionsPerWeek
-    };
-    
-    addWeakPoint(newWeakPoint);
-    toast({
-      title: "Weak Point Added",
-      description: `"${muscleGroup}" has been added as a weak point.`
-    });
-    
-    // Reset form
-    setMuscleGroup("");
-    setPriority(2);
-    setSessionsPerWeek(2);
-    onSave();
+
+    setIsLoading(true);
+    try {
+      const weakPointData: Omit<WeakPoint, "id"> = {
+        muscleGroup,
+        notes,
+        date,
+        priority,
+        sessionsPerWeekGoal,
+      };
+      await addWeakPoint(weakPointData);
+      toast({
+        title: "Success",
+        description: "Weak point added successfully.",
+      });
+      setMuscleGroup("");
+      setNotes("");
+      setDate("");
+      setPriority("Low");
+      setSessionsPerWeekGoal(1);
+    } catch (error) {
+      console.error("WeakPointTracker.tsx: Error adding weak point:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add weak point.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
+
+  const handleDeleteWeakPoint = async (id: string) => {
+    setIsLoading(true);
+    try {
+      await deleteWeakPoint(id);
+      toast({
+        title: "Success",
+        description: "Weak point deleted successfully.",
+      });
+    } catch (error) {
+      console.error("WeakPointTracker.tsx: Error deleting weak point:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete weak point.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="muscle-group" className="text-sm font-medium">
-          Muscle Group
-        </label>
-        <Input
-          id="muscle-group"
-          placeholder="e.g., Shoulders, Arms, Chest"
-          value={muscleGroup}
-          onChange={(e) => setMuscleGroup(e.target.value)}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <label htmlFor="priority" className="text-sm font-medium">
-          Priority Level
-        </label>
-        <div className="flex space-x-2">
-          {[1, 2, 3].map((level) => (
-            <Button
-              key={level}
-              type="button"
-              variant={priority === level ? "default" : "outline"}
-              className={
-                priority === level 
-                  ? "bg-iron-blue hover:bg-blue-700" 
-                  : ""
-              }
-              onClick={() => setPriority(level)}
-            >
-              {level === 1 ? "Low" : level === 2 ? "Medium" : "High"}
-            </Button>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Weak Point Tracker</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleAddWeakPoint} className="space-y-4">
+          <div>
+            <Label htmlFor="muscleGroup">Muscle Group</Label>
+            <Input
+              id="muscleGroup"
+              type="text"
+              value={muscleGroup}
+              onChange={(e) => setMuscleGroup(e.target.value)}
+              placeholder="Enter muscle group"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="priority">Priority</Label>
+            <Select onValueChange={(value: "Low" | "Medium" | "High") => setPriority(value)} value={priority}>
+              <SelectTrigger id="priority">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="sessionsPerWeekGoal">Sessions Per Week Goal</Label>
+            <Input
+              id="sessionsPerWeekGoal"
+              type="number"
+              value={sessionsPerWeekGoal}
+              onChange={(e) => setSessionsPerWeekGoal(Number(e.target.value))}
+              placeholder="Enter sessions per week goal"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Input
+              id="notes"
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes"
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Adding..." : "Add Weak Point"}
+          </Button>
+        </form>
+        <div className="space-y-2">
+          {weakPoints.map((point) => (
+            <div key={point.id} className="flex justify-between items-center p-2 border rounded">
+              <div>
+                <p>{point.muscleGroup}</p>
+                <p className="text-sm text-gray-500">{point.date}</p>
+                <p className="text-sm text-gray-500">Priority: {point.priority}</p>
+                <p className="text-sm text-gray-500">Sessions/Week Goal: {point.sessionsPerWeekGoal}</p>
+                {point.notes && <p className="text-sm">{point.notes}</p>}
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteWeakPoint(point.id)}
+                disabled={isLoading}
+              >
+                Delete
+              </Button>
+            </div>
           ))}
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <label htmlFor="sessions-per-week" className="text-sm font-medium">
-          Target Sessions Per Week
-        </label>
-        <Input
-          id="sessions-per-week"
-          type="number"
-          min="1"
-          max="7"
-          value={sessionsPerWeek}
-          onChange={(e) => setSessionsPerWeek(parseInt(e.target.value))}
-        />
-      </div>
-      
-      <div className="pt-2">
-        <Button type="submit" className="w-full bg-iron-blue hover:bg-blue-700">
-          Add Weak Point
-        </Button>
-      </div>
-    </form>
-  );
-};
-
-const WeakPointTracker: React.FC = () => {
-  const { weakPoints, deleteWeakPoint, workouts } = useAppContext();
-  const [showDialog, setShowDialog] = useState(false);
-  
-  const calculateTrainingFrequency = () => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 6); // End of week (Saturday)
-    endOfWeek.setHours(23, 59, 59, 999);
-    
-    const thisWeeksWorkouts = workouts.filter(workout => {
-      const workoutDate = new Date(workout.date);
-      return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
-    });
-    
-    const trainingCount: Record<string, number> = {};
-    
-    weakPoints.forEach(wp => {
-      trainingCount[wp.muscleGroup.toLowerCase()] = 0;
-    });
-    
-    thisWeeksWorkouts.forEach(workout => {
-      workout.exercises.forEach(exercise => {
-        if (exercise.isWeakPoint) {
-          const matchingWeakPoint = weakPoints.find(wp => 
-            exercise.name.toLowerCase().includes(wp.muscleGroup.toLowerCase())
-          );
-          
-          if (matchingWeakPoint) {
-            trainingCount[matchingWeakPoint.muscleGroup.toLowerCase()]++;
-          }
-        }
-      });
-    });
-    
-    return trainingCount;
-  };
-  
-  const trainingFrequency = calculateTrainingFrequency();
-  
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Weak Point Tracker</h2>
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-1" /> Add Weak Point
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Weak Point</DialogTitle>
-            </DialogHeader>
-            <WeakPointForm onSave={() => setShowDialog(false)} />
-          </DialogContent>
-        </Dialog>
-      </div>
-      
-      {weakPoints.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Tag className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-            <h3 className="text-lg font-medium mb-1">No Weak Points Defined</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Track your weak points to ensure you're training them enough
-            </p>
-            <Button onClick={() => setShowDialog(true)}>
-              Add Your First Weak Point
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {weakPoints
-            .sort((a, b) => b.priority - a.priority)
-            .map(weakPoint => {
-              const currentFrequency = trainingFrequency[weakPoint.muscleGroup.toLowerCase()] || 0;
-              const isUnderTrained = currentFrequency < weakPoint.sessionsPerWeekGoal;
-              
-              return (
-                <Card key={weakPoint.id} className="overflow-hidden">
-                  <CardHeader className="p-3 pb-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className={`w-3 h-3 rounded-full ${
-                            weakPoint.priority === 3 
-                              ? 'bg-red-500' 
-                              : weakPoint.priority === 2 
-                                ? 'bg-amber-500' 
-                                : 'bg-blue-500'
-                          }`}
-                        />
-                        <CardTitle className="text-base font-medium">
-                          {weakPoint.muscleGroup}
-                        </CardTitle>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0" 
-                        onClick={() => deleteWeakPoint(weakPoint.id)}
-                      >
-                        <Trash className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-3 pt-0">
-                    <div className="flex justify-between items-center text-sm">
-                      <div>
-                        <span className="text-muted-foreground">This week: </span>
-                        <span className="font-medium">
-                          {currentFrequency} / {weakPoint.sessionsPerWeekGoal}
-                        </span>
-                      </div>
-                      {isUnderTrained && (
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="text-xs font-medium">Undertrained</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="w-full bg-secondary rounded-full h-2 mt-2">
-                      <div 
-                        className={`h-2 rounded-full ${
-                          isUnderTrained 
-                            ? 'bg-amber-500' 
-                            : 'bg-green-500'
-                        }`}
-                        style={{ 
-                          width: `${Math.min(
-                            100, 
-                            (currentFrequency / weakPoint.sessionsPerWeekGoal) * 100
-                          )}%` 
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
