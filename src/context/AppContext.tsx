@@ -1018,3 +1018,4 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
+export { AppContext };
