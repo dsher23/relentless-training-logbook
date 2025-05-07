@@ -1,128 +1,127 @@
-
-import React, { useState } from "react";
-import { format } from "date-fns";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import { MoodLog } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
-const emojis = ["😖", "😔", "😐", "😊", "🤩"];
+const MoodLogForm: React.FC<{ logId?: string; onClose: () => void }> = ({ logId, onClose }) => {
+  const { moodLogs, addMoodLog, updateMoodLog } = useAppContext();
+  const { toast } = useToast();
+  const [date, setDate] = useState("");
+  const [mood, setMood] = useState("");
+  const [notes, setNotes] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-interface MoodLogFormProps {
-  existingLog?: MoodLog;
-  onSave?: () => void;
-}
-
-const MoodLogForm: React.FC<MoodLogFormProps> = ({ existingLog, onSave }) => {
-  const { addMoodLog, updateMoodLog } = useAppContext();
-  const [sleep, setSleep] = useState(existingLog?.sleepQuality || existingLog?.sleep || 7);
-  const [energy, setEnergy] = useState(existingLog?.energyLevel || existingLog?.energy || 7);
-  const [mood, setMood] = useState(existingLog?.mood ? Number(existingLog.mood) : 3);
-  const [notes, setNotes] = useState(existingLog?.notes || "");
-
-  const handleSave = () => {
-    const newLog: MoodLog = {
-      id: existingLog?.id || crypto.randomUUID(),
-      date: existingLog?.date || new Date(),
-      sleepQuality: sleep,
-      energyLevel: energy,
-      mood: mood,
-      notes,
-      stressLevel: existingLog?.stressLevel || 5,
-      sleep,
-      energy
-    };
-    
-    if (existingLog) {
-      updateMoodLog(newLog);
-    } else {
-      addMoodLog(newLog);
+  // If editing an existing mood log, load its data
+  useEffect(() => {
+    if (logId) {
+      const log = moodLogs.find((l) => l.id === logId);
+      if (log) {
+        setDate(log.date);
+        setMood(log.mood);
+        setNotes(log.notes || "");
+      }
     }
-    
-    if (onSave) onSave();
+  }, [logId, moodLogs]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!date || !mood) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const logData = {
+        date,
+        mood,
+        notes,
+      };
+
+      if (logId) {
+        await updateMoodLog(logId, { ...logData, id: logId });
+        toast({
+          title: "Success",
+          description: "Mood log updated successfully.",
+        });
+      } else {
+        await addMoodLog(logData);
+        toast({
+          title: "Success",
+          description: "Mood log added successfully.",
+        });
+      }
+      onClose();
+    } catch (error) {
+      console.error("MoodLogForm.tsx: Error saving mood log:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save mood log.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Card>
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>
-          {existingLog 
-            ? `Edit Recovery Log - ${format(new Date(existingLog.date), "MMM d, yyyy")}`
-            : `Today's Recovery Log - ${format(new Date(), "MMM d, yyyy")}`
-          }
-        </CardTitle>
+        <CardTitle>{logId ? "Edit Mood Log" : "Add Mood Log"}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Sleep Quality</label>
-          <div className="flex items-center">
-            <span className="mr-4 text-sm">Poor</span>
-            <Slider
-              value={[sleep]}
-              min={1}
-              max={10}
-              step={1}
-              onValueChange={(value) => setSleep(value[0])}
-              className="flex-1"
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={isLoading}
             />
-            <span className="ml-4 text-sm">Great</span>
           </div>
-          <div className="text-center text-sm text-muted-foreground mt-1">
-            {sleep}/10
+          <div>
+            <Label htmlFor="mood">Mood</Label>
+            <Select onValueChange={setMood} value={mood}>
+              <SelectTrigger id="mood">
+                <SelectValue placeholder="Select your mood" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Happy">Happy</SelectItem>
+                <SelectItem value="Sad">Sad</SelectItem>
+                <SelectItem value="Neutral">Neutral</SelectItem>
+                <SelectItem value="Stressed">Stressed</SelectItem>
+                <SelectItem value="Excited">Excited</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Energy Level</label>
-          <div className="flex items-center">
-            <span className="mr-4 text-sm">Low</span>
-            <Slider
-              value={[energy]}
-              min={1}
-              max={10}
-              step={1}
-              onValueChange={(value) => setEnergy(value[0])}
-              className="flex-1"
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Input
+              id="notes"
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes"
+              disabled={isLoading}
             />
-            <span className="ml-4 text-sm">High</span>
           </div>
-          <div className="text-center text-sm text-muted-foreground mt-1">
-            {energy}/10
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Mood</label>
-          <div className="flex justify-between">
-            {emojis.map((emoji, index) => (
-              <button
-                key={index}
-                onClick={() => setMood(index + 1)}
-                className={`p-2 rounded-full text-2xl ${
-                  mood === index + 1 ? "bg-secondary" : ""
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Notes</label>
-          <Textarea
-            placeholder="How are you feeling today?"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-          />
-        </div>
-        
-        <Button onClick={handleSave} className="w-full bg-gym-purple text-white hover:bg-gym-darkPurple">
-          Save Recovery Log
-        </Button>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Saving..." : logId ? "Update Mood Log" : "Add Mood Log"}
+          </Button>
+          <Button type="button" variant="outline" className="w-full" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
