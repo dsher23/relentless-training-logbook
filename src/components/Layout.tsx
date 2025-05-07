@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import TabNavigationExtended from './TabNavigationExtended';
-import NavigationHeader from './NavigationHeaderExtended';
+import NavigationHeaderExtended from './NavigationHeaderExtended';
 
 const Layout: React.FC = () => {
   const location = useLocation();
@@ -15,7 +15,7 @@ const Layout: React.FC = () => {
   
   return (
     <div className="pb-16 min-h-screen bg-background"> 
-      {!hideHeader && <NavigationHeader title="IronLog" showBack={false} />}
+      {!hideHeader && <NavigationHeaderExtended title="IronLog" showBack={false} />}
       <div className={!hideHeader ? "pt-14" : ""}> {/* Add padding top only if header is shown */}
         <Outlet />
       </div>
