@@ -91,7 +91,7 @@ export const useLiveWorkout = () => {
         weight: bestSet.weight,
         reps: bestSet.reps,
         date: new Date().toISOString(),
-        workoutId: id, // Now valid since workoutId is part of PRLift
+        workoutId: id,
         isDirectEntry: false
       });
 
@@ -147,7 +147,7 @@ export const useLiveWorkout = () => {
       // Since this is a new workout from a template, use addWorkout instead of updateWorkout
       addWorkout(completedWorkout.name, completedWorkout.exercises, {
         id: completedWorkout.id,
-        completed: true, // Fix: Use boolean instead of completedWorkout.date
+        completed: true,
         date: completedWorkout.date.toISOString(),
         notes: completedWorkout.notes,
       });
