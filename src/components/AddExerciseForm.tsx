@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { Exercise } from "@/types";
 
-const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = ({ exerciseId, onClose }) => {
+const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exercise?: Exercise; isOpen?: boolean; onSave?: (exercise: Exercise) => void }> = ({ exerciseId, onClose, exercise, isOpen, onSave }) => {
   const { exercises, addExercise, updateExercise } = useAppContext();
   const { toast } = useToast();
   const [name, setName] = useState("");
@@ -18,16 +19,21 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = 
 
   // If editing an existing exercise, load its data
   useEffect(() => {
-    if (exerciseId) {
-      const exercise = exercises.find((e) => e.id === exerciseId);
-      if (exercise) {
-        setName(exercise.name);
-        setCategory(exercise.category);
-        setSets(JSON.stringify(exercise.sets)); // Convert sets array to string for display
-        setReps(exercise.reps.toString());
+    if (exerciseId && exercises) {
+      const existingExercise = exercises.find((e) => e.id === exerciseId);
+      if (existingExercise) {
+        setName(existingExercise.name);
+        setCategory(existingExercise.category);
+        setSets(JSON.stringify(existingExercise.sets));
+        setReps(existingExercise.reps.toString());
       }
+    } else if (exercise) {
+      setName(exercise.name);
+      setCategory(exercise.category);
+      setSets(JSON.stringify(exercise.sets));
+      setReps(exercise.reps.toString());
     }
-  }, [exerciseId, exercises]);
+  }, [exerciseId, exercises, exercise]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,20 +48,23 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = 
 
     setIsLoading(true);
     try {
-      const setsArray = JSON.parse(sets); // Parse sets string back to array
+      const setsArray = JSON.parse(sets);
       if (!Array.isArray(setsArray)) {
         throw new Error("Sets must be a valid JSON array (e.g., [{reps: 10, weight: 50}])");
       }
 
-      const exerciseData = {
+      const exerciseData: Exercise = {
+        id: exerciseId || Date.now().toString(),
         name,
         category,
         sets: setsArray,
         reps: Number(reps),
       };
 
-      if (exerciseId) {
-        await updateExercise(exerciseId, { ...exerciseData, id: exerciseId });
+      if (onSave) {
+        onSave(exerciseData);
+      } else if (exerciseId) {
+        await updateExercise(exerciseId, exerciseData);
         toast({
           title: "Success",
           description: "Exercise updated successfully.",
@@ -79,6 +88,8 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = 
       setIsLoading(false);
     }
   };
+
+  if (!isOpen && !exerciseId) return null;
 
   return (
     <Card className="w-full max-w-md mx-auto">
