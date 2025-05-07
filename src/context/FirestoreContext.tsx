@@ -4,7 +4,7 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { useAppContext } from './AppContext';
-import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle } from '@/types';
+import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle, WorkoutTemplate, TrainingBlock, Supplement } from '@/types';
 
 interface MoodLogData extends MoodLog {}
 
@@ -96,7 +96,12 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load workout templates
       const templatesRef = collection(db, `users/${userId}/workoutTemplates`);
       const templatesSnap = await getDocs(templatesRef);
-      const templatesData = templatesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const templatesData = templatesSnap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        name: doc.data().name || "Template", 
+        exercises: doc.data().exercises || [] 
+      })) as WorkoutTemplate[];
       setWorkoutTemplates(templatesData);
       
       // Load body measurements
@@ -135,7 +140,13 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load training blocks
       const blocksRef = collection(db, `users/${userId}/trainingBlocks`);
       const blocksSnap = await getDocs(blocksRef);
-      const blocksData = blocksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const blocksData = blocksSnap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        name: doc.data().name || "Block",
+        startDate: doc.data().startDate || new Date().toISOString(),
+        endDate: doc.data().endDate || new Date().toISOString()
+      })) as TrainingBlock[];
       setTrainingBlocks(blocksData);
       
       // Load weekly routines
@@ -170,7 +181,14 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load supplements
       const supplementsRef = collection(db, `users/${userId}/supplements`);
       const supplementsSnap = await getDocs(supplementsRef);
-      const supplementsData = supplementsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const supplementsData = supplementsSnap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        name: doc.data().name || "",
+        dosage: doc.data().dosage || "",
+        frequency: doc.data().frequency || "",
+        date: doc.data().date || new Date().toISOString()
+      })) as Supplement[];
       setSupplements(supplementsData);
       
     } catch (error) {

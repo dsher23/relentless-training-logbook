@@ -1,64 +1,97 @@
 
-// Base types
-export interface User {
-  id: string;
-  email: string;
-  displayName?: string;
-  photoURL?: string;
-  createdAt?: string;
-}
-
 export interface UserProfile {
   id?: string;
-  displayName?: string;
-  email?: string;
+  displayName: string;
+  email: string;
+  createdAt: string;
   photoURL?: string;
-  createdAt?: string;
   bio?: string;
-  height?: number;
-  weight?: number;
-  birthDate?: string;
-  gender?: string;
-  fitnessGoal?: string;
-  experienceLevel?: string;
+  preferences?: UserPreferences;
 }
 
-// Workout related types
+export interface UserPreferences {
+  darkMode?: boolean;
+  notifications?: boolean;
+  measurementSystem?: 'metric' | 'imperial';
+}
+
 export interface Exercise {
   id: string;
   name: string;
   category: 'upper' | 'lower' | 'core' | 'other';
   sets: Array<{
     reps: number;
-    weight: number;
+    weight?: number;
     completed?: boolean;
   }>;
   reps: number;
   weight?: number;
-  restTime?: number;
+  notes?: string;
 }
 
 export interface Workout {
   id: string;
   name: string;
   exercises: Exercise[];
-  completed: boolean;
   date: string;
   duration?: number;
   notes?: string;
-  totalVolume?: number;
+  completed: boolean;
   scheduledTime?: string;
+  templateId?: string;
 }
 
 export interface WorkoutTemplate {
   id: string;
   name: string;
   exercises: Exercise[];
-  notes?: string;
-  isFavorite?: boolean;
+  description?: string;
   scheduledTime?: string;
-  dayName?: string;
-  active?: boolean;
+  estimatedDuration?: number;
+}
+
+export interface BodyMeasurement {
+  id: string;
+  date: string;
+  weight?: number;
+  bodyFat?: number;
+  measurements?: {
+    chest?: number;
+    waist?: number;
+    hips?: number;
+    thighs?: number;
+    arms?: number;
+    calves?: number;
+  };
+  notes?: string;
+}
+
+export interface ProgressPhoto {
+  id: string;
+  date: string;
+  url: string;
+  type?: 'front' | 'back' | 'side' | 'other';
+  notes?: string;
+}
+
+export interface MoodLog {
+  id: string;
+  date: string;
+  mood: 'great' | 'good' | 'okay' | 'bad' | 'terrible';
+  energy: number;
+  stress: number;
+  sleep: number;
+  notes?: string;
+}
+
+export interface TrainingBlock {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  focus?: string;
+  workouts?: Workout[];
+  notes?: string;
 }
 
 export interface WorkoutDay {
@@ -70,57 +103,19 @@ export interface WorkoutDay {
 export interface WeeklyRoutine {
   id: string;
   name: string;
-  workouts: string[];
+  workouts: Workout[];
   startDate: string;
   endDate: string;
   workoutDays: WorkoutDay[];
-  days: Record<string, string[]>;
+  days: {
+    [key: string]: {
+      workoutId?: string;
+      completed?: boolean;
+    };
+  };
   archived: boolean;
 }
 
-export interface WorkoutPlan {
-  id: string;
-  name: string;
-  description?: string;
-  duration?: number;
-  level?: string;
-  tags?: string[];
-  createdAt?: string;
-  workoutTemplates: WorkoutTemplate[];
-}
-
-export interface TrainingBlock {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  goal?: string;
-  notes?: string;
-}
-
-// Measurement related types
-export interface BodyMeasurement {
-  id: string;
-  date: string;
-  weight: number;
-  chest?: number;
-  waist?: number;
-  arms?: number;
-  forearms?: number;
-  thighs?: number;
-  calves?: number;
-  notes?: string;
-}
-
-export interface ProgressPhoto {
-  id: string;
-  url: string;
-  date: string;
-  type?: string;
-  notes?: string;
-}
-
-// PR related types
 export interface PRLift {
   id: string;
   exercise: string;
@@ -130,18 +125,6 @@ export interface PRLift {
   notes?: string;
 }
 
-// Mood related types
-export interface MoodLog {
-  id: string;
-  date: string;
-  mood: number;
-  energy: number;
-  stress?: number;
-  sleep?: number;
-  notes?: string;
-}
-
-// Supplement related types
 export interface Supplement {
   id: string;
   name: string;
@@ -151,17 +134,16 @@ export interface Supplement {
   notes?: string;
 }
 
-// Steroid related types
 export interface SteroidCompound {
   id: string;
+  cycleId: string;
   name: string;
   weeklyDosage: number;
   dosageUnit: string;
   frequency: string;
   duration?: number;
   notes?: string;
-  cycleId?: string;
-  active?: boolean;
+  active: boolean;
 }
 
 export interface SteroidCycle {
@@ -171,14 +153,32 @@ export interface SteroidCycle {
   startDate: string;
   endDate: string;
   isPrivate: boolean;
+  notes?: string;
 }
 
-// Notification types
+export interface WorkoutPlan {
+  id: string;
+  name: string;
+  description?: string;
+  workoutTemplates?: WorkoutTemplate[];
+  startDate?: string;
+  endDate?: string;
+  active?: boolean;
+}
+
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
   date: string;
   read: boolean;
+  type: 'reminder' | 'achievement' | 'system' | 'other';
+}
+
+export interface AppSettings {
+  darkMode: boolean;
+  measurementSystem: 'metric' | 'imperial';
+  notifications: boolean;
+  sound: boolean;
+  language: string;
 }
