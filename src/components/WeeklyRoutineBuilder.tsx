@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -6,7 +5,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Exercise } from "@/types";
+import { Exercise, WorkoutTemplate } from "@/types";
 import AddExerciseForm from "./AddExerciseForm";
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, MoveVertical } from "lucide-react";
@@ -77,8 +76,8 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     if (templateId) {
       const storedRoutines = localStorage.getItem('workoutTemplates');
       if (storedRoutines) {
-        const routines = JSON.parse(storedRoutines);
-        const targetRoutine = routines.find((r: any) => r.id === templateId);
+        const routines = JSON.parse(storedRoutines) as WorkoutTemplate[];
+        const targetRoutine = routines.find((r) => r.id === templateId);
         if (targetRoutine) {
           setRoutineName(targetRoutine.name);
           setSelectedExercises(targetRoutine.exercises || []);
@@ -120,7 +119,7 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
   
   const handleSaveRoutine = () => {
     // Create a workout template object
-    const workoutTemplate = {
+    const workoutTemplate: WorkoutTemplate = {
       id: templateId || uuidv4(),
       name: routineName,
       exercises: selectedExercises,
@@ -129,12 +128,12 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     
     // Save to localStorage for persistence between sessions
     const storedTemplates = localStorage.getItem('workoutTemplates');
-    let templates = [];
+    let templates: WorkoutTemplate[] = [];
     
     if (storedTemplates) {
       templates = JSON.parse(storedTemplates);
       // Update existing or add new
-      const existingIndex = templates.findIndex((t: any) => t.id === workoutTemplate.id);
+      const existingIndex = templates.findIndex((t) => t.id === workoutTemplate.id);
       if (existingIndex >= 0) {
         templates[existingIndex] = workoutTemplate;
       } else {
