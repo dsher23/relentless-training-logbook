@@ -1,53 +1,42 @@
-
 import React from "react";
-import { Shield, Info } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/context/AppContext";
+import { useToast } from "@/hooks/use-toast";
 
-interface DeloadModeProps {
-  workoutId: string;
-  isDeload: boolean;
-}
-
-const DeloadModeToggle: React.FC<DeloadModeProps> = ({ workoutId, isDeload }) => {
+const DeloadModeToggle: React.FC = () => {
   const { toggleDeloadMode } = useAppContext();
-  
-  const handleToggle = (checked: boolean) => {
-    toggleDeloadMode(workoutId, checked);
+  const { toast } = useToast();
+
+  const handleToggle = async () => {
+    try {
+      await toggleDeloadMode(); // No arguments expected
+      console.log("DeloadModeToggle.tsx: Deload mode toggled successfully");
+      toast({
+        title: "Success",
+        description: "Deload mode toggled successfully.",
+      });
+    } catch (error) {
+      console.error("DeloadModeToggle.tsx: Error toggling deload mode:", error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle deload mode.",
+        variant: "destructive",
+      });
+    }
   };
-  
+
   return (
-    <div className="flex items-center space-x-2 mb-4 p-3 border rounded-md bg-secondary">
-      <Shield className={`h-5 w-5 ${isDeload ? 'text-iron-blue' : 'text-muted-foreground'}`} />
-      <div className="flex-1">
-        <div className="flex items-center">
-          <Label htmlFor="deload-mode" className="font-medium">Deload Mode</Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground ml-1" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="w-[200px] text-xs">
-                  Deload mode reduces your working weights to help recovery. 
-                  Previous weights will be shown but reduced by your preferred percentage.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Reduce working weights for recovery
-        </p>
-      </div>
-      <Switch 
-        id="deload-mode" 
-        checked={isDeload}
-        onCheckedChange={handleToggle}
-      />
-    </div>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Deload Mode</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={handleToggle} className="w-full">
+          Toggle Deload Mode
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
