@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import AddExerciseForm from "@/components/AddExerciseForm";
 import ExercisesList from "@/components/ExercisesList";
 import { useAppContext } from "@/context/AppContext";
-import { Exercise } from "@/types";
+import { Exercise, WorkoutTemplate } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,7 +25,7 @@ const DayExercises: React.FC = () => {
   // Find active plan if planId is not provided
   const activePlan = planId 
     ? workoutPlans.find(p => p.id === planId)
-    : workoutPlans.find(p => p.isActive);
+    : workoutPlans.find(p => p.active);
     
   const plan = activePlan;
   
@@ -78,8 +78,8 @@ const DayExercises: React.FC = () => {
     );
   }
 
-  const handleSaveExercise = (exercise: Exercise) => {
-    let updatedExercises;
+  const handleSaveExercise = async (exercise: Exercise) => {
+    let updatedExercises: Exercise[];
     if (editingExerciseId) {
       updatedExercises = day.exercises.map(ex => 
         ex.id === editingExerciseId ? exercise : ex
@@ -89,18 +89,16 @@ const DayExercises: React.FC = () => {
     }
     
     // Update the day template
-    const updatedDay = { ...day, exercises: updatedExercises };
-    updateWorkoutTemplate(updatedDay);
+    const updatedDay: WorkoutTemplate = { ...day, exercises: updatedExercises };
+    await updateWorkoutTemplate(day.id, updatedDay);
     
     // If the day is part of a plan, update the plan as well
     if (plan) {
       const updatedPlanTemplates = plan.workoutTemplates.map(t => 
         t.id === dayId ? updatedDay : t
       );
-      updateWorkoutPlan({
-        ...plan,
-        workoutTemplates: updatedPlanTemplates
-      });
+      const updatedPlan = { ...plan, workoutTemplates: updatedPlanTemplates };
+      await updateWorkoutPlan(plan.id, updatedPlan);
     }
     
     setShowExerciseForm(false);
@@ -112,22 +110,20 @@ const DayExercises: React.FC = () => {
     });
   };
 
-  const handleDeleteExercise = (exerciseId: string) => {
+  const handleDeleteExercise = async (exerciseId: string) => {
     const updatedExercises = day.exercises.filter(ex => ex.id !== exerciseId);
     
     // Update the day template
-    const updatedDay = { ...day, exercises: updatedExercises };
-    updateWorkoutTemplate(updatedDay);
+    const updatedDay: WorkoutTemplate = { ...day, exercises: updatedExercises };
+    await updateWorkoutTemplate(day.id, updatedDay);
     
     // If the day is part of a plan, update the plan as well
     if (plan) {
       const updatedPlanTemplates = plan.workoutTemplates.map(t => 
         t.id === dayId ? updatedDay : t
       );
-      updateWorkoutPlan({
-        ...plan,
-        workoutTemplates: updatedPlanTemplates
-      });
+      const updatedPlan = { ...plan, workoutTemplates: updatedPlanTemplates };
+      await updateWorkoutPlan(plan.id, updatedPlan);
     }
     
     toast({
