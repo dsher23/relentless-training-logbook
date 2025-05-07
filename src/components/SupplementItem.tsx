@@ -1,233 +1,246 @@
-
 import React, { useState } from "react";
-import { format } from "date-fns";
-import { PillIcon, Check, X, Clock, Edit, Save } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
-import { Supplement, SupplementLog } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
-interface SupplementItemProps {
-  supplement: Supplement;
-  log?: SupplementLog;
-  date?: Date;
-}
-
-const SupplementItem: React.FC<SupplementItemProps> = ({ supplement, log, date = new Date() }) => {
-  const { addSupplementLog, updateSupplementLog, addReminder, updateSupplement } = useAppContext();
-  const [showTimePopover, setShowTimePopover] = useState(false);
+const SupplementItem: React.FC<{ supplement: any }> = ({ supplement }) => {
+  const { supplementLogs, addSupplementLog, updateSupplementLog, addReminder, updateSupplement } = useAppContext();
+  const { toast } = useToast();
+  const [logDate, setLogDate] = useState("");
+  const [taken, setTaken] = useState(false);
+  const [reminderDate, setReminderDate] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(supplement.name);
-  const [editedDosage, setEditedDosage] = useState(supplement.dosage);
-  const [editedNotes, setEditedNotes] = useState(supplement.notes || "");
-  
-  const handleToggle = () => {
-    if (!log) {
-      addSupplementLog({
-        id: crypto.randomUUID(),
+  const [name, setName] = useState(supplement.name);
+  const [dosage, setDosage] = useState(supplement.dosage);
+  const [frequency, setFrequency] = useState(supplement.frequency);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogSupplement = async () => {
+    if (!logDate) {
+      toast({
+        title: "Error",
+        description: "Please select a date for the log.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const logData = {
         supplementId: supplement.id,
-        date: new Date(date),
-        dosageTaken: supplement.dosage,
-        taken: true,
-        time: new Date()
+        date: logDate, // Already a string from input type="date"
+        taken,
+      };
+
+      const existingLog = supplementLogs.find(
+        (log) => log.supplementId === supplement.id && log.date === logDate
+      );
+
+      if (existingLog) {
+        await updateSupplementLog(existingLog.id, { ...logData, id: existingLog.id });
+        toast({
+          title: "Success",
+          description: "Supplement log updated successfully.",
+        });
+      } else {
+        await addSupplementLog(logData);
+        toast({
+          title: "Success",
+          description: "Supplement log added successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("SupplementItem.tsx: Error logging supplement:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log supplement.",
+        variant: "destructive",
       });
-    } else {
-      updateSupplementLog({
-        ...log,
-        taken: !log.taken,
-        time: log.taken ? undefined : new Date()
-      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleAddReminder = (time: string) => {
-    // Create a date object for today with the specified time
-    const [hours, minutes] = time.split(':').map(Number);
-    const reminderDate = new Date();
-    reminderDate.setHours(hours, minutes, 0, 0);
-    
-    // Add reminder
-    addReminder({
-      id: crypto.randomUUID(),
-      type: "supplement",
-      supplementId: supplement.id,
-      time: time,
-      days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      dateTime: reminderDate,
-      title: `Time to take ${supplement.name}`,
-      message: `${supplement.dosage} as scheduled`,
-      dueDate: reminderDate,
-      seen: false,
-      dismissed: false
-    });
-    
-    // Update supplement with time
-    const times = supplement.schedule?.times || [];
-    if (!times.includes(time)) {
-      updateSupplement({
-        ...supplement,
-        schedule: {
-          times: [...times, time],
-          workoutDays: supplement.schedule?.workoutDays || false
-        }
+
+  const handleAddReminder = async () => {
+    if (!reminderDate) {
+      toast({
+        title: "Error",
+        description: "Please select a reminder date.",
+        variant: "destructive",
       });
+      return;
     }
-    
-    setShowTimePopover(false);
+
+    setIsLoading(true);
+    try {
+      const reminderData = {
+        type: `Take ${supplement.name}`,
+        dueDate: reminderDate, // Already a string from input type="datetime-local"
+        seen: false,
+      };
+      await addReminder(reminderData);
+      toast({
+        title: "Success",
+        description: "Reminder added successfully.",
+      });
+    } catch (error) {
+      console.error("SupplementItem.tsx: Error adding reminder:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add reminder.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleStartEditing = () => {
-    setEditedName(supplement.name);
-    setEditedDosage(supplement.dosage);
-    setEditedNotes(supplement.notes || "");
-    setIsEditing(true);
+  const handleUpdateSupplement = async () => {
+    if (!name || !dosage || !frequency) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const updatedSupplement = {
+        name,
+        dosage,
+        frequency,
+        date: supplement.date,
+      };
+      await updateSupplement(supplement.id, { ...updatedSupplement, id: supplement.id });
+      toast({
+        title: "Success",
+        description: "Supplement updated successfully.",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("SupplementItem.tsx: Error updating supplement:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update supplement.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveEdit = () => {
-    updateSupplement({
-      ...supplement,
-      name: editedName,
-      dosage: editedDosage,
-      notes: editedNotes || undefined
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  // Get formatted schedule times if available
-  const scheduleTimes = supplement.schedule?.times?.map(time => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const timeDate = new Date();
-    timeDate.setHours(hours, minutes, 0, 0);
-    return format(timeDate, "h:mm a");
-  }).join(', ');
-
-  if (isEditing) {
-    return (
-      <div className="p-4 border-b bg-muted/30">
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium mb-1 block">Name</label>
-            <Input 
-              value={editedName} 
-              onChange={(e) => setEditedName(e.target.value)} 
-              className="h-8"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Dosage</label>
-            <Input 
-              value={editedDosage} 
-              onChange={(e) => setEditedDosage(e.target.value)} 
-              className="h-8"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium mb-1 block">Notes (optional)</label>
-            <Input 
-              value={editedNotes} 
-              onChange={(e) => setEditedNotes(e.target.value)} 
-              className="h-8"
-            />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button 
-              size="sm" 
-              onClick={handleSaveEdit}
-              className="h-8"
-            >
-              <Save className="h-4 w-4 mr-1" /> Save
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>{supplement.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isEditing ? (
+          <>
+            <div>
+              <Label htmlFor={`name-${supplement.id}`}>Name</Label>
+              <Input
+                id={`name-${supplement.id}`}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter supplement name"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`dosage-${supplement.id}`}>Dosage</Label>
+              <Input
+                id={`dosage-${supplement.id}`}
+                type="text"
+                value={dosage}
+                onChange={(e) => setDosage(e.target.value)}
+                placeholder="Enter dosage"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`frequency-${supplement.id}`}>Frequency</Label>
+              <Input
+                id={`frequency-${supplement.id}`}
+                type="text"
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value)}
+                placeholder="Enter frequency"
+                disabled={isLoading}
+              />
+            </div>
+            <Button onClick={handleUpdateSupplement} className="w-full" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save Changes"}
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleCancelEdit}
-              className="h-8"
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsEditing(false)}
+              disabled={isLoading}
             >
               Cancel
             </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-between p-4 border-b">
-      <div className="flex items-center">
-        <div className="p-2 rounded-full bg-secondary text-gym-purple mr-3">
-          <PillIcon className="w-5 h-5" />
-        </div>
-        <div>
-          <h3 className="text-base font-medium">{supplement.name}</h3>
-          <p className="text-xs text-muted-foreground">
-            {supplement.dosage}
-            {scheduleTimes && ` · ${scheduleTimes}`}
-          </p>
-          {supplement.notes && (
-            <p className="text-xs text-muted-foreground italic mt-1">{supplement.notes}</p>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Popover open={showTimePopover} onOpenChange={setShowTimePopover}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-muted-foreground hover:text-primary"
-            >
-              <Clock className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-56 p-3" side="top">
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Set reminder time</h4>
-              <div className="grid grid-cols-3 gap-1">
-                {["08:00", "12:00", "15:00", "18:00", "21:00", "23:00"].map(time => (
-                  <Button 
-                    key={time}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-7"
-                    onClick={() => handleAddReminder(time)}
-                  >
-                    {time}
-                  </Button>
-                ))}
-              </div>
+          </>
+        ) : (
+          <>
+            <p>Dosage: {supplement.dosage}</p>
+            <p>Frequency: {supplement.frequency}</p>
+            <div>
+              <Label htmlFor={`logDate-${supplement.id}`}>Log Date</Label>
+              <Input
+                id={`logDate-${supplement.id}`}
+                type="date"
+                value={logDate}
+                onChange={(e) => setLogDate(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
-          </PopoverContent>
-        </Popover>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-muted-foreground hover:text-primary"
-          onClick={handleStartEditing}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        
-        <button
-          onClick={handleToggle}
-          className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            log?.taken ? "bg-gym-success text-white" : "bg-secondary text-muted-foreground"
-          }`}
-          aria-label={log?.taken ? "Mark as not taken" : "Mark as taken"}
-        >
-          {log?.taken ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-        </button>
-      </div>
-    </div>
+            <div>
+              <Label>
+                <Input
+                  type="checkbox"
+                  checked={taken}
+                  onChange={(e) => setTaken(e.target.checked)}
+                  disabled={isLoading}
+                />
+                Taken
+              </Label>
+            </div>
+            <Button onClick={handleLogSupplement} className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging..." : "Log Supplement"}
+            </Button>
+            <div>
+              <Label htmlFor={`reminderDate-${supplement.id}`}>Set Reminder</Label>
+              <Input
+                id={`reminderDate-${supplement.id}`}
+                type="datetime-local"
+                value={reminderDate}
+                onChange={(e) => setReminderDate(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button onClick={handleAddReminder} className="w-full" disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Reminder"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsEditing(true)}
+              disabled={isLoading}
+            >
+              Edit Supplement
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
