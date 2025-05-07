@@ -3,152 +3,35 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { db, auth } from "../firebase";
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
 import { migrateLocalData } from "../utils/migrateLocalData";
-
-interface ProgressPhoto {
-  id: string;
-  url: string;
-  date: string;
-  notes?: string;
-}
-
-interface BodyMeasurement {
-  id: string;
-  date: string;
-  weight?: number;
-  height?: number;
-  notes?: string;
-}
-
-interface Supplement {
-  id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
-  date: string;
-}
-
-interface SupplementLog {
-  id: string;
-  supplementId: string;
-  date: string;
-  taken: boolean;
-}
-
-interface SteroidCycle {
-  id: string;
-  compound: string;
-  dosage: string;
-  startDate: string;
-  endDate: string;
-}
-
-interface SteroidCompound {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface Reminder {
-  id: string;
-  type: string;
-  dueDate: string;
-  seen: boolean;
-  time: string;
-  days: string[];
-}
-
-interface MoodLog {
-  id: string;
-  date: string;
-  mood: string;
-  notes?: string;
-}
-
-interface WeakPoint {
-  id: string;
-  muscleGroup: string;
-  notes?: string;
-  date: string;
-}
-
-interface Workout {
-  id: string;
-  name: string;
-  exercises: any[];
-  completed: boolean;
-  date: string;
-  notes?: string;
-}
-
-interface WeeklyRecoveryData {
-  id: string;
-  weekStartDate: string;
-  weekStart: string;
-  sleepHours: number[];
-  feeling: "Energized" | "Normal" | "Tired" | "Exhausted";
-  generalFeeling: "Energized" | "Normal" | "Tired" | "Exhausted";
-}
-
-interface PRLift {
-  id: string;
-  exercise: string;
-  weight: number;
-  reps: number;
-  date: string;
-  workoutId?: string;
-}
-
-interface UserProfile {
-  displayName?: string;
-  email?: string;
-  createdAt?: string;
-  startWeight?: number;
-  currentWeight?: number;
-  goalWeight?: number;
-  bio?: string;
-}
-
-interface Exercise {
-  id: string;
-  name: string;
-  category: string;
-  sets: any[];
-  reps: number;
-}
-
-interface TrainingBlock {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  workouts: Workout[];
-}
-
-interface WorkoutPlan {
-  id: string;
-  name: string;
-  templates: any[];
-  active: boolean;
-}
-
-interface WeeklyRoutine {
-  id: string;
-  name: string;
-  workouts: Workout[];
-  startDate: string;
-  endDate: string;
-  archived: boolean;
-}
+import {
+  ProgressPhoto,
+  BodyMeasurement,
+  Supplement,
+  SupplementLog,
+  SteroidCycle,
+  SteroidCompound,
+  Reminder,
+  MoodLog,
+  WeakPoint,
+  Workout,
+  WeeklyRecoveryData,
+  PRLift,
+  UserProfile,
+  Exercise,
+  TrainingBlock,
+  WorkoutPlan,
+  WeeklyRoutine,
+} from "@/types";
 
 interface AppContextType {
   user: User | null;
   userProfile: UserProfile | null;
   workouts: Workout[];
   setWorkouts: (workouts: Workout[]) => void;
-  addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
-  updateWorkout: (id: string, workout: Workout) => void;
-  deleteWorkout: (id: string) => void;
-  markWorkoutCompleted: (id: string) => void;
+  addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => Promise<string>;
+  updateWorkout: (id: string, workout: Workout) => Promise<void>;
+  deleteWorkout: (id: string) => Promise<void>;
+  markWorkoutCompleted: (id: string) => Promise<void>;
   progressPhotos: ProgressPhoto[];
   setProgressPhotos: (photos: ProgressPhoto[]) => void;
   bodyMeasurements: BodyMeasurement[];
@@ -159,66 +42,67 @@ interface AppContextType {
   supplementLogs: SupplementLog[];
   steroidCycles: SteroidCycle[];
   steroidCompounds: SteroidCompound[];
-  addSupplement: (supplement: Omit<Supplement, "id">) => void;
-  updateSupplement: (id: string, supplement: Supplement) => void;
-  addSupplementLog: (log: Omit<SupplementLog, "id">) => void;
-  updateSupplementLog: (id: string, log: SupplementLog) => void;
-  addSteroidCycle: (cycle: Omit<SteroidCycle, "id">) => void;
-  updateSteroidCycle: (id: string, cycle: SteroidCycle) => void;
-  addCompound: (compound: Omit<SteroidCompound, "id">) => void;
-  updateCompound: (id: string, compound: SteroidCompound) => void;
-  deleteCompound: (id: string) => void;
+  addSupplement: (supplement: Omit<Supplement, "id">) => Promise<void>;
+  updateSupplement: (id: string, supplement: Supplement) => Promise<void>;
+  addSupplementLog: (log: Omit<SupplementLog, "id">) => Promise<void>;
+  updateSupplementLog: (id: string, log: SupplementLog) => Promise<void>;
+  addSteroidCycle: (cycle: Omit<SteroidCycle, "id">) => Promise<void>;
+  updateSteroidCycle: (id: string, cycle: SteroidCycle) => Promise<void>;
+  addCompound: (compound: Omit<SteroidCompound, "id">) => Promise<void>;
+  updateCompound: (id: string, compound: SteroidCompound) => Promise<void>;
+  deleteCompound: (id: string) => Promise<void>;
   weeklyRecoveryData: WeeklyRecoveryData | null;
   setWeeklyRecoveryData: (data: WeeklyRecoveryData | null) => void;
   weeklyRoutines: WeeklyRoutine[];
   setWeeklyRoutines: (routines: WeeklyRoutine[]) => void;
-  addWeeklyRoutine: (routine: Omit<WeeklyRoutine, "id">) => void;
-  updateWeeklyRoutine: (id: string, routine: WeeklyRoutine) => void;
-  deleteWeeklyRoutine: (id: string) => void;
-  duplicateWeeklyRoutine: (id: string) => void;
-  archiveWeeklyRoutine: (id: string) => void;
+  addWeeklyRoutine: (routine: Omit<WeeklyRoutine, "id">) => Promise<void>;
+  updateWeeklyRoutine: (id: string, routine: WeeklyRoutine) => Promise<void>;
+  deleteWeeklyRoutine: (id: string) => Promise<void>;
+  duplicateWeeklyRoutine: (id: string) => Promise<void>;
+  archiveWeeklyRoutine: (id: string) => Promise<void>;
   workoutTemplates: any[];
   setWorkoutTemplates: (templates: any[]) => void;
-  addWorkoutTemplate: (template: any) => void;
-  updateWorkoutTemplate: (id: string, template: any) => void;
+  addWorkoutTemplate: (template: any) => Promise<void>;
+  updateWorkoutTemplate: (id: string, template: any) => Promise<void>;
+  deleteWorkoutTemplate: (id: string) => Promise<void>;
   getWorkoutById: (id: string) => Workout | undefined;
   prLifts: PRLift[];
   setPRLifts: (prLifts: PRLift[]) => void;
-  addPRLift: (prLift: Omit<PRLift, "id">) => void;
+  addPRLift: (prLift: Omit<PRLift, "id">) => Promise<void>;
   unitSystem: { bodyWeightUnit: string; bodyMeasurementUnit: string; liftingWeightUnit: string };
   convertWeight: (value: number, fromUnit: string, toUnit: string) => number;
   convertMeasurement: (value: number, fromUnit: string, toUnit: string) => number;
   getWeightUnitDisplay: () => string;
   getMeasurementUnitDisplay: () => string;
-  updateUnitSystem: (system: { bodyWeightUnit: string; bodyMeasurementUnit: string; liftingWeightUnit: string }) => void;
+  updateUnitSystem: (system: { bodyWeightUnit: string; bodyMeasurementUnit: string; liftingWeightUnit: string }) => Promise<void>;
   exercises: Exercise[];
-  addExercise: (exercise: Omit<Exercise, "id">) => void;
-  updateExercise: (id: string, exercise: Exercise) => void;
+  addExercise: (exercise: Omit<Exercise, "id">) => Promise<void>;
+  updateExercise: (id: string, exercise: Exercise) => Promise<void>;
   trainingBlocks: TrainingBlock[];
-  addTrainingBlock: (block: Omit<TrainingBlock, "id">) => void;
-  updateTrainingBlock: (id: string, block: TrainingBlock) => void;
+  addTrainingBlock: (block: Omit<TrainingBlock, "id">) => Promise<void>;
+  updateTrainingBlock: (id: string, block: TrainingBlock) => Promise<void>;
   weakPoints: WeakPoint[];
-  addWeakPoint: (weakPoint: Omit<WeakPoint, "id">) => void;
-  deleteWeakPoint: (id: string) => void;
+  addWeakPoint: (weakPoint: Omit<WeakPoint, "id">) => Promise<void>;
+  deleteWeakPoint: (id: string) => Promise<void>;
   workoutPlans: WorkoutPlan[];
-  addWorkoutPlan: (plan: Omit<WorkoutPlan, "id">) => void;
-  updateWorkoutPlan: (id: string, plan: WorkoutPlan) => void;
-  deleteWorkoutPlan: (id: string) => void;
-  duplicateWorkoutPlan: (id: string) => void;
-  setActivePlan: (id: string) => void;
-  addTemplateToPlan: (planId: string, template: any) => void;
-  removeTemplateFromPlan: (planId: string, templateId: string) => void;
-  duplicateWorkoutTemplate: (id: string) => void;
+  addWorkoutPlan: (plan: Omit<WorkoutPlan, "id">) => Promise<void>;
+  updateWorkoutPlan: (id: string, plan: WorkoutPlan) => Promise<void>;
+  deleteWorkoutPlan: (id: string) => Promise<void>;
+  duplicateWorkoutPlan: (id: string) => Promise<void>;
+  setActivePlan: (id: string) => Promise<void>;
+  addTemplateToPlan: (planId: string, template: any) => Promise<void>;
+  removeTemplateFromPlan: (planId: string, templateId: string) => Promise<void>;
+  duplicateWorkoutTemplate: (id: string) => Promise<void>;
   reminders: Reminder[];
-  addReminder: (reminder: Omit<Reminder, "id">) => void;
+  addReminder: (reminder: Omit<Reminder, "id">) => Promise<void>;
   getDueReminders: () => Reminder[];
-  markReminderAsSeen: (id: string) => void;
-  dismissReminder: (id: string) => void;
+  markReminderAsSeen: (id: string) => Promise<void>;
+  dismissReminder: (id: string) => Promise<void>;
   moodLogs: MoodLog[];
-  addMoodLog: (log: Omit<MoodLog, "id">) => void;
-  updateMoodLog: (id: string, log: MoodLog) => void;
-  toggleDeloadMode: () => void;
-  exportData: () => void;
+  addMoodLog: (log: Omit<MoodLog, "id">) => Promise<void>;
+  updateMoodLog: (id: string, log: MoodLog) => Promise<void>;
+  toggleDeloadMode: () => Promise<void>;
+  exportData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -273,7 +157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }, (error) => {
       console.error("AppContext.tsx: Error in onAuthStateChanged:", error.message);
-      setUser(undefined);
+      setUser(null);
     });
 
     return () => {
@@ -300,7 +184,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUserProfile(data);
       } else {
         console.log("AppContext.tsx: No user profile found in Firestore, using default values");
-        setUserProfile({
+        const defaultProfile: UserProfile = {
           displayName: user.displayName || "User",
           email: user.email || "",
           createdAt: new Date().toISOString(),
@@ -308,7 +192,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           currentWeight: 0,
           goalWeight: 0,
           bio: "",
-        });
+        };
+        setUserProfile(defaultProfile);
+        // Save default profile to Firestore
+        setDoc(profileRef, defaultProfile).catch((error) =>
+          console.error("AppContext.tsx: Error saving default profile to Firestore:", error.message)
+        );
       }
     }, (error) => {
       console.error("AppContext.tsx: Error syncing user profile from Firestore:", error.message);
@@ -674,7 +563,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addSteroidCycle = async (cycle: Omit<SteroidCycle, "id">) => {
-    const newCycle = { ...cycle, id: Date.now().toString() };
+    const newCycle = { 
+      id: Date.now().toString(),
+      compound: cycle.compound,
+      dosage: cycle.dosage,
+      startDate: cycle.startDate,
+      endDate: cycle.endDate,
+    };
     const updatedCycles = [...steroidCycles, newCycle];
     setSteroidCycles(updatedCycles);
   };
@@ -701,7 +596,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addWeeklyRoutine = async (routine: Omit<WeeklyRoutine, "id">) => {
-    const newRoutine = { ...routine, id: Date.now().toString(), archived: false };
+    const newRoutine = { 
+      ...routine, 
+      id: Date.now().toString(), 
+      archived: routine.archived ?? false,
+      workouts: routine.workouts ?? [],
+      startDate: routine.startDate ?? new Date().toISOString(),
+      endDate: routine.endDate ?? new Date().toISOString(),
+      workoutDays: routine.workoutDays ?? [],
+      days: routine.days ?? {}
+    };
     const updatedRoutines = [...weeklyRoutines, newRoutine];
     setWeeklyRoutines(updatedRoutines);
   };
@@ -740,6 +644,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWorkoutTemplates(updatedTemplates);
   };
 
+  const deleteWorkoutTemplate = async (id: string) => {
+    const updatedTemplates = workoutTemplates.filter(t => t.id !== id);
+    setWorkoutTemplates(updatedTemplates);
+  };
+
   const getWorkoutById = (id: string) => {
     return workouts.find(workout => workout.id === id);
   };
@@ -748,13 +657,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newPRLift = {
       ...prLift,
       id: `${prLift.exercise}-${Date.now()}`,
+      isDirectEntry: prLift.isDirectEntry ?? false,
     };
     const updatedPRLifts = [...prLifts, newPRLift];
     setPRLifts(updatedPRLifts);
   };
 
   const addExercise = async (exercise: Omit<Exercise, "id">) => {
-    const newExercise = { ...exercise, id: Date.now().toString() };
+    const newExercise = { 
+      ...exercise, 
+      id: Date.now().toString(),
+      sets: exercise.sets ?? [],
+      reps: exercise.reps ?? 0,
+      category: exercise.category ?? "other"
+    };
     const updatedExercises = [...exercises, newExercise];
     setExercises(updatedExercises);
   };
@@ -765,7 +681,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addTrainingBlock = async (block: Omit<TrainingBlock, "id">) => {
-    const newBlock = { ...block, id: Date.now().toString() };
+    const newBlock = { 
+      ...block, 
+      id: Date.now().toString(),
+      workouts: block.workouts ?? []
+    };
     const updatedBlocks = [...trainingBlocks, newBlock];
     setTrainingBlocks(updatedBlocks);
   };
@@ -776,7 +696,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addWeakPoint = async (weakPoint: Omit<WeakPoint, "id">) => {
-    const newWeakPoint = { ...weakPoint, id: Date.now().toString() };
+    const newWeakPoint = { 
+      ...weakPoint, 
+      id: Date.now().toString(),
+      muscleGroup: weakPoint.muscleGroup ?? "",
+      date: weakPoint.date ?? new Date().toISOString(),
+      priority: weakPoint.priority ?? "Low",
+      sessionsPerWeekGoal: weakPoint.sessionsPerWeekGoal ?? 1
+    };
     const updatedWeakPoints = [...weakPoints, newWeakPoint];
     setWeakPoints(updatedWeakPoints);
   };
@@ -787,7 +714,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addWorkoutPlan = async (plan: Omit<WorkoutPlan, "id">) => {
-    const newPlan = { ...plan, id: Date.now().toString(), active: false };
+    const newPlan = { 
+      ...plan, 
+      id: Date.now().toString(), 
+      active: plan.active ?? false,
+      templates: plan.templates ?? [],
+      archived: plan.archived ?? false,
+      routines: plan.routines ?? []
+    };
     const updatedPlans = [...workoutPlans, newPlan];
     setWorkoutPlans(updatedPlans);
   };
@@ -853,8 +787,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...reminder, 
       id: Date.now().toString(), 
       seen: false,
-      time: reminder.time || new Date().toISOString().split('T')[1].split('.')[0], // Default time if not provided
-      days: reminder.days || ["Monday"] // Default to Monday if not provided
+      time: reminder.time || new Date().toISOString().split('T')[1].split('.')[0],
+      days: reminder.days || ["Monday"]
     };
     const updatedReminders = [...reminders, newReminder];
     setReminders(updatedReminders);
@@ -987,6 +921,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setWorkoutTemplates,
       addWorkoutTemplate,
       updateWorkoutTemplate,
+      deleteWorkoutTemplate,
       getWorkoutById,
       prLifts,
       setPRLifts,
