@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Copy, Edit, Trash, Star, MoreVertical } from "lucide-react";
@@ -21,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 // Empty state component for when no plans exist
-const EmptyState = ({ onCreatePlan }) => (
+const EmptyState = ({ onCreatePlan }: { onCreatePlan: () => void }) => (
   <Card className="border-dashed">
     <CardContent className="pt-6 text-center">
       <div className="flex flex-col items-center justify-center p-6">
@@ -41,10 +40,24 @@ const EmptyState = ({ onCreatePlan }) => (
 );
 
 // Plan card component to display individual plans
-const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick }) => (
+const PlanCard = ({ 
+  plan, 
+  onEdit, 
+  onDuplicate, 
+  onDelete, 
+  onSetActive, 
+  onClick 
+}: { 
+  plan: WorkoutPlan; 
+  onEdit: (plan: WorkoutPlan) => void; 
+  onDuplicate: (id: string) => void; 
+  onDelete: (id: string) => void; 
+  onSetActive: (id: string) => void; 
+  onClick: () => void; 
+}) => (
   <Card 
     key={plan.id}
-    className={`${plan.isActive ? "border-primary" : ""} cursor-pointer hover:border-primary/50 transition-colors`}
+    className={`${plan.active ? "border-primary" : ""} cursor-pointer hover:border-primary/50 transition-colors`}
     onClick={onClick}
   >
     <CardHeader className="pb-2">
@@ -53,7 +66,7 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
           <CardTitle className="text-lg">
             {plan.name}
           </CardTitle>
-          {plan.isActive && (
+          {plan.active && (
             <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary-foreground mt-1">
               Active Plan
             </span>
@@ -81,7 +94,7 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
               <Copy className="h-4 w-4 mr-2" /> Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem 
-              disabled={plan.isActive}
+              disabled={plan.active}
               onClick={(e) => {
                 e.stopPropagation();
                 onSetActive(plan.id);
@@ -120,6 +133,7 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
           className="text-xs"
           onClick={(e) => {
             e.stopPropagation();
+            onClick();
           }}
         >
           View Plan
@@ -130,7 +144,17 @@ const PlanCard = ({ plan, onEdit, onDuplicate, onDelete, onSetActive, onClick })
 );
 
 // Dialog for creating/editing plans
-const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
+const PlanDialog = ({ 
+  isOpen, 
+  onClose, 
+  plan, 
+  onSave 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  plan: WorkoutPlan | null; 
+  onSave: (plan: WorkoutPlan) => void; 
+}) => {
   const [name, setName] = useState(plan?.name || "");
   const [description, setDescription] = useState(plan?.description || "");
   const { toast } = useToast();
@@ -150,8 +174,9 @@ const PlanDialog = ({ isOpen, onClose, plan, onSave }) => {
       name: name.trim(),
       description: description.trim() || undefined,
       workoutTemplates: plan?.workoutTemplates || [],
-      isActive: plan?.isActive || false,
-      archived: plan?.archived || false
+      active: plan?.active || false,
+      archived: plan?.archived || false,
+      routines: plan?.routines || [],
     });
     
     setName("");
@@ -217,7 +242,6 @@ const WorkoutPlanList: React.FC<WorkoutPlanListProps> = ({ showArchived = false 
   const { toast } = useToast();
   const { 
     workoutPlans, 
-    workoutTemplates,
     addWorkoutPlan, 
     updateWorkoutPlan, 
     deleteWorkoutPlan, 
@@ -232,52 +256,45 @@ const WorkoutPlanList: React.FC<WorkoutPlanListProps> = ({ showArchived = false 
     setIsCreateDialogOpen(true);
   };
 
-  const handleSavePlan = (plan: WorkoutPlan) => {
+  const handleSavePlan = async (plan: WorkoutPlan) => {
     const isEditing = !!editingPlan;
     
     if (isEditing) {
-      updateWorkoutPlan(plan);
-      
+      await updateWorkoutPlan(plan.id, plan);
       toast({
         title: "Success",
         description: "Workout plan updated successfully",
       });
-      
       setEditingPlan(null);
     } else {
-      addWorkoutPlan(plan);
-      
+      await addWorkoutPlan(plan);
       toast({
         title: "Success",
         description: "Workout plan created successfully",
       });
-      
       setIsCreateDialogOpen(false);
       navigate(`/exercise-plans/${plan.id}/days`);
     }
   };
 
-  const handleDeletePlan = (id: string) => {
-    deleteWorkoutPlan(id);
-    
+  const handleDeletePlan = async (id: string) => {
+    await deleteWorkoutPlan(id);
     toast({
       title: "Success",
       description: "Workout plan deleted successfully",
     });
   };
 
-  const handleDuplicatePlan = (id: string) => {
-    duplicateWorkoutPlan(id);
-    
+  const handleDuplicatePlan = async (id: string) => {
+    await duplicateWorkoutPlan(id);
     toast({
       title: "Success",
       description: "Workout plan duplicated successfully",
     });
   };
 
-  const handleSetActive = (id: string) => {
-    setActivePlan(id);
-    
+  const handleSetActive = async (id: string) => {
+    await setActivePlan(id);
     toast({
       title: "Success",
       description: "Active plan updated successfully",
