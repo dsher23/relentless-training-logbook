@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -266,6 +267,14 @@ const Auth: React.FC = () => {
       });
     }
   }, [isPhoneAuth]);
+
+  // Add loading check before rendering form
+  if (user === null) {
+    console.log("Auth.tsx: User state is still loading, rendering loading spinner...");
+    return <div>Loading...</div>;
+  }
+
+  console.log("Auth.tsx: Rendering state - isSignUp:", isSignUp, "isPhoneAuth:", isPhoneAuth, "isLoading:", isLoading);
 
   return (
     <div className="app-container animate-fade-in flex items-center justify-center h-screen px-4">

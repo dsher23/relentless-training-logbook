@@ -35,8 +35,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { user } = useAppContext();
   
   if (!user) {
-    console.log("User not authenticated, redirecting to auth page");
-    return <Navigate to="/auth" replace />;
+    console.log("ProtectedRoute: Rendering loading spinner while user state is loading...");
+    return <div>Loading...</div>;
   }
   
   return <>{children}</>;
@@ -95,6 +95,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function App() {
+  console.log("App.tsx: AppProvider context initialized");
+  
   return (
     // Wrap the entire app in AppProvider to provide context to all components
     <AppProvider>
