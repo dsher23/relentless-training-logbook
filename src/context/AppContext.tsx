@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useContext,
@@ -156,15 +155,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
   // User Profile
-  const handleSetUserProfile = async (
-    updates: Partial<UserProfile>
-  ): Promise<void> => {
-    setUserProfile((prevProfile) => ({
-      ...prevProfile,
-      ...updates,
-    }));
-  };
-
+  // Fix: Remove the custom handler for setUserProfile and use the useState setter directly
+  
   // Workouts
   const handleAddWorkout = async (
     workout: Omit<Workout, "id">
@@ -480,7 +472,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     <AppContext.Provider
       value={{
         userProfile,
-        setUserProfile: handleSetUserProfile,
+        setUserProfile, // Use the React state setter directly
         workouts,
         setWorkouts,
         addWorkout: handleAddWorkout,

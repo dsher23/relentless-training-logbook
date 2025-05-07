@@ -1,4 +1,3 @@
-
 export interface UserProfile {
   id?: string;
   displayName: string;
@@ -27,6 +26,7 @@ export interface Exercise {
   reps: number;
   weight?: number;
   notes?: string;
+  restTime?: number;
 }
 
 export interface Workout {

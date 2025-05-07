@@ -1,12 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, getDocs, DocumentData } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { useAppContext } from './AppContext';
-import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle, WorkoutTemplate, TrainingBlock, Supplement } from '@/types';
-
-interface MoodLogData extends MoodLog {}
+import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle, WorkoutTemplate, TrainingBlock, Supplement, UserProfile } from '@/types';
 
 interface FirestoreContextType {
   isAuthenticated: boolean;
@@ -70,14 +67,24 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const userProfileRef = doc(db, `users/${userId}/profile/info`);
       const userProfileSnap = await getDoc(userProfileRef);
       if (userProfileSnap.exists()) {
-        setUserProfile(userProfileSnap.data());
+        // Create a UserProfile object with the required fields to fix the type error
+        const userData = userProfileSnap.data();
+        const userProfileData: UserProfile = {
+          displayName: userData.displayName || user.displayName || "User",
+          email: userData.email || user.email || "",
+          createdAt: userData.createdAt || new Date().toISOString(),
+          ...userData
+        };
+        setUserProfile(userProfileData);
       } else {
         // Create default profile if it doesn't exist
-        await setDoc(userProfileRef, {
+        const newUserProfile: UserProfile = {
           displayName: user.displayName || "User",
-          email: user.email,
+          email: user.email || "",
           createdAt: new Date().toISOString()
-        });
+        };
+        await setDoc(userProfileRef, newUserProfile);
+        setUserProfile(newUserProfile);
       }
       
       // Load workouts
