@@ -8,7 +8,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
 const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cycleId, onClose }) => {
-  const { steroidCompounds, addSteroidCycle, updateSteroidCycle } = useAppContext();
+  const { steroidCycles, steroidCompounds, addSteroidCycle, updateSteroidCycle } = useAppContext();
   const { toast } = useToast();
   const [compound, setCompound] = useState("");
   const [dosage, setDosage] = useState("");
@@ -19,15 +19,15 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
   // If editing an existing cycle, load its data
   useEffect(() => {
     if (cycleId) {
-      const cycle = steroidCompounds.find((c) => c.id === cycleId);
+      const cycle = steroidCycles.find((c) => c.id === cycleId); // Use steroidCycles, not steroidCompounds
       if (cycle) {
-        setCompound(cycle.name);
+        setCompound(cycle.compound);
         setDosage(cycle.dosage);
         setStartDate(cycle.startDate);
         setEndDate(cycle.endDate);
       }
     }
-  }, [cycleId, steroidCompounds]);
+  }, [cycleId, steroidCycles]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
