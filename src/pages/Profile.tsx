@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../firebase"; // Removed storage import since we're using localforage
 import { doc, updateDoc, getDoc } from "firebase/firestore";
