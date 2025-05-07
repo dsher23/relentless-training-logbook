@@ -1,158 +1,142 @@
-
-import React from 'react';
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/hooks/use-toast";
 
-interface AddCycleFormProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cycleId, onClose }) => {
+  const { steroidCompounds, addSteroidCycle, updateSteroidCycle } = useAppContext();
+  const { toast } = useToast();
+  const [compound, setCompound] = useState("");
+  const [dosage, setDosage] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-const formSchema = z.object({
-  name: z.string().min(1, "Cycle name is required"),
-  totalWeeks: z.number().min(1, "Duration must be at least 1 week"),
-  isPrivate: z.boolean().default(false),
-  notes: z.string().optional(),
-});
+  // If editing an existing cycle, load its data
+  useEffect(() => {
+    if (cycleId) {
+      const cycle = steroidCompounds.find((c) => c.id === cycleId);
+      if (cycle) {
+        setCompound(cycle.name);
+        setDosage(cycle.dosage);
+        setStartDate(cycle.startDate);
+        setEndDate(cycle.endDate);
+      }
+    }
+  }, [cycleId, steroidCompounds]);
 
-const AddCycleForm: React.FC<AddCycleFormProps> = ({ open, onOpenChange }) => {
-  const { addSteroidCycle } = useAppContext();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!compound || !dosage || !startDate || !endDate) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      totalWeeks: 12,
-      isPrivate: false,
-      notes: "",
-    },
-  });
+    setIsLoading(true);
+    try {
+      const cycleData = {
+        compound,
+        dosage,
+        startDate,
+        endDate,
+      };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + values.totalWeeks * 7); // Calculate end date based on weeks
-    
-    const newCycle = {
-      id: uuidv4(),
-      name: values.name,
-      startDate: today,
-      endDate: endDate,
-      totalWeeks: values.totalWeeks,
-      currentWeek: 1,
-      isPrivate: values.isPrivate,
-      notes: values.notes,
-      compounds: [],
-    };
-    
-    addSteroidCycle(newCycle);
-    form.reset();
-    onOpenChange(false);
+      if (cycleId) {
+        await updateSteroidCycle(cycleId, { ...cycleData, id: cycleId });
+        toast({
+          title: "Success",
+          description: "Steroid cycle updated successfully.",
+        });
+      } else {
+        await addSteroidCycle(cycleData);
+        toast({
+          title: "Success",
+          description: "Steroid cycle added successfully.",
+        });
+      }
+      onClose();
+    } catch (error) {
+      console.error("AddCycleForm.tsx: Error saving steroid cycle:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save steroid cycle.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add New Cycle</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cycle Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Summer Bulk 2024" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>{cycleId ? "Edit Steroid Cycle" : "Add Steroid Cycle"}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="compound">Compound</Label>
+            <Select onValueChange={setCompound} value={compound}>
+              <SelectTrigger id="compound">
+                <SelectValue placeholder="Select a compound" />
+              </SelectTrigger>
+              <SelectContent>
+                {steroidCompounds.map((comp) => (
+                  <SelectItem key={comp.id} value={comp.name}>
+                    {comp.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="dosage">Dosage</Label>
+            <Input
+              id="dosage"
+              type="text"
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="Enter dosage (e.g., 500mg/week)"
+              disabled={isLoading}
             />
-            
-            <FormField
-              control={form.control}
-              name="totalWeeks"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration (weeks)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min={1} 
-                      {...field} 
-                      onChange={e => field.onChange(parseInt(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <Label htmlFor="startDate">Start Date</Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={isLoading}
             />
-
-            <FormField
-              control={form.control}
-              name="isPrivate"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Private Mode</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <Label htmlFor="endDate">End Date</Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={isLoading}
             />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Additional notes or protocols..."
-                      className="h-20"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full">Create Cycle</Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Saving..." : cycleId ? "Update Cycle" : "Add Cycle"}
+          </Button>
+          <Button type="button" variant="outline" className="w-full" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
