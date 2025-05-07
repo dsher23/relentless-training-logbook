@@ -1,9 +1,13 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { useAppContext } from './AppContext';
+
+interface MoodLog {
+  id: string;
+  // Add any other properties you need for mood logs
+}
 
 interface FirestoreContextType {
   isAuthenticated: boolean;
@@ -100,11 +104,17 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const photosData = photosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setProgressPhotos(photosData);
       
-      // Load mood logs
-      const moodLogsRef = collection(db, `users/${userId}/moodLogs`);
-      const moodLogsSnap = await getDocs(moodLogsRef);
-      const moodLogsData = moodLogsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMoodLogs(moodLogsData);
+      // Fetch mood logs
+      try {
+        const moodLogsSnapshot = await getDocs(collection(db, `users/${userId}/moodLogs`));
+        const moodLogsData = moodLogsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setMoodLogs(moodLogsData as MoodLog[]);
+      } catch (error) {
+        console.error("Error fetching mood logs:", error);
+      }
       
       // Load training blocks
       const blocksRef = collection(db, `users/${userId}/trainingBlocks`);

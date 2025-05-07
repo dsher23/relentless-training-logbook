@@ -1,267 +1,76 @@
-export interface Workout {
-  id: string;
-  name: string;
-  date: Date | string;
-  exercises?: Exercise[];
-  completed?: boolean;
-  deloadMode?: boolean;
-  notes?: string;
-  scheduledTime?: string;
-  isTemplate?: boolean; // Added for WeeklyRoutineBuilder and WorkoutDetailsCard
-}
-
-export interface Set {
-  reps: number;
-  weight: number;
-}
-
-export interface Exercise {
-  id: string;
-  name: string;
-  sets: Set[];
-  reps: number;
-  weight?: number;
-  category: 'upper' | 'lower' | 'core' | 'other';
-  lastProgressDate?: Date | string;
-  isWeakPoint?: boolean;
-  isPrRelevant?: boolean;
-  restTime?: number;
-  notes?: string;
-  prExerciseType?: string;
-  previousStats?: any;
-}
-
-export interface Measurement {
-  id: string;
-  date: Date | string;
-  weight?: number;
-  bodyFat?: number;
-  photos?: string[];
-}
-
-export interface BodyMeasurement extends Measurement {
-  chest?: number;
-  waist?: number;
-  hips?: number;
-  arms?: number;
-  legs?: number;
-  forearms?: number;
-  thighs?: number;
-  calves?: number;
-  notes?: string;
-}
-
+// Supplement types
 export interface Supplement {
   id: string;
   name: string;
   dosage: string;
   frequency: string;
-  time?: string;
   days?: string[];
-  notes?: string; // Added missing field
-  reminderTime?: string;
-  history?: { date: Date | string; taken: boolean }[];
-  schedule?: {
-    times?: string[];
-    workoutDays?: boolean;
-  };
-}
-
-export interface Cycle {
-  id: string;
-  name: string;
-  supplements: Supplement[];
-  startDate: Date | string;
-  endDate: Date | string;
-  history: { date: Date | string; taken: boolean }[];
-}
-
-export interface SteroidCompound {
-  id: string;
-  name: string;
-  description?: string;
-  dosage?: string;
-  frequency?: string;
-  weeklyDosage?: number;
-  dosageUnit?: string;
-  duration?: number;
+  time?: string;
   notes?: string;
-  cycleId?: string;
-  active?: boolean;
-}
-
-export interface SteroidCycle {
-  id: string;
-  compound: string;
-  dosage: string;
-  startDate: string;
-  endDate: string;
-  name?: string;
-  compounds?: SteroidCompound[];
-  notes?: string;
-  isPrivate?: boolean;
-  currentWeek?: number;
-  totalWeeks?: number;
 }
 
 export interface SupplementLog {
   id: string;
   supplementId: string;
-  date: Date | string;
+  date: string;
   taken: boolean;
-  time?: Date | string;
-  dosageTaken?: string;
+  notes?: string;
 }
 
-export interface PR {
-  id: string;
-  exercise: string;
-  weight: number;
-  reps: number;
-  date: Date | string;
-  workoutId?: string;
-  isDirectEntry?: boolean;
-}
-
-export interface WorkoutDay {
-  id: string;
-  dayOfWeek: number;
-  workoutTemplateId: string;
-  workoutName?: string;
-}
-
-export interface WeeklyRoutine {
+export interface SteroidCycle {
   id: string;
   name: string;
-  workoutDays: WorkoutDay[];
-  days: { [key: string]: any };
-  workouts: any[]; // Required field
-  startDate: string; // Required field
-  endDate: string; // Required field
-  archived: boolean;
+  startDate: string;
+  endDate: string;
+  compounds: SteroidCompound[];
+  notes?: string;
+  isPrivate: boolean;
 }
 
-export interface WorkoutTemplate {
+export interface SteroidCompound {
   id: string;
   name: string;
-  exercises: Exercise[];
-  isFavorite?: boolean;
-  scheduledTime?: string;
-  dayName?: string;
+  dosage: string;
+  frequency: string;
+  notes?: string;
 }
 
-export interface WorkoutPlan {
+// Form interfaces
+export interface SupplementFormProps {
+  supplementId?: string;
+  onClose: () => void;
+}
+
+export interface CycleFormProps {
+  cycleId?: string;
+  onClose: () => void;
+}
+
+export interface MoodLog {
   id: string;
-  name: string;
-  description?: string;
-  workoutTemplates: WorkoutTemplate[];
-  active: boolean;
-  archived: boolean;
-  routines: WeeklyRoutine[];
+  date: string;
+  time: string;
+  mood: number;
+  energy?: string;
+  sleep?: number;
+  notes?: string;
 }
 
 export interface Reminder {
   id: string;
   type: string;
   dueDate: string;
+  time: string;
+  days: string[];
   seen: boolean;
-  days: string[]; // Required field
-  time: string; // Required field
 }
 
-export interface ReminderItemProps {
-  reminder: Reminder;
-  onMarkAsSeen: () => Promise<void>;
-}
-
-export interface MoodLog {
-  id: string;
-  date: Date | string;
-  mood: string | number;
-  notes?: string;
-  sleepQuality?: number;
-  sleep?: number;
-  energyLevel?: number;
-  energy?: number;
-  stressLevel?: number;
-}
-
-export interface TrainingBlock {
+export interface WorkoutPlan {
   id: string;
   name: string;
-  startDate: Date | string;
-  endDate?: Date | string;
-  routines?: WeeklyRoutine[];
-  weeklyRoutineId?: string;
-  durationWeeks?: number;
-  goal?: string;
-  notes?: string;
-  workouts: Workout[];
-}
-
-export interface WeeklyRecoveryData {
-  id: string;
-  weekStartDate: string;
-  sleepHours: number[];
-  feeling: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
-  generalFeeling?: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
-  weekStart?: string;
-  recoveryScore?: number;
-}
-
-export interface WeakPoint {
-  id: string;
-  muscleGroup: string;
-  notes?: string;
-  date: string;
-  priority: string;
-  sessionsPerWeekGoal: number;
-  exerciseId?: string;
   description?: string;
-  name?: string;
-}
-
-export interface CycleCompound {
-  id: string;
-  steroidCompoundId: string;
-  dosage: string;
-  name?: string;
-}
-
-export interface ProgressPhoto {
-  id: string;
-  date: Date | string;
-  imageData: string;
-  caption?: string;
-  url?: string;
-}
-
-export interface UnitSystem {
-  bodyWeightUnit: WeightUnit;
-  bodyMeasurementUnit: MeasurementUnit;
-  liftingWeightUnit: WeightUnit;
-}
-
-export type WeightUnit = 'kg' | 'lbs' | 'stone';
-export type MeasurementUnit = 'cm' | 'in';
-
-export interface PRLift {
-  id: string;
-  exercise: string;
-  weight: number;
-  date: string;
-  reps: number;
-  workoutId?: string;
-  isDirectEntry: boolean;
-}
-
-export interface UserProfile {
-  displayName: string;
-  email: string;
-  bio?: string;
-  startWeight?: number;
-  currentWeight?: number;
-  goalWeight?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  active: boolean;
+  templates: string[]; // IDs of workout templates
+  createdAt: string;
+  updatedAt: string;
 }

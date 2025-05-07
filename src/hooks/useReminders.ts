@@ -1,49 +1,41 @@
 
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Reminder } from '@/types';
 
 export const useReminders = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
-  const addReminder = (reminder: Reminder) => {
-    setReminders([...reminders, reminder]);
+  const addReminder = (reminder: Omit<Reminder, 'id' | 'seen'>): Reminder => {
+    const newReminder: Reminder = {
+      id: uuidv4(),
+      ...reminder,
+      seen: false
+    };
+    
+    setReminders([...reminders, newReminder]);
+    return newReminder;
   };
 
-  const updateReminder = (reminder: Reminder) => {
-    setReminders(reminders.map(r => r.id === reminder.id ? reminder : r));
-  };
-
-  const deleteReminder = (id: string) => {
-    setReminders(reminders.filter(r => r.id !== id));
-  };
-
-  const getDueReminders = () => {
-    const now = new Date();
-    return reminders.filter(r => 
-      new Date(r.dateTime || r.dueDate) <= now && !r.dismissed
-    );
-  };
-
-  const markReminderAsSeen = (id: string) => {
-    setReminders(reminders.map(r => 
-      r.id === id ? { ...r, seen: true } : r
+  const updateReminder = (reminderId: string, updates: Partial<Reminder>): void => {
+    setReminders(reminders.map(reminder => 
+      reminder.id === reminderId ? { ...reminder, ...updates } : reminder
     ));
   };
 
-  const dismissReminder = (id: string) => {
-    setReminders(reminders.map(r => 
-      r.id === id ? { ...r, dismissed: true } : r
-    ));
+  const markReminderAsSeen = (reminderId: string): void => {
+    updateReminder(reminderId, { seen: true });
+  };
+
+  const deleteReminder = (reminderId: string): void => {
+    setReminders(reminders.filter(reminder => reminder.id !== reminderId));
   };
 
   return {
     reminders,
-    setReminders,
     addReminder,
     updateReminder,
-    deleteReminder,
-    getDueReminders,
     markReminderAsSeen,
-    dismissReminder,
+    deleteReminder
   };
 };

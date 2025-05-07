@@ -22,6 +22,14 @@ import {
   WorkoutPlan,
   WeeklyRoutine,
 } from "@/types";
+import { v4 as uuidv4 } from 'uuid';
+
+interface AppSettings {
+  bodyWeightUnit: string;
+  bodyMeasurementUnit: string;
+  liftingWeightUnit: string;
+  deloadMode?: boolean;
+}
 
 interface AppContextType {
   user: User | null;
@@ -99,10 +107,13 @@ interface AppContextType {
   markReminderAsSeen: (id: string) => Promise<void>;
   dismissReminder: (id: string) => Promise<void>;
   moodLogs: MoodLog[];
-  addMoodLog: (log: Omit<MoodLog, "id">) => Promise<void>;
-  updateMoodLog: (id: string, log: MoodLog) => Promise<void>;
+  addMoodLog: (log: Omit<MoodLog, "id">) => void;
+  updateMoodLog: (log: MoodLog) => void;
+  deleteMoodLog: (id: string) => void;
   toggleDeloadMode: () => Promise<void>;
   exportData: () => Promise<void>;
+  settings: AppSettings;
+  updateSettings: (settings: Partial<AppSettings>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -140,6 +151,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     bodyWeightUnit: "kg",
     bodyMeasurementUnit: "cm",
     liftingWeightUnit: "kg",
+  });
+  const [settings, setSettings] = useState<AppSettings>({
+    bodyWeightUnit: 'kg',
+    bodyMeasurementUnit: 'cm',
+    liftingWeightUnit: 'kg',
+    deloadMode: false
   });
 
   // Firebase Authentication listener
@@ -809,15 +826,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setReminders(updatedReminders);
   };
 
-  const addMoodLog = async (log: Omit<MoodLog, "id">) => {
-    const newLog = { ...log, id: Date.now().toString() };
-    const updatedLogs = [...moodLogs, newLog];
-    setMoodLogs(updatedLogs);
+  const addMoodLog = (logData: Omit<MoodLog, "id">) => {
+    const newLog = {
+      ...logData,
+      id: uuidv4(),
+    };
+    setMoodLogs([...moodLogs, newLog]);
   };
 
-  const updateMoodLog = async (id: string, updatedLog: MoodLog) => {
-    const updatedLogs = moodLogs.map(log => (log.id === id ? updatedLog : log));
-    setMoodLogs(updatedLogs);
+  const updateMoodLog = (log: MoodLog) => {
+    setMoodLogs(moodLogs.map(l => l.id === log.id ? log : l));
+  };
+
+  const deleteMoodLog = (id: string) => {
+    setMoodLogs(moodLogs.filter(l => l.id !== id));
   };
 
   const toggleDeloadMode = async () => {
@@ -877,6 +899,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateUnitSystem = async (newSystem: { bodyWeightUnit: string; bodyMeasurementUnit: string; liftingWeightUnit: string }) => {
     setUnitSystem(newSystem);
+  };
+
+  const updateSettings = (newSettings: Partial<AppSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
   const value = useMemo(
@@ -958,8 +984,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       moodLogs,
       addMoodLog,
       updateMoodLog,
+      deleteMoodLog,
       toggleDeloadMode,
       exportData,
+      settings,
+      updateSettings,
     }),
     [
       user,
@@ -983,6 +1012,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reminders,
       moodLogs,
       unitSystem,
+      settings,
     ]
   );
 

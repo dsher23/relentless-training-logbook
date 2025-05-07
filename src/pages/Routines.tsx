@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 
 const Routines: React.FC = () => {
-  const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine } = useAppContext();
+  const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, deleteWeeklyRoutine, duplicateWeeklyRoutine, archiveWeeklyRoutine, addRoutine } = useAppContext();
   const [open, setOpen] = React.useState(false);
   const [editRoutineId, setEditRoutineId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -52,6 +52,18 @@ const Routines: React.FC = () => {
     deleteWeeklyRoutine(routineToDelete);
     setConfirmDeleteDialog(false);
     setRoutineToDelete(null);
+  };
+
+  const handleCreateRoutine = () => {
+    addRoutine({
+      name: "New Routine",
+      workoutDays: [],
+      days: {},
+      workouts: [],
+      archived: false,
+      startDate: "",
+      endDate: ""
+    });
   };
 
   return (
