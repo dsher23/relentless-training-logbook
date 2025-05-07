@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"; // Changed to relative path
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,13 +24,13 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exer
       const existingExercise = exercises.find((e) => e.id === exerciseId);
       if (existingExercise) {
         setName(existingExercise.name);
-        setCategory(existingExercise.category);
+        setCategory(existingExercise.category as "upper" | "lower" | "core" | "other");
         setSets(JSON.stringify(existingExercise.sets));
         setReps(existingExercise.reps.toString());
       }
     } else if (exercise) {
       setName(exercise.name);
-      setCategory(exercise.category);
+      setCategory(exercise.category as "upper" | "lower" | "core" | "other");
       setSets(JSON.stringify(exercise.sets));
       setReps(exercise.reps.toString());
     }
