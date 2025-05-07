@@ -53,6 +53,8 @@ interface Reminder {
   type: string;
   dueDate: string;
   seen: boolean;
+  time: string;
+  days: string[];
 }
 
 interface MoodLog {
@@ -162,7 +164,7 @@ interface AppContextType {
   addSupplementLog: (log: Omit<SupplementLog, "id">) => void;
   updateSupplementLog: (id: string, log: SupplementLog) => void;
   addSteroidCycle: (cycle: Omit<SteroidCycle, "id">) => void;
-  updateSteroidCycle: (id: string, cycle: SteroidCycle) => void; // Added updateSteroidCycle
+  updateSteroidCycle: (id: string, cycle: SteroidCycle) => void;
   addCompound: (compound: Omit<SteroidCompound, "id">) => void;
   updateCompound: (id: string, compound: SteroidCompound) => void;
   deleteCompound: (id: string) => void;
@@ -258,36 +260,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Firebase Authentication listener
   useEffect(() => {
+    console.log("AppContext.tsx: Setting up onAuthStateChanged listener");
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log("AppContext.tsx: onAuthStateChanged fired - firebaseUser:", firebaseUser ? `User logged in: ${firebaseUser.uid}` : "User logged out");
       setUser(firebaseUser);
-      console.log("Auth state changed:", firebaseUser ? `User logged in: ${firebaseUser.uid}` : "User logged out");
-
       if (firebaseUser) {
+        console.log("AppContext.tsx: Migrating local data for user:", firebaseUser.uid);
         migrateLocalData(firebaseUser.uid);
       } else {
+        console.log("AppContext.tsx: No user, clearing userProfile");
         setUserProfile(null);
       }
+    }, (error) => {
+      console.error("AppContext.tsx: Error in onAuthStateChanged:", error.message);
+      setUser(undefined);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("AppContext.tsx: Cleaning up onAuthStateChanged listener");
+      unsubscribe();
+    };
   }, []);
 
   // Fetch user profile from Firestore
   useEffect(() => {
     if (!user) {
+      console.log("AppContext.tsx: No user, setting userProfile to null");
       setUserProfile(null);
       return;
     }
 
     const userId = user.uid;
+    console.log("AppContext.tsx: Fetching user profile for userId:", userId);
     const profileRef = doc(db, `users/${userId}/profile/info`);
     const unsubscribeProfile = onSnapshot(profileRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data() as UserProfile;
-        console.log("User profile synced from Firestore:", data);
+        console.log("AppContext.tsx: User profile synced from Firestore:", data);
         setUserProfile(data);
       } else {
-        console.log("No user profile found in Firestore, using default values");
+        console.log("AppContext.tsx: No user profile found in Firestore, using default values");
         setUserProfile({
           displayName: user.displayName || "User",
           email: user.email || "",
@@ -299,7 +311,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
       }
     }, (error) => {
-      console.error("Error syncing user profile from Firestore:", error.message);
+      console.error("AppContext.tsx: Error syncing user profile from Firestore:", error.message);
       setUserProfile({
         displayName: user.displayName || "User",
         email: user.email || "",
@@ -311,13 +323,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     });
 
-    return () => unsubscribeProfile();
+    return () => {
+      console.log("AppContext.tsx: Cleaning up user profile listener");
+      unsubscribeProfile();
+    };
   }, [user]);
 
   // Sync data with Firestore when user is authenticated
   useEffect(() => {
     if (!user) {
-      // Reset state if user is logged out
+      console.log("AppContext.tsx: No user, resetting all state");
       setWorkouts([]);
       setProgressPhotos([]);
       setBodyMeasurements([]);
@@ -340,15 +355,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const userId = user.uid;
+    console.log("AppContext.tsx: Syncing data for userId:", userId);
 
     // Sync workouts
     const workoutsRef = collection(db, `users/${userId}/workouts`);
     const unsubscribeWorkouts = onSnapshot(workoutsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Workout[];
-      console.log("Workouts synced from Firestore:", data);
+      console.log("AppContext.tsx: Workouts synced from Firestore:", data);
       setWorkouts(data);
     }, (error) => {
-      console.error("Error syncing workouts:", error.message);
+      console.error("AppContext.tsx: Error syncing workouts:", error.message);
       setWorkouts([]);
     });
 
@@ -356,10 +372,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const photosRef = collection(db, `users/${userId}/progressPhotos`);
     const unsubscribePhotos = onSnapshot(photosRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProgressPhoto[];
-      console.log("Progress photos synced from Firestore:", data);
+      console.log("AppContext.tsx: Progress photos synced from Firestore:", data);
       setProgressPhotos(data);
     }, (error) => {
-      console.error("Error syncing progress photos:", error.message);
+      console.error("AppContext.tsx: Error syncing progress photos:", error.message);
       setProgressPhotos([]);
     });
 
@@ -367,10 +383,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const measurementsRef = collection(db, `users/${userId}/bodyMeasurements`);
     const unsubscribeMeasurements = onSnapshot(measurementsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BodyMeasurement[];
-      console.log("Body measurements synced from Firestore:", data);
+      console.log("AppContext.tsx: Body measurements synced from Firestore:", data);
       setBodyMeasurements(data);
     }, (error) => {
-      console.error("Error syncing body measurements:", error.message);
+      console.error("AppContext.tsx: Error syncing body measurements:", error.message);
       setBodyMeasurements([]);
     });
 
@@ -378,10 +394,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const userSupplementsRef = collection(db, `users/${userId}/userSupplements`);
     const unsubscribeUserSupplements = onSnapshot(userSupplementsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supplement[];
-      console.log("User supplements synced from Firestore:", data);
+      console.log("AppContext.tsx: User supplements synced from Firestore:", data);
       setUserSupplements(data);
     }, (error) => {
-      console.error("Error syncing user supplements:", error.message);
+      console.error("AppContext.tsx: Error syncing user supplements:", error.message);
       setUserSupplements([]);
     });
 
@@ -389,10 +405,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const supplementsRef = collection(db, `users/${userId}/supplements`);
     const unsubscribeSupplements = onSnapshot(supplementsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supplement[];
-      console.log("Supplements synced from Firestore:", data);
+      console.log("AppContext.tsx: Supplements synced from Firestore:", data);
       setSupplements(data);
     }, (error) => {
-      console.error("Error syncing supplements:", error.message);
+      console.error("AppContext.tsx: Error syncing supplements:", error.message);
       setSupplements([]);
     });
 
@@ -400,10 +416,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const supplementLogsRef = collection(db, `users/${userId}/supplementLogs`);
     const unsubscribeSupplementLogs = onSnapshot(supplementLogsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SupplementLog[];
-      console.log("Supplement logs synced from Firestore:", data);
+      console.log("AppContext.tsx: Supplement logs synced from Firestore:", data);
       setSupplementLogs(data);
     }, (error) => {
-      console.error("Error syncing supplement logs:", error.message);
+      console.error("AppContext.tsx: Error syncing supplement logs:", error.message);
       setSupplementLogs([]);
     });
 
@@ -411,10 +427,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const steroidCyclesRef = collection(db, `users/${userId}/steroidCycles`);
     const unsubscribeSteroidCycles = onSnapshot(steroidCyclesRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SteroidCycle[];
-      console.log("Steroid cycles synced from Firestore:", data);
+      console.log("AppContext.tsx: Steroid cycles synced from Firestore:", data);
       setSteroidCycles(data);
     }, (error) => {
-      console.error("Error syncing steroid cycles:", error.message);
+      console.error("AppContext.tsx: Error syncing steroid cycles:", error.message);
       setSteroidCycles([]);
     });
 
@@ -422,10 +438,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const steroidCompoundsRef = collection(db, `users/${userId}/steroidCompounds`);
     const unsubscribeSteroidCompounds = onSnapshot(steroidCompoundsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SteroidCompound[];
-      console.log("Steroid compounds synced from Firestore:", data);
+      console.log("AppContext.tsx: Steroid compounds synced from Firestore:", data);
       setSteroidCompounds(data);
     }, (error) => {
-      console.error("Error syncing steroid compounds:", error.message);
+      console.error("AppContext.tsx: Error syncing steroid compounds:", error.message);
       setSteroidCompounds([]);
     });
 
@@ -434,13 +450,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribeRecovery = onSnapshot(recoveryRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data() as WeeklyRecoveryData;
-        console.log("Weekly recovery data synced from Firestore:", data);
+        console.log("AppContext.tsx: Weekly recovery data synced from Firestore:", data);
         setWeeklyRecoveryData(data);
       } else {
+        console.log("AppContext.tsx: No weekly recovery data found in Firestore");
         setWeeklyRecoveryData(null);
       }
     }, (error) => {
-      console.error("Error syncing weekly recovery data:", error.message);
+      console.error("AppContext.tsx: Error syncing weekly recovery data:", error.message);
       setWeeklyRecoveryData(null);
     });
 
@@ -448,10 +465,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const routinesRef = collection(db, `users/${userId}/weeklyRoutines`);
     const unsubscribeRoutines = onSnapshot(routinesRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WeeklyRoutine[];
-      console.log("Weekly routines synced from Firestore:", data);
+      console.log("AppContext.tsx: Weekly routines synced from Firestore:", data);
       setWeeklyRoutines(data);
     }, (error) => {
-      console.error("Error syncing weekly routines:", error.message);
+      console.error("AppContext.tsx: Error syncing weekly routines:", error.message);
       setWeeklyRoutines([]);
     });
 
@@ -459,10 +476,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const templatesRef = collection(db, `users/${userId}/workoutTemplates`);
     const unsubscribeTemplates = onSnapshot(templatesRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log("Workout templates synced from Firestore:", data);
+      console.log("AppContext.tsx: Workout templates synced from Firestore:", data);
       setWorkoutTemplates(data);
     }, (error) => {
-      console.error("Error syncing workout templates:", error.message);
+      console.error("AppContext.tsx: Error syncing workout templates:", error.message);
       setWorkoutTemplates([]);
     });
 
@@ -470,10 +487,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const prLiftsRef = collection(db, `users/${userId}/prLifts`);
     const unsubscribePRLifts = onSnapshot(prLiftsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PRLift[];
-      console.log("PR lifts synced from Firestore:", data);
+      console.log("AppContext.tsx: PR lifts synced from Firestore:", data);
       setPRLifts(data);
     }, (error) => {
-      console.error("Error syncing PR lifts:", error.message);
+      console.error("AppContext.tsx: Error syncing PR lifts:", error.message);
       setPRLifts([]);
     });
 
@@ -481,10 +498,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const exercisesRef = collection(db, `users/${userId}/exercises`);
     const unsubscribeExercises = onSnapshot(exercisesRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Exercise[];
-      console.log("Exercises synced from Firestore:", data);
+      console.log("AppContext.tsx: Exercises synced from Firestore:", data);
       setExercises(data);
     }, (error) => {
-      console.error("Error syncing exercises:", error.message);
+      console.error("AppContext.tsx: Error syncing exercises:", error.message);
       setExercises([]);
     });
 
@@ -492,10 +509,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const trainingBlocksRef = collection(db, `users/${userId}/trainingBlocks`);
     const unsubscribeTrainingBlocks = onSnapshot(trainingBlocksRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as TrainingBlock[];
-      console.log("Training blocks synced from Firestore:", data);
+      console.log("AppContext.tsx: Training blocks synced from Firestore:", data);
       setTrainingBlocks(data);
     }, (error) => {
-      console.error("Error syncing training blocks:", error.message);
+      console.error("AppContext.tsx: Error syncing training blocks:", error.message);
       setTrainingBlocks([]);
     });
 
@@ -503,10 +520,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const weakPointsRef = collection(db, `users/${userId}/weakPoints`);
     const unsubscribeWeakPoints = onSnapshot(weakPointsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WeakPoint[];
-      console.log("Weak points synced from Firestore:", data);
+      console.log("AppContext.tsx: Weak points synced from Firestore:", data);
       setWeakPoints(data);
     }, (error) => {
-      console.error("Error syncing weak points:", error.message);
+      console.error("AppContext.tsx: Error syncing weak points:", error.message);
       setWeakPoints([]);
     });
 
@@ -514,10 +531,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const workoutPlansRef = collection(db, `users/${userId}/workoutPlans`);
     const unsubscribeWorkoutPlans = onSnapshot(workoutPlansRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WorkoutPlan[];
-      console.log("Workout plans synced from Firestore:", data);
+      console.log("AppContext.tsx: Workout plans synced from Firestore:", data);
       setWorkoutPlans(data);
     }, (error) => {
-      console.error("Error syncing workout plans:", error.message);
+      console.error("AppContext.tsx: Error syncing workout plans:", error.message);
       setWorkoutPlans([]);
     });
 
@@ -525,10 +542,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const remindersRef = collection(db, `users/${userId}/reminders`);
     const unsubscribeReminders = onSnapshot(remindersRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Reminder[];
-      console.log("Reminders synced from Firestore:", data);
+      console.log("AppContext.tsx: Reminders synced from Firestore:", data);
       setReminders(data);
     }, (error) => {
-      console.error("Error syncing reminders:", error.message);
+      console.error("AppContext.tsx: Error syncing reminders:", error.message);
       setReminders([]);
     });
 
@@ -536,15 +553,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const moodLogsRef = collection(db, `users/${userId}/moodLogs`);
     const unsubscribeMoodLogs = onSnapshot(moodLogsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as MoodLog[];
-      console.log("Mood logs synced from Firestore:", data);
+      console.log("AppContext.tsx: Mood logs synced from Firestore:", data);
       setMoodLogs(data);
     }, (error) => {
-      console.error("Error syncing mood logs:", error.message);
+      console.error("AppContext.tsx: Error syncing mood logs:", error.message);
       setMoodLogs([]);
     });
 
     // Cleanup on unmount or user change
     return () => {
+      console.log("AppContext.tsx: Cleaning up all Firestore listeners");
       unsubscribeWorkouts();
       unsubscribePhotos();
       unsubscribeMeasurements();
@@ -579,9 +597,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           await setDoc(doc(db, `users/${userId}/${path}`, item.id), item, { merge: true });
         }
       }
-      console.log(`Updated Firestore: ${path}`, data);
+      console.log(`AppContext.tsx: Updated Firestore: ${path}`, data);
     } catch (error) {
-      console.error(`Error updating Firestore (${path}):`, error);
+      console.error(`AppContext.tsx: Error updating Firestore (${path}):`, error);
     }
   };
 
@@ -831,7 +849,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addReminder = async (reminder: Omit<Reminder, "id">) => {
-    const newReminder = { ...reminder, id: Date.now().toString(), seen: false };
+    const newReminder = { 
+      ...reminder, 
+      id: Date.now().toString(), 
+      seen: false,
+      time: reminder.time || new Date().toISOString().split('T')[1].split('.')[0], // Default time if not provided
+      days: reminder.days || ["Monday"] // Default to Monday if not provided
+    };
     const updatedReminders = [...reminders, newReminder];
     setReminders(updatedReminders);
   };
@@ -863,8 +887,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleDeloadMode = async () => {
-    // Placeholder for deload mode logic
-    console.log("Toggling deload mode");
+    console.log("AppContext.tsx: Toggling deload mode");
   };
 
   const exportData = async () => {
