@@ -7,6 +7,7 @@ export interface Workout {
   deloadMode?: boolean;
   notes?: string;
   scheduledTime?: string;
+  isTemplate?: boolean; // Added for WeeklyRoutineBuilder and WorkoutDetailsCard
 }
 
 export interface Set {
@@ -21,7 +22,7 @@ export interface Exercise {
   reps: number;
   weight?: number;
   category: 'upper' | 'lower' | 'core' | 'other';
-  lastProgressDate?: Date;
+  lastProgressDate?: Date | string;
   isWeakPoint?: boolean;
   isPrRelevant?: boolean;
   restTime?: number;
@@ -32,7 +33,7 @@ export interface Exercise {
 
 export interface Measurement {
   id: string;
-  date: Date;
+  date: Date | string;
   weight?: number;
   bodyFat?: number;
   photos?: string[];
@@ -53,11 +54,12 @@ export interface BodyMeasurement extends Measurement {
 export interface Supplement {
   id: string;
   name: string;
-  days: string[];
+  dosage: string;
+  frequency: string;
+  date: string;
+  days?: string[];
   reminderTime?: string;
-  history: { date: Date; taken: boolean }[];
-  dosage?: string;
-  notes?: string;
+  history?: { date: Date | string; taken: boolean }[];
   schedule?: {
     times?: string[];
     workoutDays?: boolean;
@@ -68,14 +70,15 @@ export interface Cycle {
   id: string;
   name: string;
   supplements: Supplement[];
-  startDate: Date;
-  endDate: Date;
-  history: { date: Date; taken: boolean }[];
+  startDate: Date | string;
+  endDate: Date | string;
+  history: { date: Date | string; taken: boolean }[];
 }
 
 export interface SteroidCompound {
   id: string;
   name: string;
+  description?: string;
   dosage?: string;
   frequency?: string;
   weeklyDosage?: number;
@@ -88,10 +91,12 @@ export interface SteroidCompound {
 
 export interface SteroidCycle {
   id: string;
-  name: string;
-  compounds: SteroidCompound[];
-  startDate: Date;
-  endDate: Date;
+  compound: string;
+  dosage: string;
+  startDate: string;
+  endDate: string;
+  name?: string;
+  compounds?: SteroidCompound[];
   notes?: string;
   isPrivate?: boolean;
   currentWeek?: number;
@@ -101,15 +106,15 @@ export interface SteroidCycle {
 export interface SupplementLog {
   id: string;
   supplementId: string;
-  date: Date;
+  date: Date | string;
   taken: boolean;
-  time?: Date;
+  time?: Date | string;
   dosageTaken?: string;
 }
 
 export interface PR {
   id: string;
-  exercise: string; // Changed from exerciseId to match PRLift
+  exercise: string;
   weight: number;
   reps: number;
   date: Date | string;
@@ -127,9 +132,12 @@ export interface WorkoutDay {
 export interface WeeklyRoutine {
   id: string;
   name: string;
-  days: { [key: string]: WorkoutTemplate[] };
+  workouts: Workout[];
+  startDate: string;
+  endDate: string;
+  archived: boolean;
   workoutDays: WorkoutDay[];
-  archived?: boolean;
+  days: { [key: string]: any };
 }
 
 export interface WorkoutTemplate {
@@ -145,9 +153,9 @@ export interface WorkoutPlan {
   id: string;
   name: string;
   routines: WeeklyRoutine[];
-  workoutTemplates?: WorkoutTemplate[];
-  isActive?: boolean;
-  archived?: boolean;
+  workoutTemplates: WorkoutTemplate[];
+  active: boolean;
+  archived: boolean;
   description?: string;
 }
 
@@ -160,14 +168,14 @@ export interface Reminder {
   dueDate?: Date | string;
   dismissed?: boolean;
   supplementId?: string;
-  seen?: boolean;
+  seen: boolean;
   title?: string;
   message?: string;
 }
 
 export interface MoodLog {
   id: string;
-  date: Date;
+  date: Date | string;
   mood: string | number;
   notes?: string;
   sleepQuality?: number;
@@ -180,13 +188,14 @@ export interface MoodLog {
 export interface TrainingBlock {
   id: string;
   name: string;
-  startDate: Date;
-  endDate?: Date;
+  startDate: Date | string;
+  endDate?: Date | string;
   routines?: WeeklyRoutine[];
   weeklyRoutineId?: string;
   durationWeeks?: number;
   goal?: string;
   notes?: string;
+  workouts: Workout[];
 }
 
 export interface WeeklyRecoveryData {
@@ -194,18 +203,20 @@ export interface WeeklyRecoveryData {
   weekStartDate: string;
   sleepHours: number[];
   feeling: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
-  generalFeeling?: 'Energized' | 'Normal' | 'Tired' | 'Exhausted'; // Added as optional for backward compatibility
-  weekStart?: string; // Added for backward compatibility
+  generalFeeling?: 'Energized' | 'Normal' | 'Tired' | 'Exhausted';
+  weekStart?: string;
   recoveryScore?: number;
 }
 
 export interface WeakPoint {
   id: string;
+  muscleGroup: string;
+  notes?: string;
+  date: string;
+  priority: string;
+  sessionsPerWeekGoal: number;
   exerciseId?: string;
   description?: string;
-  muscleGroup?: string;
-  priority?: number;
-  sessionsPerWeekGoal?: number;
   name?: string;
 }
 
@@ -218,10 +229,10 @@ export interface CycleCompound {
 
 export interface ProgressPhoto {
   id: string;
-  date: Date;
-  imageData: string;  // Changed from url to imageData to match actual usage
-  caption?: string;   // Added caption property
-  url?: string;       // Kept for backward compatibility
+  date: Date | string;
+  imageData: string;
+  caption?: string;
+  url?: string;
 }
 
 export interface UnitSystem {
@@ -240,109 +251,5 @@ export interface PRLift {
   date: string;
   reps: number;
   workoutId?: string;
-  isDirectEntry?: boolean;
+  isDirectEntry: boolean;
 }
-
-export type AppContextType = {
-  workouts: Workout[];
-  setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
-  addWorkout: (name: string, exercises?: Exercise[], additionalData?: Partial<Workout>) => string;
-  updateWorkout: (updated: Workout) => void;
-  markWorkoutCompleted: (id: string) => void;
-  deleteWorkout: (id: string) => void;
-  getWorkoutById: (id: string) => Workout | undefined;
-  duplicateWorkout: (id: string) => void;
-  toggleDeloadMode: (id: string, isDeload: boolean) => void;
-  
-  exercises: Exercise[];
-  addExercise: (exercise: Exercise) => void;
-  
-  measurements: Measurement[];
-  bodyMeasurements: BodyMeasurement[];
-  
-  supplements: Supplement[];
-  addSupplement: (supplement: Supplement) => void;
-  updateSupplement: (updated: Supplement) => void;
-  deleteSupplement: (id: string) => void;
-  
-  cycles: Cycle[];
-  addCycle: (cycle: Cycle) => void;
-  updateCycle: (updated: Cycle) => void;
-  deleteCycle: (id: string) => void;
-  markSupplementTaken: (supplementId: string, date: Date, taken: boolean) => void;
-  markCycleTaken: (cycleId: string, date: Date, taken: boolean) => void;
-  
-  steroidCycles: SteroidCycle[];
-  steroidCompounds: SteroidCompound[];
-  addSteroidCycle: (cycle: SteroidCycle) => void;
-  addCompound: (compound: SteroidCompound) => void;
-  updateCompound: (compound: SteroidCompound) => void;
-  deleteCompound: (id: string) => void;
-  
-  cycleCompounds: CycleCompound[];
-  
-  supplementLogs: SupplementLog[];
-  addSupplementLog: (log: SupplementLog) => void;
-  updateSupplementLog: (updated: SupplementLog) => void;
-  
-  weeklyRoutines: WeeklyRoutine[];
-  addWeeklyRoutine: (routine: WeeklyRoutine) => void;
-  updateWeeklyRoutine: (updated: WeeklyRoutine) => void;
-  deleteWeeklyRoutine: (id: string) => void;
-  duplicateWeeklyRoutine: (id: string) => void;
-  archiveWeeklyRoutine: (id: string, archived: boolean) => void;
-  
-  trainingBlocks: TrainingBlock[];
-  addTrainingBlock: (block: TrainingBlock) => void;
-  updateTrainingBlock: (updated: TrainingBlock) => void;
-  
-  weakPoints: WeakPoint[];
-  addWeakPoint: (weakPoint: WeakPoint) => void;
-  deleteWeakPoint: (id: string) => void;
-  
-  moodLogs: MoodLog[];
-  addMoodLog: (moodLog: MoodLog) => void;
-  updateMoodLog: (updated: MoodLog) => void;
-  
-  reminders: Reminder[];
-  addReminder: (reminder: Reminder) => void;
-  markReminderAsSeen: (id: string) => void;
-  dismissReminder: (id: string) => void;
-  getDueReminders: () => Reminder[];
-  
-  workoutTemplates: WorkoutTemplate[];
-  addWorkoutTemplate: (template: WorkoutTemplate) => void;
-  updateWorkoutTemplate: (updated: WorkoutTemplate) => void;
-  deleteWorkoutTemplate: (id: string) => void;
-  duplicateWorkoutTemplate: (id: string) => string | null;
-  
-  workoutPlans: WorkoutPlan[];
-  addWorkoutPlan: (plan: WorkoutPlan) => void;
-  updateWorkoutPlan: (updated: WorkoutPlan) => void;
-  deleteWorkoutPlan: (id: string) => void;
-  duplicateWorkoutPlan: (id: string) => void;
-  setActivePlan: (id: string) => void;
-  addTemplateToPlan: (planId: string, templateId: string, day: string) => void;
-  removeTemplateFromPlan: (planId: string, templateId: string) => void;
-  
-  progressPhotos: ProgressPhoto[];
-  
-  unitSystem: UnitSystem;
-  convertWeight: (weight: number, fromUnit?: WeightUnit, toUnit?: WeightUnit) => number;
-  convertMeasurement: (value: number, fromUnit?: MeasurementUnit, toUnit?: MeasurementUnit) => number;
-  getWeightUnitDisplay: () => WeightUnit;
-  getMeasurementUnitDisplay: () => MeasurementUnit;
-  updateUnitSystem: (update: Partial<UnitSystem>) => void;
-  
-  exportData: (type?: string) => string;
-  
-  addPRLift: (prData: Omit<PR, 'id'>) => void;
-  updatePR: (prData: PR) => void;
-  deletePR: (id: string) => void;
-  prLifts: PR[];
-  
-  weeklyRecoveryData: WeeklyRecoveryData;
-  updateWeeklyRecoveryData: (data: Partial<WeeklyRecoveryData>) => void;
-  getRestDaysForCurrentWeek: () => number;
-  calculateRecoveryScore: (sleepHours: number[], feeling: string, restDays: number) => number;
-};
