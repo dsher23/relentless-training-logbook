@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
@@ -16,13 +15,13 @@ const WorkoutDetailsCard: React.FC<WorkoutDetailsCardProps> = ({ workout }) => {
   const navigate = useNavigate();
   const { workoutPlans } = useAppContext();
   
-  const activePlan = workoutPlans.find(p => p.isActive);
+  const activePlan = workoutPlans.find(p => p.active);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if ('isTemplate' in workout && workout.isTemplate) {
+    if (workout.isTemplate) {
       // For template workouts, use the plan ID if available, otherwise use a direct path
       const planId = activePlan?.id || '';
       
