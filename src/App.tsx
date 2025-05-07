@@ -3,39 +3,62 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 
-// Create a simple HomePage component
-const HomePage = () => {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Welcome to IronLog</h1>
-      <p className="mb-4">
-        Track your workouts, monitor your progress, and achieve your fitness goals.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 border rounded-lg bg-card hover:bg-card/90 transition-colors cursor-pointer">
-          <h2 className="text-lg font-semibold mb-2">Start Training</h2>
-          <p className="text-sm text-muted-foreground">
-            Begin your workout session or create a new training plan.
-          </p>
-        </div>
-        <div className="p-4 border rounded-lg bg-card hover:bg-card/90 transition-colors cursor-pointer">
-          <h2 className="text-lg font-semibold mb-2">View Progress</h2>
-          <p className="text-sm text-muted-foreground">
-            Check your workout history and track your improvements.
-          </p>
-        </div>
+// Create a simple Dashboard component with actual content
+const Dashboard = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="p-4 border rounded-lg bg-card shadow-sm">
+        <h2 className="text-lg font-semibold mb-2">Recent Workouts</h2>
+        <p className="text-sm text-muted-foreground">
+          You have no recent workouts. Start training now!
+        </p>
+      </div>
+      <div className="p-4 border rounded-lg bg-card shadow-sm">
+        <h2 className="text-lg font-semibold mb-2">Your Progress</h2>
+        <p className="text-sm text-muted-foreground">
+          Track your fitness journey and see your improvements.
+        </p>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
-// Create placeholder components for the main routes to avoid 404 errors
-const Dashboard = () => <div className="p-4">Dashboard Page</div>;
-const Training = () => <div className="p-4">Training Page</div>;
-const WeeklyOverview = () => <div className="p-4">Weekly Overview Page</div>;
-const Supplements = () => <div className="p-4">Supplements Page</div>;
-const Recovery = () => <div className="p-4">Recovery Page</div>;
-const Profile = () => <div className="p-4">Profile Page</div>;
+// Create placeholder components for the main routes with minimal content
+const Training = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Training</h1>
+    <p>Start a new workout or continue with your training plan.</p>
+  </div>
+);
+
+const WeeklyOverview = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Weekly Overview</h1>
+    <p>View your weekly training schedule and progress.</p>
+  </div>
+);
+
+const Supplements = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Supplements</h1>
+    <p>Track your supplement intake and schedule.</p>
+  </div>
+);
+
+const Recovery = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Recovery</h1>
+    <p>Monitor your recovery metrics and rest periods.</p>
+  </div>
+);
+
+const Profile = () => (
+  <div className="p-4">
+    <h1 className="text-2xl font-bold mb-4">Profile</h1>
+    <p>View and edit your profile information.</p>
+  </div>
+);
 
 const App: React.FC = () => {
   return (
