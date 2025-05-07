@@ -1,71 +1,63 @@
-
 import React, { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/context/AppContext";
-import { Reminder } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 import ReminderItem from "./ReminderItem";
 
 const NotificationCenter: React.FC = () => {
   const { reminders, getDueReminders, markReminderAsSeen } = useAppContext();
-  const [open, setOpen] = useState(false);
-  const [dueReminders, setDueReminders] = useState<Reminder[]>([]);
-  
-  // Find reminders that are due
+  const { toast } = useToast();
+  const [dueReminders, setDueReminders] = useState(reminders);
+
   useEffect(() => {
-    const due = getDueReminders();
-    setDueReminders(due);
-  }, [reminders, getDueReminders]);
-  
-  // Mark reminders as seen when popover is opened
-  useEffect(() => {
-    if (open && dueReminders.length > 0) {
-      dueReminders.forEach(reminder => {
-        if (!reminder.seen) {
-          markReminderAsSeen(reminder.id);
-        }
+    const fetchDueReminders = () => {
+      const due = getDueReminders();
+      setDueReminders(due);
+    };
+    fetchDueReminders();
+  }, [getDueReminders, reminders]);
+
+  const handleMarkAsSeen = async (id: string) => {
+    try {
+      await markReminderAsSeen(id);
+      console.log("NotificationCenter.tsx: Reminder marked as seen:", id);
+      toast({
+        title: "Success",
+        description: "Reminder marked as seen.",
+      });
+      // Refresh due reminders after marking one as seen
+      const updatedDueReminders = getDueReminders();
+      setDueReminders(updatedDueReminders);
+    } catch (error) {
+      console.error("NotificationCenter.tsx: Error marking reminder as seen:", error);
+      toast({
+        title: "Error",
+        description: "Failed to mark reminder as seen.",
+        variant: "destructive",
       });
     }
-  }, [open, dueReminders, markReminderAsSeen]);
-  
-  // Count unseen reminders
-  const unseenCount = dueReminders.filter(r => !r.seen).length;
-  
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unseenCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {unseenCount}
-            </span>
-          )}
-          <span className="sr-only">Notifications</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 max-h-96 overflow-y-auto">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Notifications</h2>
-        </div>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Notifications</CardTitle>
+      </CardHeader>
+      <CardContent>
         {dueReminders.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
-            No notifications
-          </div>
+          <p>No due reminders.</p>
         ) : (
-          <div>
-            {dueReminders.map((reminder) => (
-              <ReminderItem key={reminder.id} reminder={reminder} />
-            ))}
-          </div>
+          dueReminders.map((reminder) => (
+            <ReminderItem
+              key={reminder.id}
+              reminder={reminder}
+              onMarkAsSeen={() => handleMarkAsSeen(reminder.id)}
+            />
+          ))
         )}
-      </PopoverContent>
-    </Popover>
+      </CardContent>
+    </Card>
   );
 };
 
