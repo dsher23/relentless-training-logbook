@@ -19,7 +19,7 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
   // If editing an existing cycle, load its data
   useEffect(() => {
     if (cycleId) {
-      const cycle = steroidCycles.find((c) => c.id === cycleId); // Use steroidCycles, not steroidCompounds
+      const cycle = steroidCycles.find((c) => c.id === cycleId);
       if (cycle) {
         setCompound(cycle.compound);
         setDosage(cycle.dosage);
