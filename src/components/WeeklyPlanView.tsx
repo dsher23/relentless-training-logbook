@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -151,7 +150,7 @@ const WeeklyPlanView: React.FC<{ planId: string }> = ({ planId }) => {
             </div>
           ))}
         </div>
-        {plan && plan.workoutTemplates && (
+        {plan && (
           <div className="mt-4">
             <h3>Plan Workout Templates</h3>
             {plan.workoutTemplates.map((template) => (

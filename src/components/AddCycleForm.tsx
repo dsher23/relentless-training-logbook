@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import { SteroidCycle } from "@/types";
 
 const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cycleId, onClose }) => {
   const { steroidCycles, steroidCompounds, addSteroidCycle, updateSteroidCycle } = useAppContext();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [selectedCompound, setSelectedCompound] = useState("");
+  const [compound, setCompound] = useState("");
+  const [dosage, setDosage] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +21,8 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
     if (cycleId) {
       const cycle = steroidCycles.find((c) => c.id === cycleId);
       if (cycle) {
-        setName(cycle.name);
+        setCompound(cycle.compound);
+        setDosage(cycle.dosage);
         setStartDate(cycle.startDate);
         setEndDate(cycle.endDate);
       }
@@ -32,10 +31,10 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !startDate || !endDate) {
+    if (!compound || !dosage || !startDate || !endDate) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all fields.",
         variant: "destructive",
       });
       return;
@@ -43,22 +42,21 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
 
     setIsLoading(true);
     try {
-      const cycleData: Partial<SteroidCycle> = {
-        name,
-        compounds: [],
+      const cycleData = {
+        compound,
+        dosage,
         startDate,
         endDate,
-        isPrivate: false
       };
 
       if (cycleId) {
-        await updateSteroidCycle(cycleId, { ...cycleData, id: cycleId } as SteroidCycle);
+        await updateSteroidCycle(cycleId, { ...cycleData, id: cycleId });
         toast({
           title: "Success",
           description: "Steroid cycle updated successfully.",
         });
       } else {
-        await addSteroidCycle(cycleData as Omit<SteroidCycle, "id">);
+        await addSteroidCycle(cycleData);
         toast({
           title: "Success",
           description: "Steroid cycle added successfully.",
@@ -85,19 +83,8 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Cycle Name</Label>
-            <Input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter cycle name"
-              disabled={isLoading}
-            />
-          </div>
-          <div>
             <Label htmlFor="compound">Compound</Label>
-            <Select onValueChange={setSelectedCompound} value={selectedCompound}>
+            <Select onValueChange={setCompound} value={compound}>
               <SelectTrigger id="compound">
                 <SelectValue placeholder="Select a compound" />
               </SelectTrigger>
@@ -109,9 +96,17 @@ const AddCycleForm: React.FC<{ cycleId?: string; onClose: () => void }> = ({ cyc
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs mt-1 text-muted-foreground">
-              You can add compounds after creating the cycle
-            </p>
+          </div>
+          <div>
+            <Label htmlFor="dosage">Dosage</Label>
+            <Input
+              id="dosage"
+              type="text"
+              value={dosage}
+              onChange={(e) => setDosage(e.target.value)}
+              placeholder="Enter dosage (e.g., 500mg/week)"
+              disabled={isLoading}
+            />
           </div>
           <div>
             <Label htmlFor="startDate">Start Date</Label>

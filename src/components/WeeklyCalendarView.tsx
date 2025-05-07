@@ -1,8 +1,7 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
-import { Workout, WorkoutDay } from "@/types";
+import { Workout } from "@/types";
 import { format, isSameDay, startOfWeek, addDays } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
   const getScheduledWorkoutTemplate = (dayOfWeek: number) => {
     if (!activeRoutine) return null;
     
-    const workoutDay = activeRoutine.workoutDays.find((wd: WorkoutDay) => wd.dayOfWeek === dayOfWeek);
+    const workoutDay = activeRoutine.workoutDays.find(wd => wd.dayOfWeek === dayOfWeek);
     if (!workoutDay || !workoutDay.workoutTemplateId) return null;
     
     return workoutTemplates.find(t => t.id === workoutDay.workoutTemplateId);

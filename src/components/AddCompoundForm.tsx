@@ -42,10 +42,10 @@ const AddCompoundForm: React.FC<AddCompoundFormProps> = ({
       id: initialCompound?.id || uuidv4(),
       cycleId: cycleId || "",
       name: values.name,
-      weeklyDosage: parseFloat(values.weeklyDosage) || 0,
+      weeklyDosage: parseFloat(values.weeklyDosage),
       dosageUnit: values.dosageUnit,
       frequency: values.frequency,
-      duration: values.duration ? parseInt(values.duration, 10) || undefined : undefined,
+      duration: values.duration ? parseInt(values.duration) : undefined,
       notes: values.notes,
       active: initialCompound?.active ?? true,
     };
