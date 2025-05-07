@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -114,7 +113,7 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = 
             </Select>
           </div>
           <div>
-            <Label htmlFor="sets">Sets (JSON format, e.g., {"[{\"reps\": 10, \"weight\": 50}]"})</Label>
+            <Label htmlFor="sets">Sets (JSON format, e.g., [{reps: 10, weight: 50}])</Label>
             <Input
               id="sets"
               type="text"
