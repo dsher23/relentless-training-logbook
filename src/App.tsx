@@ -1,172 +1,61 @@
-import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, useAppContext } from "./context/AppContext";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Workouts from "./pages/Workouts";
-import WorkoutHistory from "./pages/WorkoutHistory";
-import Supplements from "./pages/Supplements";
-import Training from "./pages/Training";
-import Routines from "./pages/Routines";
-import WeeklyOverview from "./pages/WeeklyOverview";
-import Plans from "./pages/Plans";
-import PlanDetail from "./pages/PlanDetail";
-import DayExercises from "./pages/DayExercises";
-import Measurements from "./pages/Measurements";
-import Settings from "./pages/Settings";
 
-// Protected Route component to handle authentication
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user } = useAppContext();
-  console.log("ProtectedRoute: Current user state:", user);
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
+import { FirestoreProvider } from './context/FirestoreContext';
+import { Toaster } from './components/ui/toaster';
 
-  if (user === null) {
-    console.log("ProtectedRoute: User state is still loading, rendering loading spinner...");
-    return <div>Loading...</div>;
-  }
+import Layout from './components/Layout';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Training from './pages/Training';
+import LiveWorkout from './pages/LiveWorkout';
+import WorkoutHistory from './pages/WorkoutHistory';
+import CreateWorkout from './pages/CreateWorkout';
+import ProgressPhotos from './pages/ProgressPhotos';
+import Settings from './pages/Settings';
+import WeeklyOverview from './pages/WeeklyOverview';
+import WorkoutTypeSelection from './pages/WorkoutTypeSelection';
+import Recovery from './pages/Recovery';
+import Supplements from './pages/Supplements';
+import MoodLog from './pages/MoodLog';
+import RequireAuth from './components/RequireAuth';
+import NotFound from './pages/NotFound';
 
-  if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to /auth");
-    return <Navigate to="/auth" replace />;
-  }
-
-  console.log("ProtectedRoute: User authenticated, rendering children");
-  return children;
-};
-
-const App = () => {
-  console.log("App.tsx: Rendering App component");
-  console.log("App.tsx: AppProvider context initialized");
-
-  // Log the initial route for debugging
-  useEffect(() => {
-    console.log("App.tsx: Current route:", window.location.pathname);
-  }, []);
-
+function App() {
   return (
     <AppProvider>
-      <Router>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/workouts"
-            element={
-              <ProtectedRoute>
-                <Workouts />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/workout-history"
-            element={
-              <ProtectedRoute>
-                <WorkoutHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/supplements"
-            element={
-              <ProtectedRoute>
-                <Supplements />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/training"
-            element={
-              <ProtectedRoute>
-                <Training />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/routines"
-            element={
-              <ProtectedRoute>
-                <Routines />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/weekly-overview"
-            element={
-              <ProtectedRoute>
-                <WeeklyOverview />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/plans"
-            element={
-              <ProtectedRoute>
-                <Plans />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/plan/:id"
-            element={
-              <ProtectedRoute>
-                <PlanDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/day-exercises"
-            element={
-              <ProtectedRoute>
-                <DayExercises />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/measurements"
-            element={
-              <ProtectedRoute>
-                <Measurements />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          {/* Redirect root route to /auth if user is not logged in */}
-          <Route
-            path="/"
-            element={<Navigate to="/auth" replace />}
-          />
-          {/* Catch-all route for undefined paths */}
-          <Route
-            path="*"
-            element={<Navigate to="/auth" replace />}
-          />
-        </Routes>
-      </Router>
+      <FirestoreProvider>
+        <Router>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            
+            <Route element={<RequireAuth />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/training" element={<Training />} />
+                <Route path="/workouts" element={<Training />} />
+                <Route path="/live-workout/:id" element={<LiveWorkout />} />
+                <Route path="/workout-history" element={<WorkoutHistory />} />
+                <Route path="/create-workout" element={<CreateWorkout />} />
+                <Route path="/progress-photos" element={<ProgressPhotos />} />
+                <Route path="/weekly-overview" element={<WeeklyOverview />} />
+                <Route path="/workout-selection" element={<WorkoutTypeSelection />} />
+                <Route path="/recovery" element={<Recovery />} />
+                <Route path="/supplements" element={<Supplements />} />
+                <Route path="/mood-log" element={<MoodLog />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Route>
+          </Routes>
+        </Router>
+        <Toaster />
+      </FirestoreProvider>
     </AppProvider>
   );
-};
+}
 
 export default App;

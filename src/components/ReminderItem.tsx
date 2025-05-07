@@ -1,55 +1,44 @@
 
-import React from "react";
-import { format } from "date-fns";
-import { Bell, Calendar, Clock, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAppContext } from "@/context/AppContext";
-import { Reminder } from "@/types";
+import React from 'react';
+import { Reminder } from '@/types';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Check } from 'lucide-react';
 
-interface ReminderItemProps {
+export interface ReminderItemProps {
   reminder: Reminder;
+  onMarkAsSeen: () => Promise<void>;
 }
 
-const ReminderItem: React.FC<ReminderItemProps> = ({ reminder }) => {
-  const { dismissReminder } = useAppContext();
-  
-  const getIcon = () => {
-    switch (reminder.type) {
-      case "supplement":
-        return <Clock className="h-5 w-5 text-blue-500" />;
-      case "workout":
-        return <Calendar className="h-5 w-5 text-green-500" />;
-      case "routineChange":
-        return <Bell className="h-5 w-5 text-amber-500" />;
-      default:
-        return <Bell className="h-5 w-5 text-muted-foreground" />;
-    }
+const ReminderItem: React.FC<ReminderItemProps> = ({ reminder, onMarkAsSeen }) => {
+  const handleMarkAsSeen = async () => {
+    await onMarkAsSeen();
   };
-  
+
+  // Format the due date for display
+  const formatDueDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString();
+  };
+
   return (
-    <div className="flex items-center justify-between p-3 border-b">
-      <div className="flex items-center">
-        <div className="mr-3">
-          {getIcon()}
-        </div>
+    <Card className={`mb-2 ${reminder.seen ? 'opacity-60' : ''}`}>
+      <CardContent className="p-3 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">{reminder.title}</h3>
-          <p className="text-xs text-muted-foreground">{reminder.message}</p>
-          <p className="text-xs text-muted-foreground">
-            {format(new Date(reminder.dateTime), "MMM d, h:mm a")}
+          <h4 className="font-medium">{reminder.type}</h4>
+          <p className="text-sm text-muted-foreground">
+            Due: {formatDueDate(reminder.dueDate)} at {reminder.time}
+          </p>
+          <p className="text-xs mt-1">
+            Repeats on: {reminder.days.join(', ')}
           </p>
         </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 rounded-full p-0"
-        onClick={() => dismissReminder(reminder.id)}
-      >
-        <X className="h-4 w-4" />
-        <span className="sr-only">Dismiss</span>
-      </Button>
-    </div>
+        <Button size="sm" variant="ghost" onClick={handleMarkAsSeen} disabled={reminder.seen}>
+          <Check className="h-4 w-4" />
+          <span className="sr-only">Mark as seen</span>
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

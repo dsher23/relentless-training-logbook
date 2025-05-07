@@ -1,26 +1,29 @@
 
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
+const NotFound: React.FC = () => {
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <h1 className="text-4xl font-bold mb-4 text-gym-purple">404</h1>
-      <p className="text-xl mb-8">Page not found</p>
-      <Button asChild>
-        <Link to="/">Return to Dashboard</Link>
-      </Button>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">404</CardTitle>
+          <CardDescription>Page Not Found</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center">
+          <p className="text-center mb-6">
+            The page you're looking for doesn't exist or has been moved.
+          </p>
+          <Button onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Return to Dashboard
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

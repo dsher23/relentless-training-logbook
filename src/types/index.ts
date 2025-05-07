@@ -56,8 +56,9 @@ export interface Supplement {
   name: string;
   dosage: string;
   frequency: string;
-  date: string;
+  time?: string;
   days?: string[];
+  notes?: string; // Added missing field
   reminderTime?: string;
   history?: { date: Date | string; taken: boolean }[];
   schedule?: {
@@ -123,21 +124,21 @@ export interface PR {
 }
 
 export interface WorkoutDay {
+  id: string;
   dayOfWeek: number;
-  workoutTemplateId?: string;
+  workoutTemplateId: string;
   workoutName?: string;
-  id?: string;
 }
 
 export interface WeeklyRoutine {
   id: string;
   name: string;
-  workouts: Workout[];
-  startDate: string;
-  endDate: string;
-  archived: boolean;
   workoutDays: WorkoutDay[];
   days: { [key: string]: any };
+  workouts: any[]; // Required field
+  startDate: string; // Required field
+  endDate: string; // Required field
+  archived: boolean;
 }
 
 export interface WorkoutTemplate {
@@ -152,25 +153,25 @@ export interface WorkoutTemplate {
 export interface WorkoutPlan {
   id: string;
   name: string;
-  routines: WeeklyRoutine[];
+  description?: string;
   workoutTemplates: WorkoutTemplate[];
   active: boolean;
   archived: boolean;
-  description?: string;
+  routines: WeeklyRoutine[];
 }
 
 export interface Reminder {
   id: string;
-  type: 'supplement' | 'workout' | 'routineChange';
-  time: string;
-  days: string[];
-  dateTime?: Date | string;
-  dueDate?: Date | string;
-  dismissed?: boolean;
-  supplementId?: string;
+  type: string;
+  dueDate: string;
   seen: boolean;
-  title?: string;
-  message?: string;
+  days: string[]; // Required field
+  time: string; // Required field
+}
+
+export interface ReminderItemProps {
+  reminder: Reminder;
+  onMarkAsSeen: () => Promise<void>;
 }
 
 export interface MoodLog {
@@ -252,4 +253,15 @@ export interface PRLift {
   reps: number;
   workoutId?: string;
   isDirectEntry: boolean;
+}
+
+export interface UserProfile {
+  displayName: string;
+  email: string;
+  bio?: string;
+  startWeight?: number;
+  currentWeight?: number;
+  goalWeight?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }

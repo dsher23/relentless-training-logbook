@@ -1,495 +1,367 @@
-import React, { useState, useEffect } from "react";
-import { format, addWeeks, subWeeks } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar, Plus, Edit, Trash2, Loader } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
-import WeeklyCalendarView from "@/components/WeeklyCalendarView";
-import LiftProgressGraph from "@/components/LiftProgressGraph";
-import { useAppContext } from "@/context/AppContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
-import { WeeklyRoutine } from "@/types";
+import { useAppContext } from "@/context/AppContext";
+import NavigationHeader from "@/components/NavigationHeader";
+import TabNavigation from "@/components/TabNavigation";
+
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const WeeklyOverview: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const context = useAppContext();
+  const { weeklyRoutines, addWeeklyRoutine, updateWeeklyRoutine, workoutTemplates } = useAppContext();
   
-  // Validate context is available
-  if (!context) {
-    throw new Error("WeeklyOverview must be used within an AppProvider");
-  }
+  const [selectedDay, setSelectedDay] = useState(new Date().getDay()); // 0 = Sunday, 6 = Saturday
   
-  const { 
-    weeklyRoutines = [], 
-    workoutTemplates = [], 
-    addWeeklyRoutine,
-    updateWeeklyRoutine
-  } = context;
+  // Get active weekly routine (non-archived)
+  const activeRoutine = weeklyRoutines.find(routine => !routine.archived);
   
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Data loading and validation
-    try {
-      setIsLoading(true);
-      
-      // Validate data structures
-      if (!Array.isArray(weeklyRoutines)) {
-        throw new Error("Weekly routines data is invalid");
-      }
-      
-      if (!Array.isArray(workoutTemplates)) {
-        throw new Error("Workout templates data is invalid");
-      }
-      
-      setIsLoading(false);
-    } catch (error: any) {
-      console.error("Error loading weekly overview data:", error.message);
-      setError("Failed to load weekly overview data. Please try again.");
-      setIsLoading(false);
-    }
-  }, [weeklyRoutines, workoutTemplates]);
-  
-  const nextWeek = () => {
-    setCurrentDate(addWeeks(currentDate, 1));
-  };
-  
-  const previousWeek = () => {
-    setCurrentDate(subWeeks(currentDate, 1));
-  };
-  
-  const handleDayClick = (dayIndex: number) => {
-    try {
-      setSelectedDayIndex(dayIndex);
-      
-      const activeRoutine = Array.isArray(weeklyRoutines) ? 
-        weeklyRoutines.find(r => r && !r.archived) : 
-        undefined;
-        
-      if (activeRoutine) {
-        const workoutDay = activeRoutine.workoutDays && activeRoutine.workoutDays.find(day => day && day.dayOfWeek === dayIndex);
-        setSelectedWorkoutId(workoutDay?.workoutTemplateId || null);
-      } else {
-        setSelectedWorkoutId(null);
-      }
-      
-      setIsDialogOpen(true);
-    } catch (error) {
-      console.error("Error handling day click:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleAssignWorkout = () => {
-    try {
-      if (selectedDayIndex === null) return;
-      
-      const activeRoutine = Array.isArray(weeklyRoutines) ? 
-        weeklyRoutines.find(r => r && !r.archived) : 
-        undefined;
-        
-      if (activeRoutine && updateWeeklyRoutine) {
-        const workoutName = selectedWorkoutId && Array.isArray(workoutTemplates)
-          ? workoutTemplates.find(t => t && t.id === selectedWorkoutId)?.name || ""
-          : "";
-          
-        const updatedWorkoutDays = [...(activeRoutine.workoutDays || [])];
-        const existingDayIndex = updatedWorkoutDays.findIndex(day => day && day.dayOfWeek === selectedDayIndex);
-        
-        if (existingDayIndex >= 0) {
-          if (selectedWorkoutId) {
-            updatedWorkoutDays[existingDayIndex] = {
-              ...updatedWorkoutDays[existingDayIndex],
-              workoutTemplateId: selectedWorkoutId,
-              workoutName
-            };
-          } else {
-            updatedWorkoutDays.splice(existingDayIndex, 1);
-          }
-        } else if (selectedWorkoutId) {
-          updatedWorkoutDays.push({
-            id: uuidv4(),
-            dayOfWeek: selectedDayIndex,
-            workoutTemplateId: selectedWorkoutId,
-            workoutName
-          });
-        }
-        
-        updateWeeklyRoutine({
-          ...activeRoutine,
-          workoutDays: updatedWorkoutDays
-        });
-      } else if (selectedWorkoutId && addWeeklyRoutine) {
-        const workoutName = Array.isArray(workoutTemplates)
-          ? workoutTemplates.find(t => t && t.id === selectedWorkoutId)?.name || ""
-          : "";
-          
-        const newRoutine: WeeklyRoutine = {
-          id: uuidv4(),
-          name: "Weekly Plan",
-          workoutDays: [{
-            id: uuidv4(),
-            dayOfWeek: selectedDayIndex,
-            workoutTemplateId: selectedWorkoutId,
-            workoutName
-          }],
-          days: {},
-          archived: false
-        };
-        
-        addWeeklyRoutine(newRoutine);
-      }
-      
-      setIsDialogOpen(false);
-    } catch (error) {
-      console.error("Error assigning workout:", error);
-      toast({
-        title: "Error",
-        description: "Failed to assign workout. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleRemoveWorkout = () => {
-    try {
-      if (selectedDayIndex === null) return;
-      
-      const activeRoutine = Array.isArray(weeklyRoutines) ? 
-        weeklyRoutines.find(r => r && !r.archived) : 
-        undefined;
-        
-      if (activeRoutine && updateWeeklyRoutine) {
-        const updatedWorkoutDays = (activeRoutine.workoutDays || []).filter(
-          day => day && day.dayOfWeek !== selectedDayIndex
-        );
-        
-        updateWeeklyRoutine({
-          ...activeRoutine,
-          workoutDays: updatedWorkoutDays
-        });
-        
-        toast({
-          title: "Workout removed",
-          description: `Workout removed from day ${selectedDayIndex + 1}`
-        });
-      }
-      
-      setConfirmDeleteDialogOpen(false);
-    } catch (error) {
-      console.error("Error removing workout:", error);
-      toast({
-        title: "Error",
-        description: "Failed to remove workout. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleViewWorkout = (workoutId: string) => {
-    navigate(`/exercise-plans/days/${workoutId}`);
-  };
-  
-  const handleStartWorkout = (workoutId: string) => {
-    navigate(`/live-workout/${workoutId}?isTemplate=true`);
-  };
-  
-  const getDayName = (dayIndex: number) => {
-    return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayIndex];
-  };
-  
-  // Fix: Create a constant for the "rest day" option that doesn't use an empty string
-  const REST_DAY_OPTION = "rest_day";
-
   const handleCreateRoutine = () => {
     try {
-      if (!addWeeklyRoutine) {
-        toast({
-          title: "Error",
-          description: "Cannot create routine. Function not available.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const newRoutine: WeeklyRoutine = {
-        id: uuidv4(),
-        name: "New Weekly Schedule",
+      // Create a new weekly routine with basic details
+      const newRoutine = {
+        name: "My Weekly Routine",
         workoutDays: [],
         days: {},
+        workouts: [], // Required field
+        startDate: new Date().toISOString(), // Required field
+        endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(), // Required field
         archived: false
       };
       
       addWeeklyRoutine(newRoutine);
-      navigate(`/routines/${newRoutine.id}`);
+      
+      toast({
+        title: "Success",
+        description: "New weekly routine created.",
+      });
     } catch (error) {
       console.error("Error creating routine:", error);
       toast({
         title: "Error",
-        description: "Failed to create routine. Please try again.",
-        variant: "destructive"
+        description: "Failed to create routine.",
+        variant: "destructive",
       });
     }
   };
   
-  if (isLoading) {
-    return (
-      <div className="app-container animate-fade-in">
-        <Header title="Weekly Overview" />
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <Loader className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading weekly overview...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleAssignWorkout = (dayOfWeek: number, workoutId: string, workoutName: string) => {
+    if (!activeRoutine) return;
+    
+    try {
+      // Find if this day already has a workout
+      const existingDayIndex = activeRoutine.workoutDays.findIndex(
+        day => day.dayOfWeek === dayOfWeek
+      );
+      
+      let updatedWorkoutDays = [...activeRoutine.workoutDays];
+      
+      if (existingDayIndex >= 0) {
+        // Update existing day's workout
+        updatedWorkoutDays[existingDayIndex] = {
+          ...updatedWorkoutDays[existingDayIndex],
+          workoutTemplateId: workoutId,
+          workoutName
+        };
+      } else {
+        // Add new day
+        updatedWorkoutDays.push({
+          id: crypto.randomUUID(),
+          dayOfWeek,
+          workoutTemplateId: workoutId,
+          workoutName
+        });
+      }
+      
+      updateWeeklyRoutine(activeRoutine.id, {
+        workoutDays: updatedWorkoutDays
+      });
+      
+      toast({
+        title: "Success",
+        description: `${workoutName} assigned to ${days[dayOfWeek]}.`,
+      });
+    } catch (error) {
+      console.error("Error assigning workout:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign workout.",
+        variant: "destructive",
+      });
+    }
+  };
   
-  if (error) {
-    return (
-      <div className="app-container animate-fade-in">
-        <Header title="Weekly Overview" />
-        <div className="p-4 text-center">
-          <div className="bg-destructive/10 p-4 rounded-md mb-4">
-            <p className="text-destructive">{error}</p>
-          </div>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleRemoveWorkout = (dayOfWeek: number) => {
+    if (!activeRoutine) return;
+    
+    try {
+      const updatedWorkoutDays = activeRoutine.workoutDays.filter(
+        day => day.dayOfWeek !== dayOfWeek
+      );
+      
+      updateWeeklyRoutine(activeRoutine.id, {
+        workoutDays: updatedWorkoutDays
+      });
+      
+      toast({
+        title: "Success",
+        description: `Workout removed from ${days[dayOfWeek]}.`,
+      });
+    } catch (error) {
+      console.error("Error removing workout:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove workout.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handlePreviousDay = () => {
+    setSelectedDay((prevDay) => (prevDay === 0 ? 6 : prevDay - 1));
+  };
+  
+  const handleNextDay = () => {
+    setSelectedDay((prevDay) => (prevDay === 6 ? 0 : prevDay + 1));
+  };
+
+  const handleCreateEmptyRoutine = () => {
+    try {
+      // Create a new empty weekly routine
+      const newRoutine = {
+        name: "New Weekly Routine",
+        workoutDays: [],
+        days: {},
+        workouts: [], // Required field
+        startDate: new Date().toISOString(), // Required field
+        endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(), // Required field
+        archived: false
+      };
+      
+      addWeeklyRoutine(newRoutine);
+      
+      toast({
+        title: "Success",
+        description: "New weekly routine created.",
+      });
+    } catch (error) {
+      console.error("Error creating routine:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create routine.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Find the workout assigned to the selected day
+  const assignedWorkout = activeRoutine?.workoutDays.find(day => day.dayOfWeek === selectedDay);
   
   return (
-    <div className="app-container animate-fade-in">
-      <Header title="Weekly Overview" />
+    <div className="app-container animate-fade-in pb-16">
+      <NavigationHeader title="Weekly Overview" showBack={true} />
       
-      <div className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="outline" size="icon" onClick={previousWeek}>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Previous week</span>
-          </Button>
-          
-          <div className="text-center">
-            <h2 className="text-lg font-semibold flex items-center justify-center">
-              <Calendar className="h-5 w-5 mr-2 text-gym-purple" />
-              <span>{format(currentDate, "MMMM d, yyyy")}</span>
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Week of {format(currentDate, "MMM d")}
-            </p>
-          </div>
-          
-          <Button variant="outline" size="icon" onClick={nextWeek}>
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Next week</span>
-          </Button>
-        </div>
-        
-        <div className="space-y-6">
-          <LiftProgressGraph />
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Weekly Schedule</h3>
-            
-            <div className="grid grid-cols-1 gap-2">
-              {Array.from({ length: 7 }).map((_, dayIndex) => {
-                const activeRoutine = Array.isArray(weeklyRoutines) ? 
-                  weeklyRoutines.find(r => r && !r.archived) : 
-                  undefined;
-                const workoutDay = activeRoutine?.workoutDays?.find(day => day && day.dayOfWeek === dayIndex);
-                const workout = workoutDay?.workoutTemplateId && Array.isArray(workoutTemplates)
-                  ? workoutTemplates.find(t => t && t.id === workoutDay.workoutTemplateId)
-                  : null;
+      <div className="p-4 space-y-6">
+        {activeRoutine ? (
+          <>
+            {/* Day Selection */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <Button variant="ghost" size="sm" onClick={handlePreviousDay}>
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <h3 className="text-lg font-semibold">{days[selectedDay]}</h3>
+                  <Button variant="ghost" size="sm" onClick={handleNextDay}>
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
                 
-                return (
-                  <div
-                    key={dayIndex}
-                    className="border rounded-lg p-4 hover:border-primary cursor-pointer"
-                    onClick={() => handleDayClick(dayIndex)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold">{getDayName(dayIndex)}</h4>
-                      {!workout && (
-                        <Button size="sm" variant="ghost">
+                {assignedWorkout ? (
+                  <div className="border rounded-md p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{assignedWorkout.workoutName}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Scheduled for {days[selectedDay]}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Change
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent>
+                            <SheetHeader>
+                              <SheetTitle>Select Workout for {days[selectedDay]}</SheetTitle>
+                              <SheetDescription>
+                                Choose a workout template to assign to this day
+                              </SheetDescription>
+                            </SheetHeader>
+                            <div className="py-4 space-y-2">
+                              {workoutTemplates.map(template => (
+                                <Card
+                                  key={template.id}
+                                  className="cursor-pointer hover:bg-secondary/10"
+                                  onClick={() => {
+                                    handleAssignWorkout(selectedDay, template.id, template.name);
+                                    document.querySelector('[data-radix-collection-item]')?.click();
+                                  }}
+                                >
+                                  <CardContent className="p-3 flex justify-between items-center">
+                                    <div>
+                                      <h3 className="font-medium">{template.name}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {template.exercises?.length || 0} exercises
+                                      </p>
+                                    </div>
+                                    <Button variant="ghost" size="sm">
+                                      Select
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </SheetContent>
+                        </Sheet>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={() => handleRemoveWorkout(selectedDay)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full mt-4"
+                      onClick={() => navigate(`/live-workout/${assignedWorkout.workoutTemplateId}?isTemplate=true`)}
+                    >
+                      Start Workout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border border-dashed rounded-md p-4 text-center">
+                    <p className="text-muted-foreground mb-2">No workout assigned</p>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button>
                           <Plus className="h-4 w-4 mr-1" />
                           Assign Workout
                         </Button>
-                      )}
-                    </div>
-                    
-                    {workout ? (
-                      <div className="mt-2">
-                        <p className="font-medium">{workout.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {workout.exercises?.length || 0} exercises
-                        </p>
-                        
-                        <div className="flex gap-2 mt-3">
-                          <Button 
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedDayIndex(dayIndex);
-                              setConfirmDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                          
-                          <Button 
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewWorkout(workout.id);
-                            }}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          
-                          <Button 
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartWorkout(workout.id);
-                            }}
-                          >
-                            Start
-                          </Button>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>Select Workout for {days[selectedDay]}</SheetTitle>
+                          <SheetDescription>
+                            Choose a workout template to assign to this day
+                          </SheetDescription>
+                        </SheetHeader>
+                        <div className="py-4 space-y-2">
+                          {workoutTemplates.map(template => (
+                            <Card
+                              key={template.id}
+                              className="cursor-pointer hover:bg-secondary/10"
+                              onClick={() => {
+                                handleAssignWorkout(selectedDay, template.id, template.name);
+                                document.querySelector('[data-radix-collection-item]')?.click();
+                              }}
+                            >
+                              <CardContent className="p-3 flex justify-between items-center">
+                                <div>
+                                  <h3 className="font-medium">{template.name}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {template.exercises?.length || 0} exercises
+                                  </p>
+                                </div>
+                                <Button variant="ghost" size="sm">
+                                  Select
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground mt-1">No workout assigned</p>
-                    )}
+                      </SheetContent>
+                    </Sheet>
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Weekly Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Schedule</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {days.map((day, index) => {
+                    const dayWorkout = activeRoutine.workoutDays.find(d => d.dayOfWeek === index);
+                    
+                    return (
+                      <div 
+                        key={day}
+                        className={`p-3 border rounded-md flex items-center justify-between ${selectedDay === index ? 'border-primary bg-primary/5' : ''}`}
+                        onClick={() => setSelectedDay(index)}
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${selectedDay === index ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                            {day.charAt(0)}
+                          </div>
+                          <span>{day}</span>
+                        </div>
+                        {dayWorkout ? (
+                          <Badge variant="outline" className="font-normal">
+                            {dayWorkout.workoutName}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground bg-transparent font-normal">
+                            Rest Day
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center pt-8">
+            <Card className="w-full max-w-md mx-auto">
+              <CardHeader>
+                <CardTitle>No Weekly Routine</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  You haven't created a weekly workout routine yet. Create one to schedule your workouts throughout the week.
+                </p>
+                <Button 
+                  onClick={handleCreateEmptyRoutine}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Weekly Routine
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-          
-          <WeeklyCalendarView 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        </div>
+        )}
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedDayIndex !== null && `Assign Workout for ${getDayName(selectedDayIndex)}`}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">
-              Select a workout to assign:
-            </label>
-            <Select 
-              value={selectedWorkoutId || REST_DAY_OPTION} 
-              onValueChange={(value) => setSelectedWorkoutId(value === REST_DAY_OPTION ? null : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a workout" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={REST_DAY_OPTION}>Rest Day (No Workout)</SelectItem>
-                {Array.isArray(workoutTemplates) && workoutTemplates.map((template) => (
-                  template && (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name} ({template.exercises?.length || 0} exercises)
-                    </SelectItem>
-                  )
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {(!Array.isArray(workoutTemplates) || workoutTemplates.length === 0) && (
-              <p className="text-sm text-muted-foreground mt-2">
-                No workouts available. Create workouts in the Workouts tab first.
-              </p>
-            )}
-            
-            <div className="mt-3 flex justify-between">
-              <Button
-                variant="outline" 
-                onClick={() => navigate("/workouts/new")}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Create New Workout
-              </Button>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAssignWorkout}>
-              {selectedWorkoutId ? "Assign Workout" : "Set as Rest Day"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Remove Workout</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this workout from {selectedDayIndex !== null && getDayName(selectedDayIndex)}?
-            </DialogDescription>
-          </DialogHeader>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleRemoveWorkout}>
-              Remove Workout
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TabNavigation />
     </div>
   );
 };

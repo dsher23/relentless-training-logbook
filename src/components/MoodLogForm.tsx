@@ -22,7 +22,7 @@ const MoodLogForm: React.FC<{ logId?: string; onClose: () => void }> = ({ logId,
       const log = moodLogs.find((l) => l.id === logId);
       if (log) {
         setDate(typeof log.date === 'string' ? log.date : new Date(log.date).toISOString().split('T')[0]);
-        setMood(typeof log.mood === 'string' ? log.mood : log.mood.toString());
+        setMood(String(log.mood)); // Convert to string to avoid type issues
         setNotes(log.notes || "");
       }
     }

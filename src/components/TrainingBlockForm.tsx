@@ -70,7 +70,7 @@ const TrainingBlockForm: React.FC<{ blockId?: string; onClose: () => void }> = (
           startDate,
           endDate,
           archived: false,
-          workoutDays: [], // Add missing properties from WeeklyRoutine type
+          workoutDays: [], 
           days: {}
         };
         

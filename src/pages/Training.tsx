@@ -1,305 +1,290 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Dumbbell, 
-  Calendar, 
-  Clock, 
-  Plus,
-  Play,
-  ArrowLeft,
-  Edit,
-  Loader
-} from "lucide-react";
-import Header from "@/components/Header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Dumbbell, Calendar, Settings, PlusCircle, Clock, CheckCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import HeaderExtended from "@/components/HeaderExtended";
+import TabNavigation from "@/components/TabNavigation";
 import { useAppContext } from "@/context/AppContext";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
+import NavigationHeader from "@/components/NavigationHeader";
 
 const Training: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const context = useAppContext();
-  
-  // Validate context is available
-  if (!context) {
-    throw new Error("Training must be used within an AppProvider");
-  }
-  
-  const { weeklyRoutines = [], workoutTemplates = [], workoutPlans = [] } = context;
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{id: string, type: string} | null>(null);
-  
-  useEffect(() => {
-    // Data loading and validation
-    try {
-      setIsLoading(true);
-      
-      // Validate data structures
-      if (!Array.isArray(weeklyRoutines)) {
-        throw new Error("Weekly routines data is invalid");
-      }
-      
-      if (!Array.isArray(workoutTemplates)) {
-        throw new Error("Workout templates data is invalid");
-      }
-      
-      setIsLoading(false);
-    } catch (error: any) {
-      console.error("Error loading training data:", error.message);
-      setError("Failed to load training data. Please try again.");
-      setIsLoading(false);
-    }
-  }, [weeklyRoutines, workoutTemplates]);
-  
-  // Get today's workout if scheduled
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const activeRoutine = Array.isArray(weeklyRoutines) ? weeklyRoutines.find(r => !r.archived) : undefined;
-  const todaysWorkoutDay = activeRoutine?.workoutDays?.find(day => day.dayOfWeek === dayOfWeek);
-  const todaysWorkout = todaysWorkoutDay?.workoutTemplateId && Array.isArray(workoutTemplates)
-    ? workoutTemplates.find(t => t.id === todaysWorkoutDay.workoutTemplateId)
-    : null;
-  
-  // Find active plan to use for routing
-  const activePlan = Array.isArray(workoutPlans) ? workoutPlans.find(p => p.isActive) : undefined;
-  
-  // Get the appropriate plan ID for workout editing
-  const handleEdit = (workoutId: string) => {
-    try {
-      if (activePlan) {
-        navigate(`/exercise-plans/${activePlan.id}/days/${workoutId}`);
-      } else {
-        navigate(`/exercise-plans/days/${workoutId}`);
-      }
-    } catch (error) {
-      console.error("Error navigating to edit workout:", error);
-      toast({
-        title: "Navigation Error",
-        description: "Failed to navigate to edit workout. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-    
-  const handleDeleteConfirm = () => {
-    try {
-      if (!itemToDelete) return;
-      setConfirmDialog(false);
-      setItemToDelete(null);
-      
-      toast({
-        title: "Success",
-        description: "Item deleted successfully.",
-      });
-    } catch (error) {
-      console.error("Error deleting item:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete item. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+  const { workoutPlans, workoutTemplates, weeklyRoutines, trainingBlocks } = useAppContext();
 
-  if (isLoading) {
-    return (
-      <div className="app-container animate-fade-in">
-        <Header title="Workouts">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <Loader className="animate-spin h-8 w-8 mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading training data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Find active workout plan
+  const activePlan = workoutPlans.find(plan => plan.active);
   
-  if (error) {
-    return (
-      <div className="app-container animate-fade-in">
-        <Header title="Workouts">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Header>
-        <div className="p-4 text-center">
-          <div className="bg-destructive/10 p-4 rounded-md mb-4">
-            <p className="text-destructive">{error}</p>
-          </div>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Get latest workout templates
+  const latestTemplates = [...workoutTemplates]
+    .sort((a, b) => {
+      const dateA = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
+      const dateB = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 3);
+  
+  // Get active weekly routine
+  const activeRoutine = weeklyRoutines.find(routine => !routine.archived);
+  
+  // Get active training block
+  const now = new Date();
+  const activeBlock = trainingBlocks.find(block => {
+    const startDate = new Date(block.startDate);
+    const endDate = new Date(block.endDate);
+    return startDate <= now && endDate >= now;
+  });
 
   return (
-    <div className="app-container animate-fade-in">
-      <Header title="Workouts">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-      </Header>
+    <div className="app-container animate-fade-in pb-16">
+      <NavigationHeader title="Training" showBack={false} />
       
-      <div className="p-4 space-y-6">
-        {/* Start Workout Button */}
-        <Button
-          className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-6 flex items-center justify-center shadow-lg rounded-xl"
-          onClick={() => navigate("/workout-selection")}
-        >
-          <Play className="mr-3 h-5 w-5" />
-          Start Workout
-        </Button>
+      <div className="px-4 pt-4 space-y-6">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            className="h-20 flex flex-col"
+            onClick={() => navigate("/workout-selection")}
+          >
+            <Dumbbell className="h-5 w-5 mb-1" />
+            <span>Start Workout</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="h-20 flex flex-col"
+            onClick={() => navigate("/workout-history")}
+          >
+            <Clock className="h-5 w-5 mb-1" />
+            <span>Workout History</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="h-20 flex flex-col"
+            onClick={() => navigate("/weekly-overview")}
+          >
+            <Calendar className="h-5 w-5 mb-1" />
+            <span>Weekly Routine</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="h-20 flex flex-col"
+            onClick={() => navigate("/exercise-plans")}
+          >
+            <BookOpen className="h-5 w-5 mb-1" />
+            <span>Workout Plans</span>
+          </Button>
+        </div>
         
-        {/* Create Workout Button */}
-        <Button
-          variant="outline"
-          className="w-full py-4 flex items-center justify-center"
-          onClick={() => navigate("/workouts/new")}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Workout
-        </Button>
-      
-        {/* Today's workout if scheduled */}
-        {todaysWorkout && (
-          <Card className="bg-primary/10 mb-2">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-sm text-muted-foreground">
-                    {format(today, "EEEE, MMMM d")}
-                  </h3>
-                  <p className="font-medium">Today's Workout: {todaysWorkout.name}</p>
-                </div>
-                <div className="flex gap-2">
+        {/* Active Plan */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Active Workout Plan</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/exercise-plans")}
+              >
+                View All
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {activePlan ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-lg">{activePlan.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {activePlan.workoutTemplates.length} workout templates
+                    </p>
+                  </div>
                   <Button
-                    size="sm"
                     variant="outline"
-                    className="flex items-center"
-                    onClick={() => handleEdit(todaysWorkout.id)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
                     size="sm"
-                    onClick={() => navigate(`/live-workout/${todaysWorkout.id}?isTemplate=true`)}
+                    onClick={() => navigate(`/plan/${activePlan.id}`)}
                   >
-                    Start
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Active
+                  </Button>
+                </div>
+                <div className="mt-2">
+                  <Button 
+                    variant="default"
+                    className="w-full"
+                    onClick={() => navigate(`/plan/${activePlan.id}`)}
+                  >
+                    View Plan Details
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      
-        <div className="grid grid-cols-1 gap-4">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/workouts")}>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Dumbbell className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">My Workout Library</h3>
-                  <p className="text-muted-foreground">Browse and manage your workout collection</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/workout-history")}>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Clock className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Workout History</h3>
-                  <p className="text-muted-foreground">View your past workout sessions</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Card className="cursor-pointer transition-all hover:shadow-lg hover:bg-secondary/10" onClick={() => navigate("/weekly-overview")}>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Calendar className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Weekly Schedule</h3>
-                  <p className="text-muted-foreground">Plan your workouts for the week</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+            ) : (
+              <div className="py-4 text-center">
+                <p className="text-muted-foreground mb-2">No active workout plan</p>
+                <Button
+                  onClick={() => navigate("/exercise-plans")}
+                  variant="outline"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create or Select a Plan
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Workout Templates */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Workout Templates</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/workouts")}
+              >
+                View All
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {workoutTemplates.length > 0 ? (
+              <div className="space-y-2">
+                {latestTemplates.map(template => (
+                  <div 
+                    key={template.id}
+                    className="p-3 border rounded-md cursor-pointer hover:bg-secondary/10"
+                    onClick={() => navigate(`/live-workout/${template.id}?isTemplate=true`)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-semibold">{template.name}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {template.exercises?.length || 0} exercises
+                        </p>
+                      </div>
+                      <Button size="sm">
+                        Start
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  className="w-full mt-2"
+                  variant="outline"
+                  onClick={() => navigate("/workouts")}
+                >
+                  View All Templates
+                </Button>
+              </div>
+            ) : (
+              <div className="py-4 text-center">
+                <p className="text-muted-foreground mb-2">No workout templates</p>
+                <Button
+                  onClick={() => navigate("/create-workout")}
+                  variant="outline"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create New Template
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Weekly Routine */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Weekly Routine</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/weekly-overview")}
+              >
+                View
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {activeRoutine ? (
+              <div>
+                <h3 className="font-semibold">{activeRoutine.name}</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {activeRoutine.workoutDays.length} workouts scheduled
+                </p>
+                <Button 
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate("/weekly-overview")}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  View Weekly Schedule
+                </Button>
+              </div>
+            ) : (
+              <div className="py-4 text-center">
+                <p className="text-muted-foreground mb-2">No active weekly routine</p>
+                <Button
+                  onClick={() => navigate("/routines")}
+                  variant="outline"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Weekly Routine
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Training Block */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Training Block</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/training-blocks")}
+              >
+                View All
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {activeBlock ? (
+              <div>
+                <h3 className="font-semibold">{activeBlock.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(activeBlock.startDate).toLocaleDateString()} - {new Date(activeBlock.endDate).toLocaleDateString()}
+                </p>
+                <Button 
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => navigate(`/training-block/${activeBlock.id}`)}
+                >
+                  View Block Details
+                </Button>
+              </div>
+            ) : (
+              <div className="py-4 text-center">
+                <p className="text-muted-foreground mb-2">No active training block</p>
+                <Button
+                  onClick={() => navigate("/training-blocks")}
+                  variant="outline"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Training Block
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
       
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TabNavigation />
     </div>
   );
 };
