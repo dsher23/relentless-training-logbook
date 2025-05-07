@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import type { WorkoutTemplate, Exercise } from "@/types";
+import { WorkoutTemplate } from "@/types";
 
 /**
  * Custom hook for managing workout days logic and state.
@@ -37,7 +36,7 @@ export const useWorkoutDays = () => {
 
   const plan = workoutPlans.find((p) => p.id === planId);
 
-  const handleCreateDay = () => {
+  const handleCreateDay = async () => {
     if (!dayName.trim()) {
       toast({
         title: "Error",
@@ -52,9 +51,10 @@ export const useWorkoutDays = () => {
       dayName: dayName.trim(),
       exercises: [],
     };
-    addWorkoutTemplate(newDay);
+    await addWorkoutTemplate(newDay);
     if (plan) {
-      updateWorkoutPlan({ ...plan, workoutTemplates: [...plan.workoutTemplates, newDay] });
+      const updatedPlan = { ...plan, workoutTemplates: [...plan.workoutTemplates, newDay] };
+      await updateWorkoutPlan(plan.id, updatedPlan);
     }
     setDayName("");
     setIsCreateDayDialogOpen(false);
@@ -64,18 +64,19 @@ export const useWorkoutDays = () => {
     });
   };
 
-  const handleDeleteDay = (dayId: string) => {
+  const handleDeleteDay = async (dayId: string) => {
     if (!plan) return;
-    removeTemplateFromPlan(plan.id, dayId);
+    await removeTemplateFromPlan(plan.id, dayId);
     if (weeklyRoutines && Array.isArray(weeklyRoutines)) {
-      weeklyRoutines.forEach((routine) => {
+      for (const routine of weeklyRoutines) {
         if (routine.workoutDays.some(wd => wd.workoutTemplateId === dayId)) {
-          updateWeeklyRoutine({
+          const updatedRoutine = {
             ...routine,
             workoutDays: routine.workoutDays.filter(wd => wd.workoutTemplateId !== dayId)
-          });
+          };
+          await updateWeeklyRoutine(routine.id, updatedRoutine);
         }
-      });
+      }
     }
     toast({
       title: "Workout Day Deleted",
@@ -93,13 +94,14 @@ export const useWorkoutDays = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleSaveEditDay = () => {
+  const handleSaveEditDay = async () => {
     if (!editingDay || !plan) return;
-    updateWorkoutTemplate(editingDay);
+    await updateWorkoutTemplate(editingDay.id, editingDay);
     const updatedPlanTemplates = plan.workoutTemplates.map(t =>
       t.id === editingDay.id ? editingDay : t
     );
-    updateWorkoutPlan({ ...plan, workoutTemplates: updatedPlanTemplates });
+    const updatedPlan = { ...plan, workoutTemplates: updatedPlanTemplates };
+    await updateWorkoutPlan(plan.id, updatedPlan);
     setIsEditDialogOpen(false);
     setEditingDay(null);
     toast({
@@ -116,9 +118,9 @@ export const useWorkoutDays = () => {
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (pendingDeleteDayId) {
-      handleDeleteDay(pendingDeleteDayId);
+      await handleDeleteDay(pendingDeleteDayId);
       setPendingDeleteDayId(null);
       setIsDeleteDialogOpen(false);
       setIsEditDialogOpen(false);
@@ -132,9 +134,9 @@ export const useWorkoutDays = () => {
     setConfirmBulkDelete(true);
   };
 
-  const handleConfirmBulkDelete = () => {
+  const handleConfirmBulkDelete = async () => {
     if (!dayToBulkDelete) return;
-    handleDeleteDay(dayToBulkDelete.id);
+    await handleDeleteDay(dayToBulkDelete.id);
     setDayToBulkDelete(null);
     setConfirmBulkDelete(false);
   };
