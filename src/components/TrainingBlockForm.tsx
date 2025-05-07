@@ -1,310 +1,153 @@
-
-import React, { useState } from "react";
-import { Calendar as CalendarIcon, Save } from "lucide-react";
-import { format } from "date-fns";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 import { useAppContext } from "@/context/AppContext";
-import { WeeklyRoutine, TrainingBlock } from "@/types";
-import { useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
 
-interface TrainingBlockFormValues {
-  name: string;
-  weeklyRoutineId: string;
-  startDate: Date;
-  durationWeeks: number;
-  goal: string;
-  notes: string;
-}
-
-interface WeeklyScheduleBuilderProps {
-  value: WeeklyRoutine | null;
-  onChange: (value: WeeklyRoutine) => void;
-}
-
-const WeeklyScheduleBuilder: React.FC<WeeklyScheduleBuilderProps> = ({ value, onChange }) => {
-  const { workoutTemplates } = useAppContext();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  
-  const REST_DAY_VALUE = "rest_day";
-  
-  const handleDayUpdate = (dayOfWeek: number, templateId: string | null) => {
-    if (!value) return;
-    
-    const updatedDays = [...value.workoutDays];
-    const existingDayIndex = updatedDays.findIndex(d => d.dayOfWeek === dayOfWeek);
-    
-    if (existingDayIndex >= 0) {
-      if (templateId === null || templateId === REST_DAY_VALUE) {
-        updatedDays.splice(existingDayIndex, 1);
-      } else {
-        updatedDays[existingDayIndex].workoutTemplateId = templateId;
-        
-        const selectedTemplate = workoutTemplates.find(t => t.id === templateId);
-        updatedDays[existingDayIndex].workoutName = selectedTemplate?.name || "Workout";
-      }
-    } else if (templateId !== null && templateId !== REST_DAY_VALUE) {
-      const selectedTemplate = workoutTemplates.find(t => t.id === templateId);
-      updatedDays.push({ 
-        id: uuidv4(),
-        dayOfWeek, 
-        workoutTemplateId: templateId,
-        workoutName: selectedTemplate?.name || "Workout"
-      });
-    }
-    
-    onChange({
-      ...value,
-      workoutDays: updatedDays
-    });
-  };
-  
-  return (
-    <div className="space-y-3">
-      {dayNames.map((day, index) => (
-        <div key={day} className="flex items-center gap-3">
-          <div className="w-20 text-sm font-medium">{day}</div>
-          <Select
-            value={value?.workoutDays.find(d => d.dayOfWeek === index)?.workoutTemplateId || REST_DAY_VALUE}
-            onValueChange={(val) => handleDayUpdate(index, val || null)}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Rest Day" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={REST_DAY_VALUE}>Rest Day</SelectItem>
-              {workoutTemplates.map((template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-interface TrainingBlockFormProps {
-  blockId?: string;
-  nextSuggestedDate?: Date;
-  onSave?: () => void;
-  onClose?: () => void;
-}
-
-const TrainingBlockForm: React.FC<TrainingBlockFormProps> = ({ 
-  blockId, 
-  nextSuggestedDate,
-  onSave,
-  onClose 
-}) => {
-  const { 
-    trainingBlocks, 
-    addTrainingBlock, 
-    updateTrainingBlock, 
-    weeklyRoutines,
-    addWeeklyRoutine 
-  } = useAppContext();
+const TrainingBlockForm: React.FC<{ blockId?: string; onClose: () => void }> = ({ blockId, onClose }) => {
+  const { trainingBlocks, addTrainingBlock, updateTrainingBlock, addWeeklyRoutine } = useAppContext();
   const { toast } = useToast();
-  
-  const existingBlock = blockId ? trainingBlocks.find(b => b.id === blockId) : null;
-  
-  const [weeklyRoutine, setWeeklyRoutine] = useState<WeeklyRoutine>(() => {
-    if (existingBlock) {
-      return weeklyRoutines.find(r => r.id === existingBlock.weeklyRoutineId) || {
-        id: uuidv4(),
-        name: "New Schedule",
-        workoutDays: [],
-        days: {}, // Add this to fix the error
-        archived: false
-      };
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [routineName, setRoutineName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // If editing an existing training block, load its data
+  useEffect(() => {
+    if (blockId) {
+      const block = trainingBlocks.find((b) => b.id === blockId);
+      if (block) {
+        setName(block.name);
+        setStartDate(block.startDate);
+        setEndDate(block.endDate);
+      }
     }
-    return {
-      id: uuidv4(),
-      name: "New Schedule",
-      workoutDays: [],
-      days: {}, // Add this to fix the error
-      archived: false
-    };
-  });
-  
-  const form = useForm<TrainingBlockFormValues>({
-    defaultValues: {
-      name: existingBlock?.name || "",
-      weeklyRoutineId: existingBlock?.weeklyRoutineId || "",
-      startDate: existingBlock?.startDate ? new Date(existingBlock.startDate) : nextSuggestedDate || new Date(),
-      durationWeeks: existingBlock?.durationWeeks || 6,
-      goal: existingBlock?.goal || "",
-      notes: existingBlock?.notes || ""
-    }
-  });
-  
-  const handleSubmit = (values: TrainingBlockFormValues) => {
-    if (weeklyRoutine.workoutDays.length === 0) {
+  }, [blockId, trainingBlocks]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !startDate || !endDate) {
       toast({
-        title: "Missing Information",
-        description: "Please add at least one workout day to your schedule.",
-        variant: "destructive"
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       });
       return;
     }
-    
-    const existingRoutine = weeklyRoutines.find(r => r.id === weeklyRoutine.id);
-    if (!existingRoutine) {
-      addWeeklyRoutine(weeklyRoutine);
-    }
-    
-    const blockData: TrainingBlock = {
-      id: existingBlock?.id || uuidv4(),
-      name: values.name,
-      startDate: values.startDate,
-      endDate: new Date(values.startDate.getTime() + (values.durationWeeks * 7 * 24 * 60 * 60 * 1000)), // Add computed endDate
-      durationWeeks: values.durationWeeks,
-      weeklyRoutineId: weeklyRoutine.id,
-      goal: values.goal || "Training Block",
-      notes: values.notes,
-      routines: [] // Add empty routines array to satisfy the type
-    };
-    
-    if (existingBlock) {
-      updateTrainingBlock(blockData);
+
+    setIsLoading(true);
+    try {
+      const blockData = {
+        name,
+        startDate,
+        endDate,
+        workouts: [], // Initialize with empty workouts array as per TrainingBlock type
+      };
+
+      if (blockId) {
+        await updateTrainingBlock(blockId, { ...blockData, id: blockId });
+        toast({
+          title: "Success",
+          description: "Training block updated successfully.",
+        });
+      } else {
+        await addTrainingBlock(blockData);
+        toast({
+          title: "Success",
+          description: "Training block added successfully.",
+        });
+      }
+
+      // Add a weekly routine if specified
+      if (routineName) {
+        const routineData = {
+          name: routineName,
+          workouts: [],
+          startDate,
+          endDate,
+          archived: false,
+        };
+        await addWeeklyRoutine(routineData);
+        toast({
+          title: "Success",
+          description: "Weekly routine added successfully.",
+        });
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("TrainingBlockForm.tsx: Error saving training block:", error);
       toast({
-        title: "Training Block Updated",
-        description: `${values.name} has been updated.`
+        title: "Error",
+        description: "Failed to save training block.",
+        variant: "destructive",
       });
-    } else {
-      addTrainingBlock(blockData);
-      toast({
-        title: "Training Block Created",
-        description: `${values.name} has been created.`
-      });
-    }
-    
-    if (onSave) {
-      onSave();
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Block Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Strength Phase" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="startDate"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Start Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className="w-full pl-3 text-left font-normal"
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="durationWeeks"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Duration (Weeks)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  max="52" 
-                  {...field} 
-                  onChange={e => field.onChange(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="space-y-2">
-          <FormLabel>Weekly Schedule</FormLabel>
-          <Card>
-            <CardContent className="pt-4">
-              <WeeklyScheduleBuilder 
-                value={weeklyRoutine} 
-                onChange={setWeeklyRoutine}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Any specific goals or focus for this training block?"
-                  className="min-h-[100px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="flex justify-end">
-          <Button type="submit" className="bg-iron-blue hover:bg-blue-700">
-            <Save className="mr-2 h-4 w-4" />
-            {existingBlock ? "Update" : "Save"} Training Block
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>{blockId ? "Edit Training Block" : "Add Training Block"}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Training Block Name</Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter training block name"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="startDate">Start Date</Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="endDate">End Date</Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="routineName">Weekly Routine Name (Optional)</Label>
+            <Input
+              id="routineName"
+              type="text"
+              value={routineName}
+              onChange={(e) => setRoutineName(e.target.value)}
+              placeholder="Enter weekly routine name"
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Saving..." : blockId ? "Update Training Block" : "Add Training Block"}
           </Button>
-        </div>
-      </form>
-    </Form>
+          <Button type="button" variant="outline" className="w-full" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
