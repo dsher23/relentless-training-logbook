@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -17,7 +16,7 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
   selectedDate,
   onDateChange,
 }) => {
-  const { workouts, workoutTemplates, weeklyRoutines, trainingBlocks, updateWorkout } = useAppContext();
+  const { workouts, workoutTemplates, weeklyRoutines, updateWorkout } = useAppContext();
   const navigate = useNavigate();
   
   // Get current week days
@@ -62,9 +61,9 @@ const WeeklyCalendarView: React.FC<WeeklyCalendarProps> = ({
     }
   };
   
-  const toggleCompleted = (e: React.MouseEvent, workout: Workout) => {
+  const toggleCompleted = async (e: React.MouseEvent, workout: Workout) => {
     e.stopPropagation();
-    updateWorkout({
+    await updateWorkout(workout.id, {
       ...workout,
       completed: !workout.completed
     });
