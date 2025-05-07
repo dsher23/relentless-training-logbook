@@ -162,6 +162,7 @@ interface AppContextType {
   addSupplementLog: (log: Omit<SupplementLog, "id">) => void;
   updateSupplementLog: (id: string, log: SupplementLog) => void;
   addSteroidCycle: (cycle: Omit<SteroidCycle, "id">) => void;
+  updateSteroidCycle: (id: string, cycle: SteroidCycle) => void; // Added updateSteroidCycle
   addCompound: (compound: Omit<SteroidCompound, "id">) => void;
   updateCompound: (id: string, compound: SteroidCompound) => void;
   deleteCompound: (id: string) => void;
@@ -190,6 +191,7 @@ interface AppContextType {
   updateUnitSystem: (system: { bodyWeightUnit: string; bodyMeasurementUnit: string; liftingWeightUnit: string }) => void;
   exercises: Exercise[];
   addExercise: (exercise: Omit<Exercise, "id">) => void;
+  updateExercise: (id: string, exercise: Exercise) => void;
   trainingBlocks: TrainingBlock[];
   addTrainingBlock: (block: Omit<TrainingBlock, "id">) => void;
   updateTrainingBlock: (id: string, block: TrainingBlock) => void;
@@ -659,6 +661,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSteroidCycles(updatedCycles);
   };
 
+  const updateSteroidCycle = async (id: string, updatedCycle: SteroidCycle) => {
+    const updatedCycles = steroidCycles.map(c => (c.id === id ? updatedCycle : c));
+    setSteroidCycles(updatedCycles);
+  };
+
   const addCompound = async (compound: Omit<SteroidCompound, "id">) => {
     const newCompound = { ...compound, id: Date.now().toString() };
     const updatedCompounds = [...steroidCompounds, newCompound];
@@ -731,6 +738,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addExercise = async (exercise: Omit<Exercise, "id">) => {
     const newExercise = { ...exercise, id: Date.now().toString() };
     const updatedExercises = [...exercises, newExercise];
+    setExercises(updatedExercises);
+  };
+
+  const updateExercise = async (id: string, updatedExercise: Exercise) => {
+    const updatedExercises = exercises.map(e => (e.id === id ? updatedExercise : e));
     setExercises(updatedExercises);
   };
 
@@ -935,6 +947,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addSupplementLog,
       updateSupplementLog,
       addSteroidCycle,
+      updateSteroidCycle,
       addCompound,
       updateCompound,
       deleteCompound,
@@ -963,6 +976,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateUnitSystem,
       exercises,
       addExercise,
+      updateExercise,
       trainingBlocks,
       addTrainingBlock,
       updateTrainingBlock,
