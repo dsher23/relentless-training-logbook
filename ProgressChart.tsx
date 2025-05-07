@@ -1,22 +1,25 @@
-
 import React from "react";
 import {
-  ResponsiveContainer, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
 } from "recharts";
 
+/* ---- props ---- */
 interface Props {
-  data: { date: string; value: number }[];
+  data: Array<{ date: string; value: number }>;
   yAxisLabel?: string;
   maxValue?: number;
-  title?: string;
-  displayMode?: string;
 }
 
-const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue, title, displayMode }) => {
+const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue }) => {
   const [min, max] = React.useMemo(() => {
     if (!data.length) return [0, 10];
-    const vals = data.map(v => v.value);
+    const vals = data.map((d) => d.value);
     const hi = maxValue ?? Math.max(...vals);
     const lo = Math.min(...vals);
     const pad = (hi - lo) * 0.1;
@@ -26,8 +29,8 @@ const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue, title, dis
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" opacity={0.2}/>
-        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false}/>
+        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
         <YAxis
           domain={[min, max]}
           tick={{ fontSize: 10 }}
@@ -35,13 +38,16 @@ const ProgressChart: React.FC<Props> = ({ data, yAxisLabel, maxValue, title, dis
           axisLine={false}
           label={
             yAxisLabel
-              ? { value: yAxisLabel, angle: -90, position: "insideLeft",
-                  style: { fontSize: 10, textAnchor: "middle" } }
+              ? {
+                  value: yAxisLabel,
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { fontSize: 10, textAnchor: "middle" },
+                }
               : undefined
           }
         />
-        <Tooltip/>
-        {title && <text x={10} y={20} fontSize="12" textAnchor="start">{title}</text>}
+        <Tooltip />
         <Line
           type="monotone"
           dataKey="value"
