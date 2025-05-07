@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -19,6 +18,8 @@ declare global {
 }
 
 const Auth: React.FC = () => {
+  console.log("Auth.tsx: Rendering Auth component");
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAppContext();
@@ -33,17 +34,20 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log("Current user state:", user);
+    console.log("Auth.tsx: Current user state:", user);
     if (user) {
-      console.log("User authenticated, redirecting to /dashboard");
-      setTimeout(() => navigate("/dashboard"), 1000);
+      console.log("Auth.tsx: User authenticated, redirecting to /dashboard");
+      setTimeout(() => {
+        console.log("Auth.tsx: Executing navigation to /dashboard");
+        navigate("/dashboard");
+      }, 1000);
     }
   }, [user, navigate]);
 
   const handleEmailAuth = async () => {
-    console.log("handleEmailAuth called with:", { email, password, displayName, isSignUp });
+    console.log("Auth.tsx: handleEmailAuth called with:", { email, password, displayName, isSignUp });
     if (!email || !password) {
-      console.log("Validation failed: Email or password missing");
+      console.log("Auth.tsx: Validation failed: Email or password missing");
       toast({
         title: "Error",
         description: "Please enter both email and password.",
@@ -52,7 +56,7 @@ const Auth: React.FC = () => {
       return;
     }
     if (isSignUp && !displayName) {
-      console.log("Validation failed: Display name missing");
+      console.log("Auth.tsx: Validation failed: Display name missing");
       toast({
         title: "Error",
         description: "Please enter a display name.",
@@ -64,17 +68,17 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       if (isSignUp) {
-        console.log("Attempting to sign up with Firebase...");
+        console.log("Auth.tsx: Attempting to sign up with Firebase...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const firebaseUser = userCredential.user;
-        console.log("Sign-up successful, user:", firebaseUser);
+        console.log("Auth.tsx: Sign-up successful, user:", firebaseUser);
 
         // Set display name in Firebase Authentication
         try {
           await updateProfile(firebaseUser, { displayName });
-          console.log("Display name set in Firebase Authentication:", displayName);
+          console.log("Auth.tsx: Display name set in Firebase Authentication:", displayName);
         } catch (error: any) {
-          console.error("Failed to set display name in Firebase Authentication:", error.message);
+          console.error("Auth.tsx: Failed to set display name in Firebase Authentication:", error.message);
           toast({
             title: "Warning",
             description: "Failed to set display name, proceeding with sign-up.",
@@ -89,9 +93,9 @@ const Auth: React.FC = () => {
             email,
             createdAt: new Date().toISOString(),
           });
-          console.log("User profile saved to Firestore:", { displayName, email });
+          console.log("Auth.tsx: User profile saved to Firestore:", { displayName, email });
         } catch (error: any) {
-          console.error("Failed to save user profile to Firestore:", error.message);
+          console.error("Auth.tsx: Failed to save user profile to Firestore:", error.message);
           toast({
             title: "Warning",
             description: "Failed to save profile to Firestore, proceeding with sign-up.",
@@ -104,38 +108,41 @@ const Auth: React.FC = () => {
           description: "Account created successfully.",
         });
       } else {
-        console.log("Attempting to log in with Firebase...");
+        console.log("Auth.tsx: Attempting to log in with Firebase...");
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("Login successful, user:", userCredential.user);
+        console.log("Auth.tsx: Login successful, user:", userCredential.user);
         toast({
           title: "Success",
           description: "Logged in successfully.",
         });
       }
-      console.log("Navigating to /dashboard with delay");
-      setTimeout(() => navigate("/dashboard"), 1000);
+      console.log("Auth.tsx: Navigating to /dashboard with delay");
+      setTimeout(() => {
+        console.log("Auth.tsx: Executing navigation to /dashboard");
+        navigate("/dashboard");
+      }, 1000);
     } catch (error: any) {
-      console.error("Auth error:", error.code, error.message);
+      console.error("Auth.tsx: Auth error:", error.code, error.message);
       toast({
         title: "Error",
         description: error.message || "An error occurred during authentication.",
         variant: "destructive",
       });
     } finally {
-      console.log("Setting isLoading to false");
+      console.log("Auth.tsx: Setting isLoading to false");
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    console.log("handleGoogleSignIn called");
+    console.log("Auth.tsx: handleGoogleSignIn called");
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      console.log("Attempting Google Sign-In...");
+      console.log("Auth.tsx: Attempting Google Sign-In...");
       const userCredential = await signInWithPopup(auth, provider);
       const firebaseUser = userCredential.user;
-      console.log("Google Sign-In successful, user:", firebaseUser);
+      console.log("Auth.tsx: Google Sign-In successful, user:", firebaseUser);
 
       // Save user profile to Firestore if not already present
       try {
@@ -144,9 +151,9 @@ const Auth: React.FC = () => {
           email: firebaseUser.email,
           createdAt: new Date().toISOString(),
         }, { merge: true });
-        console.log("User profile saved to Firestore for Google sign-in:", { displayName: firebaseUser.displayName || "User", email: firebaseUser.email });
+        console.log("Auth.tsx: User profile saved to Firestore for Google sign-in:", { displayName: firebaseUser.displayName || "User", email: firebaseUser.email });
       } catch (error: any) {
-        console.error("Failed to save user profile to Firestore for Google sign-in:", error.message);
+        console.error("Auth.tsx: Failed to save user profile to Firestore for Google sign-in:", error.message);
         toast({
           title: "Warning",
           description: "Failed to save profile to Firestore, proceeding with login.",
@@ -158,9 +165,12 @@ const Auth: React.FC = () => {
         title: "Success",
         description: "Logged in with Google successfully.",
       });
-      setTimeout(() => navigate("/dashboard"), 1000);
+      setTimeout(() => {
+        console.log("Auth.tsx: Executing navigation to /dashboard after Google Sign-In");
+        navigate("/dashboard");
+      }, 1000);
     } catch (error: any) {
-      console.error("Google Sign-In error:", error.code, error.message);
+      console.error("Auth.tsx: Google Sign-In error:", error.code, error.message);
       toast({
         title: "Error",
         description: error.message || "An error occurred during Google Sign-In.",
@@ -172,9 +182,9 @@ const Auth: React.FC = () => {
   };
 
   const handlePhoneAuth = async () => {
-    console.log("handlePhoneAuth called with:", { phoneNumber });
+    console.log("Auth.tsx: handlePhoneAuth called with:", { phoneNumber });
     if (!phoneNumber) {
-      console.log("Validation failed: Phone number missing");
+      console.log("Auth.tsx: Validation failed: Phone number missing");
       toast({
         title: "Error",
         description: "Please enter a valid phone number.",
@@ -186,14 +196,14 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier!);
-      console.log("Phone auth confirmation sent:", confirmation);
+      console.log("Auth.tsx: Phone auth confirmation sent:", confirmation);
       setConfirmationResult(confirmation);
       toast({
         title: "Success",
         description: "Verification code sent to your phone.",
       });
     } catch (error: any) {
-      console.error("Phone Auth error:", error.code, error.message);
+      console.error("Auth.tsx: Phone Auth error:", error.code, error.message);
       toast({
         title: "Error",
         description: error.message || "An error occurred during phone authentication.",
@@ -205,9 +215,9 @@ const Auth: React.FC = () => {
   };
 
   const handleVerifyCode = async () => {
-    console.log("handleVerifyCode called with:", { verificationCode });
+    console.log("Auth.tsx: handleVerifyCode called with:", { verificationCode });
     if (!verificationCode || !confirmationResult) {
-      console.log("Validation failed: Verification code or confirmation result missing");
+      console.log("Auth.tsx: Validation failed: Verification code or confirmation result missing");
       toast({
         title: "Error",
         description: "Please enter the verification code.",
@@ -220,7 +230,7 @@ const Auth: React.FC = () => {
     try {
       const result = await confirmationResult.confirm(verificationCode);
       const firebaseUser = result.user;
-      console.log("Phone verification successful, user:", firebaseUser);
+      console.log("Auth.tsx: Phone verification successful, user:", firebaseUser);
 
       // Save user profile to Firestore
       try {
@@ -229,9 +239,9 @@ const Auth: React.FC = () => {
           email: firebaseUser.email || phoneNumber,
           createdAt: new Date().toISOString(),
         }, { merge: true });
-        console.log("User profile saved to Firestore for phone sign-in:", { displayName: "User", email: firebaseUser.email || phoneNumber });
+        console.log("Auth.tsx: User profile saved to Firestore for phone sign-in:", { displayName: "User", email: firebaseUser.email || phoneNumber });
       } catch (error: any) {
-        console.error("Failed to save user profile to Firestore for phone sign-in:", error.message);
+        console.error("Auth.tsx: Failed to save user profile to Firestore for phone sign-in:", error.message);
         toast({
           title: "Warning",
           description: "Failed to save profile to Firestore, proceeding with login.",
@@ -243,9 +253,12 @@ const Auth: React.FC = () => {
         title: "Success",
         description: "Logged in with phone number successfully.",
       });
-      setTimeout(() => navigate("/dashboard"), 1000);
+      setTimeout(() => {
+        console.log("Auth.tsx: Executing navigation to /dashboard after phone verification");
+        navigate("/dashboard");
+      }, 1000);
     } catch (error: any) {
-      console.error("Verification error:", error.code, error.message);
+      console.error("Auth.tsx: Verification error:", error.code, error.message);
       toast({
         title: "Error",
         description: error.message || "An error occurred during verification.",
@@ -258,17 +271,16 @@ const Auth: React.FC = () => {
 
   useEffect(() => {
     if (isPhoneAuth && !window.recaptchaVerifier) {
-      console.log("Initializing reCAPTCHA verifier");
+      console.log("Auth.tsx: Initializing reCAPTCHA verifier");
       window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
         size: "invisible",
         callback: () => {
-          console.log("reCAPTCHA verified");
+          console.log("Auth.tsx: reCAPTCHA verified");
         },
       });
     }
   }, [isPhoneAuth]);
 
-  // Add loading check before rendering form
   if (user === null) {
     console.log("Auth.tsx: User state is still loading, rendering loading spinner...");
     return <div>Loading...</div>;
