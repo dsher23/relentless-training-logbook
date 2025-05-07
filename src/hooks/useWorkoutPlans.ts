@@ -12,7 +12,7 @@ export const useWorkoutPlans = () => {
       name: plan.name || "New Workout Plan",
       description: plan.description || "",
       workoutTemplates: plan.workoutTemplates || [],
-      isActive: plan.isActive !== undefined ? plan.isActive : true,
+      active: plan.active !== undefined ? plan.active : true,
       archived: plan.archived || false,
       routines: plan.routines || [] // Add empty routines array to satisfy the type
     };
@@ -42,7 +42,7 @@ export const useWorkoutPlans = () => {
         id: uuidv4(),
         name: `${planToDuplicate.name} (Copy)`,
         workoutTemplates: duplicatedTemplates,
-        isActive: false,
+        active: false,
         archived: false
       };
       setWorkoutPlans([...workoutPlans, newPlan]);
@@ -78,7 +78,7 @@ export const useWorkoutPlans = () => {
   const setActivePlan = (planId: string) => {
     setWorkoutPlans(workoutPlans.map(plan => ({
       ...plan,
-      isActive: plan.id === planId
+      active: plan.id === planId
     })));
   };
 

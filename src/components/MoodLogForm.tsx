@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,8 +21,8 @@ const MoodLogForm: React.FC<{ logId?: string; onClose: () => void }> = ({ logId,
     if (logId) {
       const log = moodLogs.find((l) => l.id === logId);
       if (log) {
-        setDate(log.date);
-        setMood(log.mood);
+        setDate(typeof log.date === 'string' ? log.date : new Date(log.date).toISOString().split('T')[0]);
+        setMood(typeof log.mood === 'string' ? log.mood : log.mood.toString());
         setNotes(log.notes || "");
       }
     }

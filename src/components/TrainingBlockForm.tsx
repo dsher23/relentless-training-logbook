@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,8 @@ const TrainingBlockForm: React.FC<{ blockId?: string; onClose: () => void }> = (
       const block = trainingBlocks.find((b) => b.id === blockId);
       if (block) {
         setName(block.name);
-        setStartDate(block.startDate);
-        setEndDate(block.endDate);
+        setStartDate(typeof block.startDate === 'string' ? block.startDate : new Date(block.startDate).toISOString().split('T')[0]);
+        setEndDate(typeof block.endDate === 'string' ? block.endDate : block.endDate ? new Date(block.endDate).toISOString().split('T')[0] : '');
       }
     }
   }, [blockId, trainingBlocks]);
@@ -69,7 +70,10 @@ const TrainingBlockForm: React.FC<{ blockId?: string; onClose: () => void }> = (
           startDate,
           endDate,
           archived: false,
+          workoutDays: [], // Add missing properties from WeeklyRoutine type
+          days: {}
         };
+        
         await addWeeklyRoutine(routineData);
         toast({
           title: "Success",
