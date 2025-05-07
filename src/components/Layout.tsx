@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import TabNavigationExtended from './TabNavigation';
-import NavigationHeader from './NavigationHeader';
+import TabNavigationExtended from './TabNavigationExtended';
+import NavigationHeader from './NavigationHeaderExtended';
 
 const Layout: React.FC = () => {
   const location = useLocation();
