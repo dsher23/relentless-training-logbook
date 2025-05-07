@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { auth, db } from "../firebase"; // Removed storage import since we're using localforage
+import { auth, db, storage } from "../firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { updateProfile as updateFirebaseProfile } from "firebase/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

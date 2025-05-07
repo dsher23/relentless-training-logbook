@@ -114,7 +114,7 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void }> = 
             </Select>
           </div>
           <div>
-            <Label htmlFor="sets">Sets (JSON format, e.g., [{reps: 10, weight: 50}])</Label>
+            <Label htmlFor="sets">Sets (JSON format, e.g., {"[{\"reps\": 10, \"weight\": 50}]"})</Label>
             <Input
               id="sets"
               type="text"
