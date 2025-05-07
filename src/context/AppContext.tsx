@@ -582,10 +582,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addSteroidCycle = async (cycle: Omit<SteroidCycle, "id">) => {
     const newCycle = { 
       id: Date.now().toString(),
-      compound: cycle.compound,
-      dosage: cycle.dosage,
+      name: cycle.name || "New Cycle",
       startDate: cycle.startDate,
       endDate: cycle.endDate,
+      compounds: cycle.compounds || [],
+      notes: cycle.notes || "",
+      isPrivate: cycle.isPrivate ?? false
     };
     const updatedCycles = [...steroidCycles, newCycle];
     setSteroidCycles(updatedCycles);
@@ -736,8 +738,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: Date.now().toString(), 
       active: plan.active ?? false,
       templates: plan.templates ?? [],
-      archived: plan.archived ?? false,
-      routines: plan.routines ?? []
+      createdAt: plan.createdAt || new Date().toISOString(),
+      updatedAt: plan.updatedAt || new Date().toISOString()
     };
     const updatedPlans = [...workoutPlans, newPlan];
     setWorkoutPlans(updatedPlans);
@@ -1018,5 +1020,5 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
-export { AppContext, AppProvider, useAppContext };
 
+export { AppContext, AppProvider, useAppContext };

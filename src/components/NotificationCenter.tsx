@@ -8,7 +8,7 @@ import ReminderItem from "./ReminderItem";
 import { Reminder } from "@/types";
 
 const NotificationCenter: React.FC = () => {
-  const { reminders, updateReminder } = useAppContext();
+  const { reminders, markReminderAsSeen } = useAppContext();
   const [unseenCount, setUnseenCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -20,7 +20,7 @@ const NotificationCenter: React.FC = () => {
 
   const handleMarkAsSeen = async (id: string) => {
     try {
-      await updateReminder(id, { seen: true });
+      await markReminderAsSeen(id);
     } catch (error) {
       console.error("Failed to mark reminder as seen:", error);
     }
@@ -31,7 +31,7 @@ const NotificationCenter: React.FC = () => {
       // Update all unseen reminders
       const promises = reminders
         .filter(r => !r.seen)
-        .map(r => updateReminder(r.id, { seen: true }));
+        .map(r => markReminderAsSeen(r.id));
       
       await Promise.all(promises);
     } catch (error) {

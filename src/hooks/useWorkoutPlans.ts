@@ -1,20 +1,22 @@
 
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { WorkoutPlan, WorkoutTemplate, WeeklyRoutine } from '@/types';
+import { WorkoutPlan, WorkoutTemplate } from '@/types';
 
 export const useWorkoutPlans = () => {
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
-  const addWorkoutPlan = (plan: WorkoutPlan) => {
+  const addWorkoutPlan = (plan: Omit<WorkoutPlan, "id">) => {
     const validatedPlan: WorkoutPlan = {
-      id: plan.id || uuidv4(),
+      id: uuidv4(),
       name: plan.name || "New Workout Plan",
       description: plan.description || "",
-      workoutTemplates: plan.workoutTemplates || [],
+      templates: plan.templates || [],
       active: plan.active !== undefined ? plan.active : true,
       archived: plan.archived || false,
-      routines: plan.routines || [] // Add empty routines array to satisfy the type
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      routines: plan.routines || [] 
     };
     
     setWorkoutPlans([...workoutPlans, validatedPlan]);
@@ -31,32 +33,24 @@ export const useWorkoutPlans = () => {
   const duplicateWorkoutPlan = (id: string) => {
     const planToDuplicate = workoutPlans.find(p => p.id === id);
     if (planToDuplicate) {
-      // Create new IDs for all templates within the plan
-      const duplicatedTemplates = planToDuplicate.workoutTemplates.map(template => ({
-        ...template,
-        id: uuidv4()
-      }));
-      
       const newPlan = {
         ...planToDuplicate,
         id: uuidv4(),
         name: `${planToDuplicate.name} (Copy)`,
-        workoutTemplates: duplicatedTemplates,
         active: false,
-        archived: false
+        archived: false,
+        updatedAt: new Date().toISOString()
       };
       setWorkoutPlans([...workoutPlans, newPlan]);
     }
   };
 
   const addTemplateToPlan = (planId: string, templateId: string) => {
-    const template = workoutPlans.flatMap(p => p.workoutTemplates).find(t => t.id === templateId);
-    
     setWorkoutPlans(workoutPlans.map(plan => {
-      if (plan.id === planId && template) {
+      if (plan.id === planId) {
         return {
           ...plan,
-          workoutTemplates: [...plan.workoutTemplates, template]
+          templates: [...plan.templates, templateId]
         };
       }
       return plan;
@@ -68,7 +62,7 @@ export const useWorkoutPlans = () => {
       if (plan.id === planId) {
         return {
           ...plan,
-          workoutTemplates: plan.workoutTemplates.filter(t => t.id !== templateId)
+          templates: plan.templates.filter(t => t !== templateId)
         };
       }
       return plan;
