@@ -1,9 +1,12 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, getDocs, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { useAppContext } from './AppContext';
-import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle, WorkoutTemplate, TrainingBlock, Supplement, UserProfile } from '@/types';
+import { BodyMeasurement, MoodLog, PRLift, ProgressPhoto, Workout, WeeklyRoutine, SteroidCycle } from '@/types';
+
+interface MoodLogData extends MoodLog {}
 
 interface FirestoreContextType {
   isAuthenticated: boolean;
@@ -67,24 +70,14 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const userProfileRef = doc(db, `users/${userId}/profile/info`);
       const userProfileSnap = await getDoc(userProfileRef);
       if (userProfileSnap.exists()) {
-        // Create a UserProfile object with the required fields to fix the type error
-        const userData = userProfileSnap.data();
-        const userProfileData: UserProfile = {
-          displayName: userData.displayName || user.displayName || "User",
-          email: userData.email || user.email || "",
-          createdAt: userData.createdAt || new Date().toISOString(),
-          ...userData
-        };
-        setUserProfile(userProfileData);
+        setUserProfile(userProfileSnap.data());
       } else {
         // Create default profile if it doesn't exist
-        const newUserProfile: UserProfile = {
+        await setDoc(userProfileRef, {
           displayName: user.displayName || "User",
-          email: user.email || "",
+          email: user.email,
           createdAt: new Date().toISOString()
-        };
-        await setDoc(userProfileRef, newUserProfile);
-        setUserProfile(newUserProfile);
+        });
       }
       
       // Load workouts
@@ -103,12 +96,7 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load workout templates
       const templatesRef = collection(db, `users/${userId}/workoutTemplates`);
       const templatesSnap = await getDocs(templatesRef);
-      const templatesData = templatesSnap.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        name: doc.data().name || "Template", 
-        exercises: doc.data().exercises || [] 
-      })) as WorkoutTemplate[];
+      const templatesData = templatesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setWorkoutTemplates(templatesData);
       
       // Load body measurements
@@ -147,13 +135,7 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load training blocks
       const blocksRef = collection(db, `users/${userId}/trainingBlocks`);
       const blocksSnap = await getDocs(blocksRef);
-      const blocksData = blocksSnap.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        name: doc.data().name || "Block",
-        startDate: doc.data().startDate || new Date().toISOString(),
-        endDate: doc.data().endDate || new Date().toISOString()
-      })) as TrainingBlock[];
+      const blocksData = blocksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTrainingBlocks(blocksData);
       
       // Load weekly routines
@@ -188,14 +170,7 @@ export const FirestoreProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load supplements
       const supplementsRef = collection(db, `users/${userId}/supplements`);
       const supplementsSnap = await getDocs(supplementsRef);
-      const supplementsData = supplementsSnap.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        name: doc.data().name || "",
-        dosage: doc.data().dosage || "",
-        frequency: doc.data().frequency || "",
-        date: doc.data().date || new Date().toISOString()
-      })) as Supplement[];
+      const supplementsData = supplementsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSupplements(supplementsData);
       
     } catch (error) {

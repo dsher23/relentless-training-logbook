@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -122,8 +123,7 @@ const WeeklyRoutineBuilder: React.FC<WeeklyRoutineBuilderProps> = ({
     const workoutTemplate: WorkoutTemplate = {
       id: templateId || uuidv4(),
       name: routineName,
-      exercises: selectedExercises,
-      isFavorite: false
+      exercises: selectedExercises
     };
     
     // Save to localStorage for persistence between sessions

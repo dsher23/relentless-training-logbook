@@ -20,8 +20,6 @@ import {
   SteroidCycle,
   SteroidCompound,
   UserProfile,
-  Exercise,
-  WorkoutPlan
 } from "@/types";
 
 interface AppContextType {
@@ -116,16 +114,6 @@ interface AppContextType {
     updates: Partial<SteroidCompound>
   ) => Promise<void>;
   deleteSteroidCompound: (id: string) => Promise<void>;
-  exercises: Exercise[];
-  setExercises: Dispatch<SetStateAction<Exercise[]>>;
-  addExercise: (exercise: Omit<Exercise, "id">) => Promise<void>;
-  updateExercise: (id: string, updates: Partial<Exercise>) => Promise<void>;
-  deleteExercise: (id: string) => Promise<void>;
-  workoutPlans: WorkoutPlan[];
-  setWorkoutPlans: Dispatch<SetStateAction<WorkoutPlan[]>>;
-  addWorkoutPlan: (plan: Omit<WorkoutPlan, "id">) => Promise<void>;
-  updateWorkoutPlan: (id: string, updates: Partial<WorkoutPlan>) => Promise<void>;
-  deleteWorkoutPlan: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -151,12 +139,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>(
     []
   );
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
   // User Profile
-  // Fix: Remove the custom handler for setUserProfile and use the useState setter directly
-  
+  const handleSetUserProfile = async (
+    updates: Partial<UserProfile>
+  ): Promise<void> => {
+    setUserProfile((prevProfile) => ({
+      ...prevProfile,
+      ...updates,
+    }));
+  };
+
   // Workouts
   const handleAddWorkout = async (
     workout: Omit<Workout, "id">
@@ -414,65 +407,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  // Exercises
-  const handleAddExercise = async (
-    exercise: Omit<Exercise, "id">
-  ): Promise<void> => {
-    setExercises((prevExercises) => [
-      ...prevExercises,
-      { ...exercise, id: uuidv4() },
-    ]);
-  };
-
-  const handleUpdateExercise = async (
-    id: string,
-    updates: Partial<Exercise>
-  ): Promise<void> => {
-    setExercises((prevExercises) =>
-      prevExercises.map((exercise) =>
-        exercise.id === id ? { ...exercise, ...updates } : exercise
-      )
-    );
-  };
-
-  const handleDeleteExercise = async (id: string): Promise<void> => {
-    setExercises((prevExercises) =>
-      prevExercises.filter((exercise) => exercise.id !== id)
-    );
-  };
-
-  // Workout Plans
-  const handleAddWorkoutPlan = async (
-    plan: Omit<WorkoutPlan, "id">
-  ): Promise<void> => {
-    setWorkoutPlans((prevPlans) => [
-      ...prevPlans,
-      { ...plan, id: uuidv4() },
-    ]);
-  };
-
-  const handleUpdateWorkoutPlan = async (
-    id: string,
-    updates: Partial<WorkoutPlan>
-  ): Promise<void> => {
-    setWorkoutPlans((prevPlans) =>
-      prevPlans.map((plan) =>
-        plan.id === id ? { ...plan, ...updates } : plan
-      )
-    );
-  };
-
-  const handleDeleteWorkoutPlan = async (id: string): Promise<void> => {
-    setWorkoutPlans((prevPlans) =>
-      prevPlans.filter((plan) => plan.id !== id)
-    );
-  };
-
   return (
     <AppContext.Provider
       value={{
         userProfile,
-        setUserProfile, // Use the React state setter directly
+        setUserProfile: handleSetUserProfile,
         workouts,
         setWorkouts,
         addWorkout: handleAddWorkout,
@@ -528,16 +467,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         addSteroidCompound: handleAddSteroidCompound,
         updateSteroidCompound: handleUpdateSteroidCompound,
         deleteSteroidCompound: handleDeleteSteroidCompound,
-        exercises,
-        setExercises,
-        addExercise: handleAddExercise,
-        updateExercise: handleUpdateExercise,
-        deleteExercise: handleDeleteExercise,
-        workoutPlans,
-        setWorkoutPlans,
-        addWorkoutPlan: handleAddWorkoutPlan,
-        updateWorkoutPlan: handleUpdateWorkoutPlan,
-        deleteWorkoutPlan: handleDeleteWorkoutPlan,
       }}
     >
       {children}

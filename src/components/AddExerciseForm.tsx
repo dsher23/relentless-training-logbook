@@ -16,6 +16,7 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exer
   const [category, setCategory] = useState<"upper" | "lower" | "core" | "other">("upper");
   const [sets, setSets] = useState("");
   const [reps, setReps] = useState("");
+  const [weight, setWeight] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // If editing an existing exercise, load its data
@@ -27,12 +28,14 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exer
         setCategory(existingExercise.category as "upper" | "lower" | "core" | "other");
         setSets(JSON.stringify(existingExercise.sets));
         setReps(existingExercise.reps.toString());
+        setWeight(existingExercise.weight?.toString() || "0");
       }
     } else if (exercise) {
       setName(exercise.name);
       setCategory(exercise.category as "upper" | "lower" | "core" | "other");
       setSets(JSON.stringify(exercise.sets));
       setReps(exercise.reps.toString());
+      setWeight(exercise.weight?.toString() || "0");
     }
   }, [exerciseId, exercises, exercise]);
 
@@ -60,6 +63,7 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exer
         category,
         sets: setsArray,
         reps: Number(reps),
+        weight: Number(weight) || 0,
       };
 
       if (onSave) {
@@ -143,6 +147,17 @@ const AddExerciseForm: React.FC<{ exerciseId?: string; onClose: () => void; exer
               value={reps}
               onChange={(e) => setReps(e.target.value)}
               placeholder="Enter default reps"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <Label htmlFor="weight">Default Weight (kg)</Label>
+            <Input
+              id="weight"
+              type="number"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              placeholder="Enter default weight"
               disabled={isLoading}
             />
           </div>
