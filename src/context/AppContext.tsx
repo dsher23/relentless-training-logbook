@@ -116,7 +116,6 @@ interface AppContextType {
     updates: Partial<SteroidCompound>
   ) => Promise<void>;
   deleteSteroidCompound: (id: string) => Promise<void>;
-  // Adding the missing properties
   exercises: Exercise[];
   addExercise: (exercise: Omit<Exercise, "id">) => Promise<void>;
   updateExercise: (id: string, exercise: Exercise) => Promise<void>;
@@ -154,7 +153,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>(
     []
   );
-  // Adding the missing state for exercises and workout plans
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
@@ -425,7 +423,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  // Add the missing handlers for exercises
+  // Exercises
   const handleAddExercise = async (
     exercise: Omit<Exercise, "id">
   ): Promise<void> => {
@@ -453,55 +451,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteWorkout: handleDeleteWorkout,
         workoutTemplates,
         setWorkoutTemplates,
-        addWorkoutTemplate: () => Promise.resolve(), // Add implementations as needed
-        updateWorkoutTemplate: () => Promise.resolve(),
-        deleteWorkoutTemplate: () => Promise.resolve(),
+        addWorkoutTemplate: handleAddWorkoutTemplate,
+        updateWorkoutTemplate: handleUpdateWorkoutTemplate,
+        deleteWorkoutTemplate: handleDeleteWorkoutTemplate,
         bodyMeasurements,
         setBodyMeasurements,
-        addBodyMeasurement: () => Promise.resolve(),
-        updateBodyMeasurement: () => Promise.resolve(),
-        deleteBodyMeasurement: () => Promise.resolve(),
+        addBodyMeasurement: handleAddBodyMeasurement,
+        updateBodyMeasurement: handleUpdateBodyMeasurement,
+        deleteBodyMeasurement: handleDeleteBodyMeasurement,
         progressPhotos,
         setProgressPhotos,
-        addProgressPhoto: () => Promise.resolve(),
-        updateProgressPhoto: () => Promise.resolve(),
-        deleteProgressPhoto: () => Promise.resolve(),
+        addProgressPhoto: handleAddProgressPhoto,
+        updateProgressPhoto: handleUpdateProgressPhoto,
+        deleteProgressPhoto: handleDeleteProgressPhoto,
         moodLogs,
         setMoodLogs,
-        addMoodLog: () => Promise.resolve(),
-        updateMoodLog: () => Promise.resolve(),
-        deleteMoodLog: () => Promise.resolve(),
+        addMoodLog: handleAddMoodLog,
+        updateMoodLog: handleUpdateMoodLog,
+        deleteMoodLog: handleDeleteMoodLog,
         trainingBlocks,
         setTrainingBlocks,
-        addTrainingBlock: () => Promise.resolve(),
-        updateTrainingBlock: () => Promise.resolve(),
-        deleteTrainingBlock: () => Promise.resolve(),
+        addTrainingBlock: handleAddTrainingBlock,
+        updateTrainingBlock: handleUpdateTrainingBlock,
+        deleteTrainingBlock: handleDeleteTrainingBlock,
         weeklyRoutines,
         setWeeklyRoutines,
-        addWeeklyRoutine: () => Promise.resolve(),
-        updateWeeklyRoutine: () => Promise.resolve(),
-        deleteWeeklyRoutine: () => Promise.resolve(),
+        addWeeklyRoutine: handleAddWeeklyRoutine,
+        updateWeeklyRoutine: handleUpdateWeeklyRoutine,
+        deleteWeeklyRoutine: handleDeleteWeeklyRoutine,
         prLifts,
         setPRLifts,
-        addPRLift: () => Promise.resolve(),
-        updatePRLift: () => Promise.resolve(),
-        deletePRLift: () => Promise.resolve(),
+        addPRLift: handleAddPRLift,
+        updatePRLift: handleUpdatePRLift,
+        deletePRLift: handleDeletePRLift,
         supplements,
         setSupplements,
-        addSupplement: () => Promise.resolve(),
-        updateSupplement: () => Promise.resolve(),
-        deleteSupplement: () => Promise.resolve(),
+        addSupplement: handleAddSupplement,
+        updateSupplement: handleUpdateSupplement,
+        deleteSupplement: handleDeleteSupplement,
         steroidCycles,
         setSteroidCycles,
-        addSteroidCycle: () => Promise.resolve(),
-        updateSteroidCycle: () => Promise.resolve(),
-        deleteSteroidCycle: () => Promise.resolve(),
+        addSteroidCycle: handleAddSteroidCycle,
+        updateSteroidCycle: handleUpdateSteroidCycle,
+        deleteSteroidCycle: handleDeleteSteroidCycle,
         steroidCompounds,
         setSteroidCompounds,
-        addSteroidCompound: () => Promise.resolve(),
-        updateSteroidCompound: () => Promise.resolve(),
-        deleteSteroidCompound: () => Promise.resolve(),
-        // Adding the missing properties to the context value
+        addSteroidCompound: handleAddSteroidCompound,
+        updateSteroidCompound: handleUpdateSteroidCompound,
+        deleteSteroidCompound: handleDeleteSteroidCompound,
         exercises,
         addExercise: handleAddExercise,
         updateExercise: handleUpdateExercise,
