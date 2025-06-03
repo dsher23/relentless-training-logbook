@@ -137,12 +137,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>(
-    []
-  );
-  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>(
-    []
-  );
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([]);
   const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
   const [moodLogs, setMoodLogs] = useState<MoodLog[]>([]);
   const [trainingBlocks, setTrainingBlocks] = useState<TrainingBlock[]>([]);
@@ -150,16 +146,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [prLifts, setPRLifts] = useState<PRLift[]>([]);
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [steroidCycles, setSteroidCycles] = useState<SteroidCycle[]>([]);
-  const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>(
-    []
-  );
+  const [steroidCompounds, setSteroidCompounds] = useState<SteroidCompound[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [workoutPlans, setWorkoutPlans] = useState<WorkoutPlan[]>([]);
 
   // User Profile
-  const handleSetUserProfile = async (
-    updates: Partial<UserProfile>
-  ): Promise<void> => {
+  const handleSetUserProfile = async (updates: Partial<UserProfile>): Promise<void> => {
     setUserProfile((prevProfile) => ({
       ...prevProfile,
       ...updates,

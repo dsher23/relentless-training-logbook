@@ -6,7 +6,13 @@ import './index.css';
 import { AppProvider } from './context/AppContext';
 import { FirestoreProvider } from './context/FirestoreContext';
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+const root = document.getElementById('root');
+
+if (!root) {
+  throw new Error('Root element not found');
+}
+
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <AppProvider>
       <FirestoreProvider>
