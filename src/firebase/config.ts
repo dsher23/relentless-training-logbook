@@ -5,9 +5,8 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Firebase configuration
-// TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_ACTUAL_API_KEY_HERE", // Replace this with your real API key
+  apiKey: "AIzaSyAjuJ6X0QJM0J9QqkUJ7YDtdL30XAn-AcE",
   authDomain: "ironlog-dev.firebaseapp.com",
   projectId: "ironlog-dev",
   storageBucket: "ironlog-dev.appspot.com",
